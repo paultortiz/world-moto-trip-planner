@@ -113,6 +113,13 @@ export default function PrivacyPage() {
             associated trips to be deleted, please contact the maintainer of this project and
             include the email address you use to sign in.
           </p>
+          <p>
+            For step-by-step instructions, see our{" "}
+            <Link href="/data-deletion" className="text-adv-accent hover:underline">
+              Data Deletion Instructions
+            </Link>
+            .
+          </p>
         </section>
 
         <section className="space-y-2">
