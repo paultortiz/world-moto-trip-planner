@@ -75,6 +75,13 @@ export default async function HomePage() {
                     <span className="inline-block h-1.5 w-6 rounded-full bg-black/40" />
                     Sign in with Google
                   </Link>
+                  <p className="mt-2 text-[11px] text-slate-400">
+                    By signing in you agree to our{" "}
+                    <Link href="/privacy" className="text-adv-accent hover:underline">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
                 </div>
               </>
             )}

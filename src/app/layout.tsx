@@ -57,6 +57,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </nav>
           </header>
           <main className="flex-1">{children}</main>
+          <footer className="border-t border-adv-border bg-slate-900/80 text-[11px] text-slate-400">
+            <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[11px] text-slate-500">
+                World Moto Trip Planner · For trip planning only. Always ride within your limits and
+                verify conditions on the ground.
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <Link href="/privacy" className="hover:text-adv-accent">
+                  Privacy policy
+                </Link>
+              </div>
+            </div>
+          </footer>
         </div>
       </body>
     </html>
