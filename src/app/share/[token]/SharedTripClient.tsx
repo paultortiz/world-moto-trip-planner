@@ -1,0 +1,116 @@
+'use client';
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import TripPlannerMap, { type WaypointPosition } from "@/features/map/TripPlannerMap";
+
+interface SharedTripClientProps {
+  tripId: string;
+  token: string;
+  name: string;
+  description: string | null;
+  totalDistanceMeters: number | null;
+  totalDurationSeconds: number | null;
+  waypoints: WaypointPosition[];
+  routePath?: WaypointPosition[];
+}
+
+export default function SharedTripClient({
+  tripId,
+  token,
+  name,
+  description,
+  totalDistanceMeters,
+  totalDurationSeconds,
+  waypoints,
+  routePath,
+}: SharedTripClientProps) {
+  const router = useRouter();
+  const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleClone() {
+    setStatus(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/share/${encodeURIComponent(token)}/clone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (res.status === 401) {
+        // Not signed in; send to sign-in page.
+        router.push("/api/auth/signin");
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to clone trip");
+      }
+
+      const data = await res.json();
+      if (data?.id) {
+        router.push(`/trips/${data.id}`);
+        return;
+      }
+
+      setStatus("Trip cloned, but no ID returned.");
+    } catch (err: any) {
+      setStatus(err.message ?? "Failed to clone trip");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="min-h-screen p-6 space-y-6">
+      <header className="max-w-5xl">
+        <p className="mb-1 inline-flex items-center rounded-full border border-adv-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-adv-accent">
+          Shared route
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-50">{name}</h1>
+            {description && (
+              <p className="mt-2 text-sm text-slate-300">{description}</p>
+            )}
+            <p className="mt-1 text-xs text-slate-500">
+              Distance: {totalDistanceMeters != null
+                ? `${(totalDistanceMeters / 1000).toFixed(1)} km`
+                : "--"}
+              {" · "}
+              Duration: {totalDurationSeconds != null
+                ? `${(totalDurationSeconds / 3600).toFixed(1)} h`
+                : "--"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClone}
+            disabled={loading}
+            className="mt-2 rounded bg-adv-accent px-4 py-2 text-xs font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50 sm:mt-0"
+          >
+            {loading ? "Cloning..." : "Clone to my routes"}
+          </button>
+        </div>
+        {status && (
+          <p className="mt-2 text-xs text-slate-300">{status}</p>
+        )}
+      </header>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-100">Route map</h2>
+          <p className="mt-1 text-xs text-slate-400">
+            View this route and clone it into your own account to edit waypoints, fuel plan, and schedule.
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
+          <TripPlannerMap waypoints={waypoints} routePath={routePath} />
+        </div>
+      </section>
+    </main>
+  );
+}

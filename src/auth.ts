@@ -1,0 +1,35 @@
+import NextAuth, { getServerSession, type NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import FacebookProvider from "next-auth/providers/facebook";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
+
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+    }),
+  ],
+  session: {
+    strategy: "database",
+  },
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user) {
+        // Expose user id on the session so we can use it in route handlers.
+        (session.user as any).id = (user as any).id;
+      }
+      return session;
+    },
+  },
+};
+
+export function auth() {
+  return getServerSession(authOptions);
+}

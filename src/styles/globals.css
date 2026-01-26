@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100;
+
+  /* Adventure night-ride gradient background */
+  background-color: #020617;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(251, 146, 60, 0.12), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.18), transparent 55%),
+    linear-gradient(to bottom, #020617, #020617 40%, #020617);
+  background-attachment: fixed;
+}
