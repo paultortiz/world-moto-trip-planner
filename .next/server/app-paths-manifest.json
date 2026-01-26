@@ -1,8 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/trips/page": "app/trips/page.js",
-  "/api/routes/elevation/route": "app/api/routes/elevation/route.js",
-  "/share/[token]/page": "app/share/[token]/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/trips/[id]/page": "app/trips/[id]/page.js"
-}

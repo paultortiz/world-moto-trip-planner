@@ -44,15 +44,13 @@ export default function WaypointEditor({
   }
 
   function moveWaypoint(index: number, direction: "up" | "down") {
-    onWaypointsChange(() => {
-      const next = [...waypoints];
-      const target = direction === "up" ? index - 1 : index + 1;
-      if (target < 0 || target >= next.length) return waypoints;
-      const tmp = next[index];
-      next[index] = next[target];
-      next[target] = tmp;
-      return next;
-    });
+    const next = [...waypoints];
+    const target = direction === "up" ? index - 1 : index + 1;
+    if (target < 0 || target >= next.length) return;
+    const tmp = next[index];
+    next[index] = next[target];
+    next[target] = tmp;
+    onWaypointsChange(next);
   }
 
   async function handleSave() {
