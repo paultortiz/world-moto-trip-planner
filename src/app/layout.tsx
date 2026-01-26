@@ -64,6 +64,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 verify conditions on the ground.
               </p>
               <div className="flex flex-wrap items-center gap-4">
+                <Link href="/terms" className="hover:text-adv-accent">
+                  Terms of service
+                </Link>
                 <Link href="/privacy" className="hover:text-adv-accent">
                   Privacy policy
                 </Link>

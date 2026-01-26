@@ -77,6 +77,10 @@ export default async function HomePage() {
                   </Link>
                   <p className="mt-2 text-[11px] text-slate-400">
                     By signing in you agree to our{" "}
+                    <Link href="/terms" className="text-adv-accent hover:underline">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
                     <Link href="/privacy" className="text-adv-accent hover:underline">
                       Privacy Policy
                     </Link>
