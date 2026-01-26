@@ -49,7 +49,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         plannedDailyRideHours: source.plannedDailyRideHours,
         earliestDepartureHour: source.earliestDepartureHour,
         latestArrivalHour: source.latestArrivalHour,
-        segmentNotes: source.segmentNotes,
+        // Normalize JSON to the input type Prisma expects; treat null as undefined.
+        segmentNotes:
+          source.segmentNotes === null || typeof source.segmentNotes === "undefined"
+            ? undefined
+            : (source.segmentNotes as any),
         checklistItems:
           source.checklistItems.length > 0
             ? {
