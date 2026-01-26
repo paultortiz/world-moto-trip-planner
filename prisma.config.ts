@@ -9,6 +9,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Cast here because defineConfig expects a string, and we rely on DATABASE_URL
+    // being defined in the environment for any place this config runs (local, CI, Vercel).
+    url: process.env["DATABASE_URL"] as string,
   },
 });
