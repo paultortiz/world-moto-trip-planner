@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GoogleMap, Marker, Polyline, useJsApiLoader, MarkerClusterer } from "@react-google-maps/api";
+import { GoogleMap, Marker, Polyline, useJsApiLoader, MarkerClusterer, StandaloneSearchBox } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -53,6 +53,7 @@ export default function TripPlannerMap({
 }: TripPlannerMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
+  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const { isLoaded, loadError } = useJsApiLoader({
     id: "google-maps-trip-planner",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
@@ -108,6 +109,41 @@ export default function TripPlannerMap({
     },
     [routePath, waypoints],
   );
+
+  const handleSearchPlacesChanged = useCallback(() => {
+    if (!onAddWaypoint || !searchBoxRef.current) return;
+    const places = searchBoxRef.current.getPlaces();
+    if (!places || places.length === 0) return;
+    const place = places[0];
+    if (!place.geometry || !place.geometry.location) return;
+
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+
+    const types = place.types ?? [];
+    let inferredType: string | null = null;
+
+    if (types.includes("gas_station")) {
+      inferredType = "FUEL";
+    } else if (types.includes("lodging")) {
+      inferredType = "LODGING";
+    } else if (types.includes("restaurant") || types.includes("cafe") || types.includes("bar")) {
+      inferredType = "DINING";
+    } else if (types.includes("tourist_attraction") || types.includes("point_of_interest")) {
+      inferredType = "POI";
+    }
+
+    onAddWaypoint({ lat, lng, type: inferredType });
+
+    const map = mapRef.current;
+    if (map) {
+      map.panTo({ lat, lng });
+      const zoom = map.getZoom() ?? 0;
+      if (zoom < 12) {
+        map.setZoom(12);
+      }
+    }
+  }, [onAddWaypoint]);
 
   const handleMapIdle = useCallback(() => {
     if (!mapRef.current) return;
@@ -373,8 +409,8 @@ export default function TripPlannerMap({
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={center}
-      zoom={4}
+      defaultCenter={center}
+      defaultZoom={4}
       onLoad={handleMapLoad}
       onIdle={handleMapIdle}
       onClick={handleMapClick}
@@ -383,6 +419,26 @@ export default function TripPlannerMap({
         zoomControl: true,
       }}
     >
+      {onAddWaypoint && (
+        <div
+          className="pointer-events-auto"
+          style={{ position: "absolute", left: 8, top: 8, zIndex: 30 }}
+        >
+          <StandaloneSearchBox
+            onLoad={(ref: google.maps.places.SearchBox) => {
+              searchBoxRef.current = ref;
+            }}
+            onPlacesChanged={handleSearchPlacesChanged}
+          >
+            <input
+              type="text"
+              placeholder="Search address or place..."
+              className="w-64 rounded border border-adv-border bg-slate-950/90 px-2 py-1 text-[11px] text-slate-100 shadow-adv-glow placeholder:text-slate-500"
+            />
+          </StandaloneSearchBox>
+        </div>
+      )}
+
       {routePath && routePath.length > 0 && (
         <Polyline
           path={routePath}
