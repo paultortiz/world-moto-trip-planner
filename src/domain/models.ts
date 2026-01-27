@@ -1,4 +1,4 @@
-export type WaypointType = "FUEL" | "LODGING" | "POI" | "CHECKPOINT" | "OTHER";
+export type WaypointType = "FUEL" | "LODGING" | "DINING" | "POI" | "CHECKPOINT" | "OTHER";
 
 export interface Waypoint {
   id: string;

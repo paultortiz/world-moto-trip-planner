@@ -19,7 +19,7 @@ type PlaceMarker = {
   name?: string | null;
   rating?: number | null;
   openNow?: boolean | null;
-  category: "fuel" | "lodging" | "poi";
+  category: "fuel" | "lodging" | "dining" | "poi";
 };
 
 const MAX_PLACES_RESULTS = 25;
@@ -32,6 +32,7 @@ interface TripPlannerMapProps {
   routePath?: WaypointPosition[];
   showFuelPlaces?: boolean;
   showLodgingPlaces?: boolean;
+  showDiningPlaces?: boolean;
   showPoiPlaces?: boolean;
   minPlaceRating?: number | null;
   onlyOpenNow?: boolean;
@@ -45,6 +46,7 @@ export default function TripPlannerMap({
   routePath,
   showFuelPlaces,
   showLodgingPlaces,
+  showDiningPlaces,
   showPoiPlaces,
   minPlaceRating,
   onlyOpenNow,
@@ -59,12 +61,13 @@ export default function TripPlannerMap({
 
   const [fuelPlaces, setFuelPlaces] = useState<PlaceMarker[]>([]);
   const [lodgingPlaces, setLodgingPlaces] = useState<PlaceMarker[]>([]);
+  const [diningPlaces, setDiningPlaces] = useState<PlaceMarker[]>([]);
   const [poiPlaces, setPoiPlaces] = useState<PlaceMarker[]>([]);
   const [placesCenter, setPlacesCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [highlightedPlace, setHighlightedPlace] = useState<{
     lat: number;
     lng: number;
-    category: "fuel" | "lodging" | "poi";
+    category: "fuel" | "lodging" | "dining" | "poi";
   } | null>(null);
   const highlightTimeoutRef = useRef<number | null>(null);
 
@@ -131,6 +134,7 @@ export default function TripPlannerMap({
       if (zoom < 7) {
         setFuelPlaces([]);
         setLodgingPlaces([]);
+        setDiningPlaces([]);
         setPoiPlaces([]);
         return;
       }
@@ -207,6 +211,40 @@ export default function TripPlannerMap({
         setLodgingPlaces([]);
       }
 
+      if (showDiningPlaces) {
+        service.nearbySearch(
+          {
+            bounds,
+            type: "restaurant",
+          },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk =
+                  !minPlaceRating ||
+                  (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk =
+                  !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              const limited = filtered.slice(0, MAX_PLACES_RESULTS);
+              setDiningPlaces(
+                limited.map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "dining",
+                })),
+              );
+            }
+          },
+        );
+      } else {
+        setDiningPlaces([]);
+      }
+
       if (showPoiPlaces) {
         service.nearbySearch(
           {
@@ -241,7 +279,7 @@ export default function TripPlannerMap({
         setPoiPlaces([]);
       }
     }, 500);
-  }, [showFuelPlaces, showLodgingPlaces, showPoiPlaces, minPlaceRating, onlyOpenNow]);
+  }, [showFuelPlaces, showLodgingPlaces, showDiningPlaces, showPoiPlaces, minPlaceRating, onlyOpenNow]);
 
   function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
     const R = 6371;
@@ -261,7 +299,7 @@ export default function TripPlannerMap({
     if (!placesCenter)
       return [] as {
         name: string;
-        category: "fuel" | "lodging" | "poi";
+        category: "fuel" | "lodging" | "dining" | "poi";
         distanceKm: number;
         rating?: number | null;
         lat: number;
@@ -271,6 +309,7 @@ export default function TripPlannerMap({
     const all: PlaceMarker[] = [];
     if (showFuelPlaces) all.push(...fuelPlaces);
     if (showLodgingPlaces) all.push(...lodgingPlaces);
+    if (showDiningPlaces) all.push(...diningPlaces);
     if (showPoiPlaces) all.push(...poiPlaces);
 
     const withDistance = all.map((p) => ({
@@ -293,7 +332,7 @@ export default function TripPlannerMap({
   }, [placesCenter, showFuelPlaces, showLodgingPlaces, showPoiPlaces, fuelPlaces, lodgingPlaces, poiPlaces]);
 
   const handlePanelItemClick = useCallback(
-    (item: { lat: number; lng: number; category: "fuel" | "lodging" | "poi" }) => {
+    (item: { lat: number; lng: number; category: "fuel" | "lodging" | "dining" | "poi" }) => {
       const map = mapRef.current;
       if (map) {
         map.panTo({ lat: item.lat, lng: item.lng });
@@ -379,6 +418,16 @@ export default function TripPlannerMap({
             fillColor: "#60a5fa", // blue for lodging
             fillOpacity: 0.95,
             strokeColor: "#1d4ed8",
+            strokeWeight: 1,
+          };
+          zIndex = 9;
+        } else if (wpType === "DINING") {
+          icon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: "#fb7185", // rose/red for dining
+            fillOpacity: 0.95,
+            strokeColor: "#be123c",
             strokeWeight: 1,
           };
           zIndex = 9;
@@ -477,6 +526,47 @@ export default function TripPlannerMap({
               return (
                 <Marker
                   key={`lodging-place-${idx}`}
+                  position={{ lat: p.lat, lng: p.lng }}
+                  title={p.name ?? undefined}
+                  clusterer={clusterer}
+                  icon={icon}
+                  zIndex={isHighlighted ? 20 : 4}
+                />
+              );
+            })}
+            </>
+          )}
+        </MarkerClusterer>
+      )}
+
+      {showDiningPlaces && diningPlaces.length > 0 && (
+        <MarkerClusterer>
+          {(clusterer) => (
+            <>
+              {diningPlaces.map((p, idx) => {
+              const isHighlighted =
+                highlightedPlace &&
+                highlightedPlace.category === "dining" &&
+                highlightedPlace.lat === p.lat &&
+                highlightedPlace.lng === p.lng;
+
+              const baseIcon: google.maps.Symbol = {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 4,
+                fillColor: "#fb7185",
+                fillOpacity: 0.4,
+                strokeColor: "#fb7185",
+                strokeOpacity: 0.8,
+                strokeWeight: 1,
+              };
+
+              const icon = isHighlighted
+                ? { ...baseIcon, scale: 6, fillOpacity: 0.9, strokeWeight: 2 }
+                : baseIcon;
+
+              return (
+                <Marker
+                  key={`dining-place-${idx}`}
                   position={{ lat: p.lat, lng: p.lng }}
                   title={p.name ?? undefined}
                   clusterer={clusterer}
