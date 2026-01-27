@@ -465,7 +465,7 @@ export default function TripDetailClient({
                     lat: wp.lat,
                     lng: wp.lng,
                     name: null,
-                    type: "CHECKPOINT",
+                    type: (wp.type as string | undefined) ?? "CHECKPOINT",
                     notes: null,
                     dayIndex: prev.length === 0 ? 1 : lastDay,
                   },
