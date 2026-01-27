@@ -96,7 +96,15 @@ export default function TripPlannerMap({
       mapRef.current = map;
       // Prefer fitting the full route path if available; otherwise fit all waypoints.
       const points = (routePath && routePath.length > 1 ? routePath : waypoints) ?? [];
-      if (!points || points.length === 0) return;
+
+      if (!points || points.length === 0) {
+        // New-trip workflow or trips without stored waypoints: seed a sensible
+        // initial view so the rider doesn't see an empty gray map.
+        const initialCenter = (centerOverride as google.maps.LatLngLiteral | undefined) ?? defaultCenter;
+        map.setCenter(initialCenter);
+        map.setZoom(4);
+        return;
+      }
 
       const bounds = new google.maps.LatLngBounds();
       for (const p of points) {
@@ -107,7 +115,7 @@ export default function TripPlannerMap({
       if (bounds.isEmpty()) return;
       map.fitBounds(bounds);
     },
-    [routePath, waypoints],
+    [routePath, waypoints, centerOverride],
   );
 
   const handleSearchPlacesChanged = useCallback(() => {
