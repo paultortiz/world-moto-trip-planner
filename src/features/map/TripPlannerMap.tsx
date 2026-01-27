@@ -10,7 +10,8 @@ const containerStyle = {
 
 const defaultCenter = { lat: 39.7392, lng: -104.9903 }; // Example default center (Denver)
 
-export type WaypointPosition = { lat: number; lng: number };
+// Optional "type" is used to visually distinguish waypoints such as FUEL, LODGING, and POI.
+export type WaypointPosition = { lat: number; lng: number; type?: string | null };
 
 interface TripPlannerMapProps {
   waypoints: WaypointPosition[];
@@ -99,15 +100,56 @@ export default function TripPlannerMap({
         />
       )}
 
-      {waypoints.map((position, index) => (
-        <Marker
-          key={index}
-          position={position}
-          onClick={() => {
-            if (onMarkerClick) onMarkerClick(index);
-          }}
-        />
-      ))}
+      {waypoints.map((position, index) => {
+        const wpType = position.type ?? null;
+
+        let icon: google.maps.Symbol | undefined;
+        let zIndex: number | undefined;
+
+        if (wpType === "FUEL") {
+          icon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: "#22c55e", // green for fuel
+            fillOpacity: 0.95,
+            strokeColor: "#15803d",
+            strokeWeight: 1,
+          };
+          zIndex = 10;
+        } else if (wpType === "LODGING") {
+          icon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: "#60a5fa", // blue for lodging
+            fillOpacity: 0.95,
+            strokeColor: "#1d4ed8",
+            strokeWeight: 1,
+          };
+          zIndex = 9;
+        } else if (wpType === "POI") {
+          icon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: "#eab308", // amber/yellow for POI
+            fillOpacity: 0.95,
+            strokeColor: "#a16207",
+            strokeWeight: 1,
+          };
+          zIndex = 8;
+        }
+
+        return (
+          <Marker
+            key={index}
+            position={position}
+            icon={icon}
+            zIndex={zIndex}
+            onClick={() => {
+              if (onMarkerClick) onMarkerClick(index);
+            }}
+          />
+        );
+      })}
     </GoogleMap>
   );
 }

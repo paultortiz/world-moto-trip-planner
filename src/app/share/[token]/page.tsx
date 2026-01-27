@@ -30,6 +30,7 @@ export default async function SharedTripPage({ params }: SharedTripPageProps) {
   const waypoints: WaypointPosition[] = trip.waypoints.map((wp) => ({
     lat: wp.lat,
     lng: wp.lng,
+    type: wp.type,
   }));
 
   const firstSegmentWithPolyline = trip.routeSegments.find((seg) => !!seg.polyline);

@@ -105,6 +105,20 @@ export default function SharedTripClient({
           <p className="mt-1 text-xs text-slate-400">
             View this route and clone it into your own account to edit waypoints, fuel plan, and schedule.
           </p>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+            <div className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
+              <span>Fuel</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#60a5fa]" />
+              <span>Lodging</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
+              <span>POI</span>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
