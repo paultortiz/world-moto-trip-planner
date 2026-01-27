@@ -409,8 +409,7 @@ export default function TripPlannerMap({
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      defaultCenter={center}
-      defaultZoom={4}
+      center={center}
       onLoad={handleMapLoad}
       onIdle={handleMapIdle}
       onClick={handleMapClick}
