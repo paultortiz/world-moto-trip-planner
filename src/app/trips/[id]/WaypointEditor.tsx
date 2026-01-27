@@ -20,7 +20,7 @@ interface Props {
   onSaveSuccess?: () => void;
 }
 
-const WAYPOINT_TYPES = ["CHECKPOINT", "FUEL", "LODGING", "POI", "OTHER"] as const;
+const WAYPOINT_TYPES = ["CHECKPOINT", "FUEL", "LODGING", "DINING", "POI", "OTHER"] as const;
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 export default function WaypointEditor({

@@ -324,6 +324,7 @@ export default function TripDetailClient({
 
   const [showFuelPlaces, setShowFuelPlaces] = useState(false);
   const [showLodgingPlaces, setShowLodgingPlaces] = useState(false);
+  const [showDiningPlaces, setShowDiningPlaces] = useState(false);
   const [showPoiPlaces, setShowPoiPlaces] = useState(false);
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
@@ -374,6 +375,10 @@ export default function TripDetailClient({
               <span>Lodging</span>
             </div>
             <div className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#fb7185]" />
+              <span>Dining</span>
+            </div>
+            <div className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
               <span>POI</span>
             </div>
@@ -395,6 +400,15 @@ export default function TripDetailClient({
                   onChange={(e) => setShowLodgingPlaces(e.target.checked)}
                 />
                 <span>Nearby lodging</span>
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3 accent-adv-accent"
+                  checked={showDiningPlaces}
+                  onChange={(e) => setShowDiningPlaces(e.target.checked)}
+                />
+                <span>Nearby dining</span>
               </label>
               <label className="flex items-center gap-1">
                 <input
@@ -432,11 +446,12 @@ export default function TripDetailClient({
         </div>
 
         <div className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
-          <TripPlannerMap
+            <TripPlannerMap
             waypoints={mapWaypoints}
             routePath={isDirty ? undefined : routePath}
             showFuelPlaces={showFuelPlaces}
             showLodgingPlaces={showLodgingPlaces}
+            showDiningPlaces={showDiningPlaces}
             showPoiPlaces={showPoiPlaces}
             minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
             onlyOpenNow={onlyOpenNow}

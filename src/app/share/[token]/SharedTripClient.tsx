@@ -65,6 +65,7 @@ export default function SharedTripClient({
 
   const [showFuelPlaces, setShowFuelPlaces] = useState(false);
   const [showLodgingPlaces, setShowLodgingPlaces] = useState(false);
+  const [showDiningPlaces, setShowDiningPlaces] = useState(false);
   const [showPoiPlaces, setShowPoiPlaces] = useState(false);
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
@@ -121,6 +122,10 @@ export default function SharedTripClient({
               <span>Lodging</span>
             </div>
             <div className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#fb7185]" />
+              <span>Dining</span>
+            </div>
+            <div className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
               <span>POI</span>
             </div>
@@ -142,6 +147,15 @@ export default function SharedTripClient({
                   onChange={(e) => setShowLodgingPlaces(e.target.checked)}
                 />
                 <span>Nearby lodging</span>
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3 accent-adv-accent"
+                  checked={showDiningPlaces}
+                  onChange={(e) => setShowDiningPlaces(e.target.checked)}
+                />
+                <span>Nearby dining</span>
               </label>
               <label className="flex items-center gap-1">
                 <input
@@ -184,6 +198,7 @@ export default function SharedTripClient({
             routePath={routePath}
             showFuelPlaces={showFuelPlaces}
             showLodgingPlaces={showLodgingPlaces}
+            showDiningPlaces={showDiningPlaces}
             showPoiPlaces={showPoiPlaces}
             minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
             onlyOpenNow={onlyOpenNow}
