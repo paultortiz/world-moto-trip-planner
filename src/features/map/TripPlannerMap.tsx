@@ -410,8 +410,9 @@ export default function TripPlannerMap({
       {/* Google Places overlays (secondary markers) */}
       {showFuelPlaces && fuelPlaces.length > 0 && (
         <MarkerClusterer>
-          {(clusterer) =>
-            fuelPlaces.map((p, idx) => {
+          {(clusterer) => (
+            <>
+              {fuelPlaces.map((p, idx) => {
               const isHighlighted =
                 highlightedPlace &&
                 highlightedPlace.category === "fuel" &&
@@ -442,15 +443,17 @@ export default function TripPlannerMap({
                   zIndex={isHighlighted ? 20 : 5}
                 />
               );
-            })
-          }
+            })}
+            </>
+          )}
         </MarkerClusterer>
       )}
 
       {showLodgingPlaces && lodgingPlaces.length > 0 && (
         <MarkerClusterer>
-          {(clusterer) =>
-            lodgingPlaces.map((p, idx) => {
+          {(clusterer) => (
+            <>
+              {lodgingPlaces.map((p, idx) => {
               const isHighlighted =
                 highlightedPlace &&
                 highlightedPlace.category === "lodging" &&
@@ -481,15 +484,17 @@ export default function TripPlannerMap({
                   zIndex={isHighlighted ? 20 : 4}
                 />
               );
-            })
-          }
+            })}
+            </>
+          )}
         </MarkerClusterer>
       )}
 
       {showPoiPlaces && poiPlaces.length > 0 && (
         <MarkerClusterer>
-          {(clusterer) =>
-            poiPlaces.map((p, idx) => {
+          {(clusterer) => (
+            <>
+              {poiPlaces.map((p, idx) => {
               const isHighlighted =
                 highlightedPlace &&
                 highlightedPlace.category === "poi" &&
@@ -520,8 +525,9 @@ export default function TripPlannerMap({
                   zIndex={isHighlighted ? 20 : 3}
                 />
               );
-            })
-          }
+            })}
+            </>
+          )}
         </MarkerClusterer>
       )}
 
