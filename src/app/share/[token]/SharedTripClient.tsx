@@ -63,6 +63,12 @@ export default function SharedTripClient({
     }
   }
 
+  const [showFuelPlaces, setShowFuelPlaces] = useState(false);
+  const [showLodgingPlaces, setShowLodgingPlaces] = useState(false);
+  const [showPoiPlaces, setShowPoiPlaces] = useState(false);
+  const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
+  const [onlyOpenNow, setOnlyOpenNow] = useState(false);
+
   return (
     <main className="min-h-screen p-6 space-y-6">
       <header className="max-w-5xl">
@@ -105,7 +111,7 @@ export default function SharedTripClient({
           <p className="mt-1 text-xs text-slate-400">
             View this route and clone it into your own account to edit waypoints, fuel plan, and schedule.
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+          <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
             <div className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
               <span>Fuel</span>
@@ -118,11 +124,70 @@ export default function SharedTripClient({
               <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
               <span>POI</span>
             </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3 accent-adv-accent"
+                  checked={showFuelPlaces}
+                  onChange={(e) => setShowFuelPlaces(e.target.checked)}
+                />
+                <span>Nearby fuel</span>
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3 accent-adv-accent"
+                  checked={showLodgingPlaces}
+                  onChange={(e) => setShowLodgingPlaces(e.target.checked)}
+                />
+                <span>Nearby lodging</span>
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3 accent-adv-accent"
+                  checked={showPoiPlaces}
+                  onChange={(e) => setShowPoiPlaces(e.target.checked)}
+                />
+                <span>Nearby POIs</span>
+              </label>
+              <label className="flex items-center gap-1">
+                <span className="text-slate-500">Min rating</span>
+                <select
+                  className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px]"
+                  value={minPlaceRating}
+                  onChange={(e) => setMinPlaceRating(e.target.value)}
+                >
+                  <option value="any">Any</option>
+                  <option value="3.5">3.5+</option>
+                  <option value="4.0">4.0+</option>
+                  <option value="4.5">4.5+</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3 accent-adv-accent"
+                  checked={onlyOpenNow}
+                  onChange={(e) => setOnlyOpenNow(e.target.checked)}
+                />
+                <span>Open now only</span>
+              </label>
+            </div>
           </div>
         </div>
 
         <div className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
-          <TripPlannerMap waypoints={waypoints} routePath={routePath} />
+          <TripPlannerMap
+            waypoints={waypoints}
+            routePath={routePath}
+            showFuelPlaces={showFuelPlaces}
+            showLodgingPlaces={showLodgingPlaces}
+            showPoiPlaces={showPoiPlaces}
+            minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
+            onlyOpenNow={onlyOpenNow}
+          />
         </div>
       </section>
     </main>
