@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import TripPlannerMap, {
-  type WaypointPosition,
-} from "@/features/map/TripPlannerMap";
 
 export default function NewTripClient() {
   const router = useRouter();
@@ -12,7 +9,6 @@ export default function NewTripClient() {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [waypoints, setWaypoints] = useState<WaypointPosition[]>([]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,7 +19,7 @@ export default function NewTripClient() {
       const res = await fetch("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, waypoints }),
+        body: JSON.stringify({ name, description }),
       });
 
       const data = await res.json().catch(() => null);
@@ -53,7 +49,6 @@ export default function NewTripClient() {
       setStatus("Trip created.");
       setName("");
       setDescription("");
-      setWaypoints([]);
     } catch (err: any) {
       setStatus(`Error: ${err.message ?? "Failed to create trip"}`);
     } finally {
@@ -66,7 +61,8 @@ export default function NewTripClient() {
       <header className="max-w-5xl">
         <h1 className="text-2xl font-bold">Plan a new route</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Name the leg, add a short note, then start dropping waypoints on the map.
+          Give this route a name and optional description. After creating it, you&apos;ll be
+          taken to the full trip editor to add waypoints, fuel plan, schedule, and notes.
         </p>
       </header>
 
@@ -106,49 +102,8 @@ export default function NewTripClient() {
         )}
       </section>
 
-      <section className="mt-6 space-y-3">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Planning map</h2>
-            <p className="mt-1 text-xs text-slate-400">
-              Click on the map to drop waypoints. These are currently stored in
-              local state and will be saved with the trip.
-            </p>
-          </div>
-          {waypoints.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setWaypoints([])}
-              className="mt-2 rounded border border-adv-border px-3 py-1 text-[10px] text-slate-200 hover:bg-slate-900 md:mt-0"
-            >
-              Clear all waypoints
-            </button>
-          )}
-        </div>
-
-        <div className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
-          <TripPlannerMap
-            waypoints={waypoints}
-            onAddWaypoint={(wp) => setWaypoints((prev) => [...prev, wp])}
-            onMarkerClick={(index) =>
-              setWaypoints((prev) => prev.filter((_, i) => i !== index))
-            }
-          />
-        </div>
-
-        {waypoints.length > 0 && (
-          <div className="text-xs text-slate-300">
-            <p className="font-semibold">Waypoints on this leg:</p>
-            <ol className="mt-1 list-decimal space-y-1 pl-4">
-              {waypoints.map((wp, index) => (
-                <li key={`${wp.lat}-${wp.lng}-${index}`}>
-                  lat: {wp.lat.toFixed(5)}, lng: {wp.lng.toFixed(5)}
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-      </section>
+      {/* After creating the trip, the rider will be redirected to the trip
+          detail page where the full planning map and Places overlays live. */}
     </main>
   );
 }

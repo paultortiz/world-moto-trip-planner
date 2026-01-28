@@ -359,6 +359,16 @@ export default function TripDetailClient({
       </header>
 
       <section className="space-y-3">
+        {waypoints.length === 0 && (
+          <div className="rounded border border-adv-border bg-slate-900/80 p-2 text-[11px] text-slate-200 shadow-adv-glow">
+            <p className="font-semibold text-slate-100">Start planning this route</p>
+            <p className="mt-1 text-slate-300">
+              Drop your first waypoint directly on the map below, or use the "Search address or place..." box
+              to add a location. Then you can turn on nearby fuel, lodging, dining, and POI overlays.
+            </p>
+          </div>
+        )}
+
         <div>
           <h2 className="text-lg font-semibold">Trip overview map</h2>
           <p className="mt-1 text-xs text-slate-400">
