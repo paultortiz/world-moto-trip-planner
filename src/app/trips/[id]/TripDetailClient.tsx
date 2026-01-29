@@ -329,6 +329,11 @@ export default function TripDetailClient({
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
 
+  const [fuelPanelOpen, setFuelPanelOpen] = useState(false);
+  const [schedulePanelOpen, setSchedulePanelOpen] = useState(false);
+  const [segmentPanelOpen, setSegmentPanelOpen] = useState(false);
+  const [checklistPanelOpen, setChecklistPanelOpen] = useState(false);
+
   const earliestHour =
     typeof trip.earliestDepartureHour === "number"
       ? trip.earliestDepartureHour
@@ -358,841 +363,874 @@ export default function TripDetailClient({
         </p>
       </header>
 
-      <section className="space-y-3">
-        {waypoints.length === 0 && (
-          <div className="rounded border border-adv-border bg-slate-900/80 p-2 text-[11px] text-slate-200 shadow-adv-glow">
-            <p className="font-semibold text-slate-100">Start planning this route</p>
-            <p className="mt-1 text-slate-300">
-              Drop your first waypoint directly on the map below, or use the "Search address or place..." box
-              to add a location. Then you can turn on nearby fuel, lodging, dining, and POI overlays.
-            </p>
-          </div>
-        )}
+      <section className="mt-4 grid gap-4 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.6fr)]">
+        {/* Left column: map, elevation, daily plan */}
+        <div className="space-y-3">
+          {waypoints.length === 0 && (
+            <div className="rounded border border-adv-border bg-slate-900/80 p-2 text-[11px] text-slate-200 shadow-adv-glow">
+              <p className="font-semibold text-slate-100">Start planning this route</p>
+              <p className="mt-1 text-slate-300">
+                Drop your first waypoint directly on the map below, or use the "Search address or place..." box
+                to add a location. Then you can turn on nearby fuel, lodging, dining, and POI overlays.
+              </p>
+            </div>
+          )}
 
-        <div>
-          <h2 className="text-lg font-semibold">Trip overview map</h2>
-          <p className="mt-1 text-xs text-slate-400">
-            Saved waypoints and the calculated route for this trip are shown below.
-            Click on the map to add waypoints, and click markers to remove them while editing.
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
-            <div className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
-              <span>Fuel</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-[#60a5fa]" />
-              <span>Lodging</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-[#fb7185]" />
-              <span>Dining</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
-              <span>POI</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3 accent-adv-accent"
-                  checked={showFuelPlaces}
-                  onChange={(e) => setShowFuelPlaces(e.target.checked)}
-                />
-                <span>Nearby fuel</span>
-              </label>
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3 accent-adv-accent"
-                  checked={showLodgingPlaces}
-                  onChange={(e) => setShowLodgingPlaces(e.target.checked)}
-                />
-                <span>Nearby lodging</span>
-              </label>
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3 accent-adv-accent"
-                  checked={showDiningPlaces}
-                  onChange={(e) => setShowDiningPlaces(e.target.checked)}
-                />
-                <span>Nearby dining</span>
-              </label>
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3 accent-adv-accent"
-                  checked={showPoiPlaces}
-                  onChange={(e) => setShowPoiPlaces(e.target.checked)}
-                />
-                <span>Nearby POIs</span>
-              </label>
-              <label className="flex items-center gap-1">
-                <span className="text-slate-500">Min rating</span>
-                <select
-                  className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px]"
-                  value={minPlaceRating}
-                  onChange={(e) => setMinPlaceRating(e.target.value)}
-                >
-                  <option value="any">Any</option>
-                  <option value="3.5">3.5+</option>
-                  <option value="4.0">4.0+</option>
-                  <option value="4.5">4.5+</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3 accent-adv-accent"
-                  checked={onlyOpenNow}
-                  onChange={(e) => setOnlyOpenNow(e.target.checked)}
-                />
-                <span>Open now only</span>
-              </label>
+          <div>
+            <h2 className="text-lg font-semibold">Trip overview map</h2>
+            <p className="mt-1 text-xs text-slate-400">
+              Saved waypoints and the calculated route for this trip are shown below.
+              Click on the map to add waypoints, and click markers to remove them while editing.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
+                <span>Fuel</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-[#60a5fa]" />
+                <span>Lodging</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-[#fb7185]" />
+                <span>Dining</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
+                <span>POI</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={showFuelPlaces}
+                    onChange={(e) => setShowFuelPlaces(e.target.checked)}
+                  />
+                  <span>Nearby fuel</span>
+                </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={showLodgingPlaces}
+                    onChange={(e) => setShowLodgingPlaces(e.target.checked)}
+                  />
+                  <span>Nearby lodging</span>
+                </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={showDiningPlaces}
+                    onChange={(e) => setShowDiningPlaces(e.target.checked)}
+                  />
+                  <span>Nearby dining</span>
+                </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={showPoiPlaces}
+                    onChange={(e) => setShowPoiPlaces(e.target.checked)}
+                  />
+                  <span>Nearby POIs</span>
+                </label>
+                <label className="flex items-center gap-1">
+                  <span className="text-slate-500">Min rating</span>
+                  <select
+                    className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px]"
+                    value={minPlaceRating}
+                    onChange={(e) => setMinPlaceRating(e.target.value)}
+                  >
+                    <option value="any">Any</option>
+                    <option value="3.5">3.5+</option>
+                    <option value="4.0">4.0+</option>
+                    <option value="4.5">4.5+</option>
+                  </select>
+                </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={onlyOpenNow}
+                    onChange={(e) => setOnlyOpenNow(e.target.checked)}
+                  />
+                  <span>Open now only</span>
+                </label>
+              </div>
             </div>
           </div>
+
+          <div className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
+            <TripPlannerMap
+              waypoints={mapWaypoints}
+              routePath={isDirty ? undefined : routePath}
+              showFuelPlaces={showFuelPlaces}
+              showLodgingPlaces={showLodgingPlaces}
+              showDiningPlaces={showDiningPlaces}
+              showPoiPlaces={showPoiPlaces}
+              minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
+              onlyOpenNow={onlyOpenNow}
+              onAddWaypoint={(wp) => {
+                setWaypoints((prev) => {
+                  const last = prev[prev.length - 1];
+                  const lastDay =
+                    typeof last?.dayIndex === "number" && last.dayIndex >= 1 ? last.dayIndex : 1;
+                  return [
+                    ...prev,
+                    {
+                      lat: wp.lat,
+                      lng: wp.lng,
+                      name: null,
+                      type: (wp.type as string | undefined) ?? "CHECKPOINT",
+                      notes: null,
+                      dayIndex: prev.length === 0 ? 1 : lastDay,
+                    },
+                  ];
+                });
+                setIsDirty(true);
+              }}
+              onMarkerClick={(index) => {
+                setWaypoints((prev) => prev.filter((_, i) => i !== index));
+                setIsDirty(true);
+              }}
+            />
+          </div>
+
+          {isDirty && (
+            <p className="text-[11px] text-amber-400">
+              You have unsaved waypoint changes. The route line reflects the last saved version and
+              will update after saving.
+            </p>
+          )}
+
+          <ElevationProfile tripId={trip.id} />
+
+          <div className="flex items-center justify-between text-xs text-slate-300">
+            <div>
+              <p>
+                Total distance: {trip.totalDistanceMeters != null
+                  ? `${(trip.totalDistanceMeters / 1000).toFixed(1)} km`
+                  : "--"}
+              </p>
+              <p>
+                Total duration: {trip.totalDurationSeconds != null
+                  ? `${(trip.totalDurationSeconds / 3600).toFixed(1)} h`
+                  : "--"}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <RecalculateRouteButton tripId={trip.id} />
+              <a
+                href={`/api/trips/${trip.id}/gpx`}
+                className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
+              >
+                Export GPX
+              </a>
+              <DeleteTripButton tripId={trip.id} />
+            </div>
+          </div>
+
+          {dailyPlan.length > 0 && (
+            <div className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-slate-100">Daily plan</p>
+              </div>
+              <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
+                {dailyPlan.map((day) => {
+                  const isHeavy = day.distanceKm > 600 || day.durationHours > 10;
+                  return (
+                    <div
+                      key={day.day}
+                      className={`flex items-center justify-between rounded px-2 py-1 text-[11px] ${
+                        isHeavy
+                          ? "border border-amber-500/70 bg-amber-500/10"
+                          : "border border-slate-700 bg-slate-950/60"
+                      }`}
+                    >
+                      <span className="text-slate-300">Day {day.day}</span>
+                      <span className="text-slate-400">
+                        {day.distanceKm.toFixed(0)} km · {day.durationHours.toFixed(1)} h
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
-            <TripPlannerMap
-            waypoints={mapWaypoints}
-            routePath={isDirty ? undefined : routePath}
-            showFuelPlaces={showFuelPlaces}
-            showLodgingPlaces={showLodgingPlaces}
-            showDiningPlaces={showDiningPlaces}
-            showPoiPlaces={showPoiPlaces}
-            minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
-            onlyOpenNow={onlyOpenNow}
-            onAddWaypoint={(wp) => {
-              setWaypoints((prev) => {
-                const last = prev[prev.length - 1];
-                const lastDay = typeof last?.dayIndex === "number" && last.dayIndex >= 1 ? last.dayIndex : 1;
-                return [
-                  ...prev,
-                  {
-                    lat: wp.lat,
-                    lng: wp.lng,
-                    name: null,
-                    type: (wp.type as string | undefined) ?? "CHECKPOINT",
-                    notes: null,
-                    dayIndex: prev.length === 0 ? 1 : lastDay,
-                  },
-                ];
-              });
+        {/* Right column: sharing, accordions, waypoint editor */}
+        <div className="space-y-3">
+          {/* Sharing panel */}
+          <div className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-semibold text-slate-100">Sharing</p>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={shareEnabled}
+                    onChange={async (e) => {
+                      const enabled = e.target.checked;
+                      setShareSaving(true);
+                      setShareStatus(null);
+                      try {
+                        const res = await fetch(`/api/trips/${trip.id}/share`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ enabled }),
+                        });
+
+                        if (!res.ok) {
+                          const data = await res.json().catch(() => null);
+                          throw new Error(data?.error ?? "Failed to update sharing");
+                        }
+
+                        const data = await res.json();
+                        setShareEnabled(Boolean(data.isPublic && data.shareToken));
+                        setShareToken(data.shareToken ?? null);
+                        setShareStatus(
+                          data.isPublic ? "Sharing enabled." : "Sharing disabled.",
+                        );
+                      } catch (err: any) {
+                        setShareStatus(err.message ?? "Failed to update sharing");
+                      } finally {
+                        setShareSaving(false);
+                      }
+                    }}
+                  />
+                  <span>{shareEnabled ? "Anyone with the link can view" : "Sharing disabled"}</span>
+                </label>
+                {shareEnabled && shareToken && (
+                  <button
+                    type="button"
+                    disabled={shareSaving}
+                    onClick={async () => {
+                      try {
+                        const origin = window.location.origin;
+                        const url = `${origin}/share/${shareToken}`;
+                        await navigator.clipboard.writeText(url);
+                        setShareStatus("Share link copied to clipboard.");
+                      } catch {
+                        setShareStatus("Unable to copy link; please copy it manually.");
+                      }
+                    }}
+                    className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
+                  >
+                    Copy link
+                  </button>
+                )}
+              </div>
+            </div>
+            {shareEnabled && shareToken && (
+              <div className="mt-1">
+                <p className="text-[11px] text-slate-400">Share URL</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    readOnly
+                    className="flex-1 truncate rounded border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-300"
+                    value={`/share/${shareToken}`}
+                  />
+                </div>
+              </div>
+            )}
+            {shareStatus && (
+              <p className="mt-1 text-[11px] text-slate-300">{shareStatus}</p>
+            )}
+          </div>
+
+          {/* Fuel accordion */}
+          <div className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between text-[11px]"
+              onClick={() => setFuelPanelOpen((prev) => !prev)}
+            >
+              <span className="font-semibold text-slate-100">Fuel settings & plan</span>
+              <span className="text-slate-400">{fuelPanelOpen ? "−" : "+"}</span>
+            </button>
+            {fuelPanelOpen && (
+              <div className="mt-2 space-y-3">
+                <div>
+                  <p className="text-[11px] text-slate-400">
+                    Set your bike&apos;s comfortable range between fuel stops. We&apos;ll use this to flag risky legs
+                    between FUEL waypoints.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-3">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] text-slate-400">Range (km)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                        value={fuelRangeInput}
+                        onChange={(e) => setFuelRangeInput(e.target.value)}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] text-slate-400">Reserve (km, optional)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                        value={fuelReserveInput}
+                        onChange={(e) => setFuelReserveInput(e.target.value)}
+                      />
+                    </label>
+                    <div className="flex flex-1 items-end justify-end">
+                      <button
+                        type="button"
+                        disabled={fuelSaving}
+                        onClick={async () => {
+                          setFuelStatus(null);
+                          setFuelSaving(true);
+                          try {
+                            const rangeVal =
+                              fuelRangeInput.trim() === "" ? null : Number(fuelRangeInput);
+                            const reserveVal =
+                              fuelReserveInput.trim() === "" ? null : Number(fuelReserveInput);
+
+                            const res = await fetch(`/api/trips/${trip.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                fuelRangeKm:
+                                  typeof rangeVal === "number" && Number.isFinite(rangeVal)
+                                    ? Math.round(rangeVal)
+                                    : null,
+                                fuelReserveKm:
+                                  typeof reserveVal === "number" && Number.isFinite(reserveVal)
+                                    ? Math.round(reserveVal)
+                                    : null,
+                              }),
+                            });
+
+                            if (!res.ok) {
+                              const data = await res.json().catch(() => null);
+                              throw new Error(data?.error ?? "Failed to save fuel settings");
+                            }
+
+                            setFuelStatus("Fuel settings saved.");
+                            router.refresh();
+                          } catch (err: any) {
+                            setFuelStatus(err.message ?? "Failed to save fuel settings");
+                          } finally {
+                            setFuelSaving(false);
+                          }
+                        }}
+                        className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+                      >
+                        {fuelSaving ? "Saving..." : "Save fuel settings"}
+                      </button>
+                    </div>
+                  </div>
+                  {fuelStatus && (
+                    <p className="mt-1 text-[11px] text-slate-300">{fuelStatus}</p>
+                  )}
+                </div>
+
+                {fuelPlan && fuelPlan.legs.length > 0 && (
+                  <div className="space-y-2 rounded border border-slate-800 bg-slate-950/70 p-2">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-slate-100">Fuel plan</p>
+                      <p className="text-[11px] text-slate-400">
+                        Range: {trip.fuelRangeKm ? `${trip.fuelRangeKm} km` : "not set"}
+                        {trip.fuelReserveKm ? ` · Reserve: ${trip.fuelReserveKm} km` : ""}
+                      </p>
+                    </div>
+                    {fuelPlan.longestLegKm != null && (
+                      <p className="text-[11px] text-slate-300">
+                        Longest distance between fuel stops: {fuelPlan.longestLegKm.toFixed(0)} km
+                      </p>
+                    )}
+                    <div className="space-y-1">
+                      {fuelPlan.legs.map((leg) => (
+                        <div
+                          key={leg.label}
+                          className="flex items-center justify-between text-[11px]"
+                        >
+                          <span className="text-slate-300">{leg.label}</span>
+                          <span
+                            className={
+                              leg.risk === "high"
+                                ? "text-red-400"
+                                : leg.risk === "medium"
+                                ? "text-amber-300"
+                                : "text-slate-300"
+                            }
+                          >
+                            {leg.distanceKm.toFixed(0)} km
+                            {leg.risk === "high"
+                              ? " (beyond range)"
+                              : leg.risk === "medium"
+                              ? " (beyond reserve)"
+                              : ""}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Schedule accordion */}
+          <div className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between text-[11px]"
+              onClick={() => setSchedulePanelOpen((prev) => !prev)}
+            >
+              <span className="font-semibold text-slate-100">Schedule settings & daily schedule</span>
+              <span className="text-slate-400">{schedulePanelOpen ? "−" : "+"}</span>
+            </button>
+            {schedulePanelOpen && (
+              <div className="mt-2 space-y-3">
+                <div>
+                  <p className="text-[11px] text-slate-400">
+                    Configure your ideal riding day to see when arrivals might push past your comfort window.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-3">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] text-slate-400">Target riding time (h/day)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                        value={scheduleDailyHoursInput}
+                        onChange={(e) => setScheduleDailyHoursInput(e.target.value)}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] text-slate-400">Earliest departure (hour)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={23}
+                        className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                        value={scheduleEarliestInput}
+                        onChange={(e) => setScheduleEarliestInput(e.target.value)}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] text-slate-400">Latest arrival (hour)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={23}
+                        className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                        value={scheduleLatestInput}
+                        onChange={(e) => setScheduleLatestInput(e.target.value)}
+                      />
+                    </label>
+                    <div className="flex flex-1 items-end justify-end">
+                      <button
+                        type="button"
+                        disabled={scheduleSaving}
+                        onClick={async () => {
+                          setScheduleStatus(null);
+                          setScheduleSaving(true);
+                          try {
+                            const dailyVal =
+                              scheduleDailyHoursInput.trim() === ""
+                                ? null
+                                : Number(scheduleDailyHoursInput);
+                            const earliestVal =
+                              scheduleEarliestInput.trim() === ""
+                                ? null
+                                : Number(scheduleEarliestInput);
+                            const latestVal =
+                              scheduleLatestInput.trim() === ""
+                                ? null
+                                : Number(scheduleLatestInput);
+
+                            const res = await fetch(`/api/trips/${trip.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                plannedDailyRideHours:
+                                  typeof dailyVal === "number" && Number.isFinite(dailyVal)
+                                    ? Math.round(dailyVal)
+                                    : null,
+                                earliestDepartureHour:
+                                  typeof earliestVal === "number" && Number.isFinite(earliestVal)
+                                    ? Math.round(earliestVal)
+                                    : null,
+                                latestArrivalHour:
+                                  typeof latestVal === "number" && Number.isFinite(latestVal)
+                                    ? Math.round(latestVal)
+                                    : null,
+                              }),
+                            });
+
+                            if (!res.ok) {
+                              const data = await res.json().catch(() => null);
+                              throw new Error(data?.error ?? "Failed to save schedule settings");
+                            }
+
+                            setScheduleStatus("Schedule settings saved.");
+                            router.refresh();
+                          } catch (err: any) {
+                            setScheduleStatus(err.message ?? "Failed to save schedule settings");
+                          } finally {
+                            setScheduleSaving(false);
+                          }
+                        }}
+                        className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+                      >
+                        {scheduleSaving ? "Saving..." : "Save schedule settings"}
+                      </button>
+                    </div>
+                  </div>
+                  {scheduleStatus && (
+                    <p className="mt-1 text-[11px] text-slate-300">{scheduleStatus}</p>
+                  )}
+                </div>
+
+                {dailyPlan.length > 0 && (
+                  <div className="space-y-2 rounded border border-slate-800 bg-slate-950/70 p-2">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-slate-100">Daily schedule</p>
+                    </div>
+                    <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
+                      {dailyPlan.map((day) => {
+                        const ride = day.durationHours;
+                        const depart = earliestHour;
+                        const arrive = depart + ride;
+                        const isLate = latestHour != null && arrive > latestHour;
+                        const overTarget =
+                          targetDailyHours != null && ride > targetDailyHours;
+                        const heavy = isLate || overTarget;
+                        return (
+                          <div
+                            key={day.day}
+                            className={`flex items-center justify-between rounded px-2 py-1 text-[11px] ${
+                              heavy
+                                ? "border border-amber-500/70 bg-amber-500/10"
+                                : "border border-slate-700 bg-slate-950/60"
+                            }`}
+                          >
+                            <span className="text-slate-300">Day {day.day}</span>
+                            <span className="text-slate-400">
+                              {formatTime(depart)} → {formatTime(arrive)} ({ride.toFixed(1)} h)
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Segment risk & notes accordion */}
+          {waypoints.length > 1 && (
+            <div className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between text-[11px]"
+                onClick={() => setSegmentPanelOpen((prev) => !prev)}
+              >
+                <span className="font-semibold text-slate-100">Segment risk & notes</span>
+                <span className="text-slate-400">{segmentPanelOpen ? "−" : "+"}</span>
+              </button>
+              {segmentPanelOpen && (
+                <div className="mt-2 space-y-2">
+                  <p className="text-[11px] text-slate-400">
+                    Annotate tricky legs between waypoints: exposure, remoteness, weather risks, or surface changes.
+                  </p>
+                  <div className="mt-2 max-h-56 space-y-2 overflow-y-auto pr-1">
+                    {waypoints.slice(0, -1).map((wp, index) => {
+                      const next = waypoints[index + 1];
+                      const approxKm = haversineKm(
+                        { lat: wp.lat, lng: wp.lng },
+                        { lat: next.lat, lng: next.lng },
+                      );
+                      const existing = segmentNotes.find((s) => s.index === index) ?? {
+                        index,
+                        risk: null as SegmentRiskLevel,
+                        note: "",
+                      };
+                      const labelFrom = wp.name || `#${index + 1}`;
+                      const labelTo = next.name || `#${index + 2}`;
+                      return (
+                        <div
+                          key={index}
+                          className="rounded border border-slate-700 bg-slate-950/60 p-2"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                            <span className="text-slate-300">
+                              {labelFrom} → {labelTo}
+                            </span>
+                            <span className="text-slate-500">~{approxKm.toFixed(0)} km</span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                            <select
+                              className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
+                              value={existing.risk ?? ""}
+                              onChange={(e) => {
+                                const value = e.target.value as SegmentRiskLevel | "";
+                                setSegmentNotes((prev) => {
+                                  const without = prev.filter((s) => s.index !== index);
+                                  const nextRisk = value === "" ? null : (value as SegmentRiskLevel);
+                                  if (!nextRisk && !existing.note) {
+                                    return without;
+                                  }
+                                  return [
+                                    ...without,
+                                    { index, risk: nextRisk, note: existing.note },
+                                  ];
+                                });
+                              }}
+                            >
+                              <option value="">Risk: none</option>
+                              <option value="low">Low</option>
+                              <option value="medium">Medium</option>
+                              <option value="high">High</option>
+                              <option value="extreme">Extreme</option>
+                            </select>
+                            <input
+                              type="text"
+                              className="min-w-[160px] flex-1 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                              placeholder="Notes (sand, cliffs, no services, etc.)"
+                              value={existing.note}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setSegmentNotes((prev) => {
+                                  const without = prev.filter((s) => s.index !== index);
+                                  const nextNote = value;
+                                  if (!nextNote && !existing.risk) {
+                                    return without;
+                                  }
+                                  return [
+                                    ...without,
+                                    { index, risk: existing.risk, note: nextNote },
+                                  ];
+                                });
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <button
+                      type="button"
+                      disabled={segmentNotesSaving}
+                      onClick={async () => {
+                        setSegmentNotesStatus(null);
+                        setSegmentNotesSaving(true);
+                        try {
+                          const payload = segmentNotes
+                            .filter((s) => s.risk || s.note.trim() !== "")
+                            .map((s) => ({ index: s.index, risk: s.risk, note: s.note.trim() }));
+
+                          const res = await fetch(`/api/trips/${trip.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ segmentNotes: payload }),
+                          });
+
+                          if (!res.ok) {
+                            const data = await res.json().catch(() => null);
+                            throw new Error(data?.error ?? "Failed to save segment notes");
+                          }
+
+                          setSegmentNotesStatus("Segment notes saved.");
+                        } catch (err: any) {
+                          setSegmentNotesStatus(err.message ?? "Failed to save segment notes");
+                        } finally {
+                          setSegmentNotesSaving(false);
+                        }
+                      }}
+                      className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+                    >
+                      {segmentNotesSaving ? "Saving..." : "Save segment notes"}
+                    </button>
+                    {segmentNotesStatus && (
+                      <p className="text-[11px] text-slate-300">{segmentNotesStatus}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Checklist accordion */}
+          <div className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between text-[11px]"
+              onClick={() => setChecklistPanelOpen((prev) => !prev)}
+            >
+              <span className="font-semibold text-slate-100">Pre-ride checklist</span>
+              <span className="text-slate-400">{checklistPanelOpen ? "−" : "+"}</span>
+            </button>
+            {checklistPanelOpen && (
+              <div className="mt-2 space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                    <select
+                      defaultValue=""
+                      className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[10px] text-slate-200"
+                      onChange={(e) => {
+                        const value = e.target.value as ChecklistTemplateId | "";
+                        if (!value) return;
+                        const tpl = CHECKLIST_TEMPLATES.find((t) => t.id === value);
+                        if (!tpl) return;
+                        setChecklist(
+                          tpl.items.map((item) => ({
+                            label: item.label,
+                            isDone: false,
+                          })),
+                        );
+                        setChecklistStatus("Template applied (not yet saved).");
+                      }}
+                    >
+                      <option value="">Apply template...</option>
+                      {CHECKLIST_TEMPLATES.map((tpl) => (
+                        <option key={tpl.id} value={tpl.id}>
+                          {tpl.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChecklist(
+                          ADV_DEFAULT_CHECKLIST.map((item) => ({
+                            label: item.label,
+                            isDone: false,
+                          })),
+                        );
+                        setChecklistStatus("Reset to ADV defaults (not yet saved).");
+                      }}
+                      className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
+                    >
+                      Reset ADV defaults
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setChecklist((prev) => [
+                          ...prev,
+                          { label: "", isDone: false },
+                        ])
+                      }
+                      className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
+                    >
+                      Add item
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Capture the things you want to confirm before rolling out on this specific route.
+                </p>
+                <div className="mt-2 space-y-2">
+                  {checklist.map((item, index) => (
+                    <div
+                      key={item.id ?? `${index}-${item.label}`}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-3 w-3 accent-adv-accent"
+                        checked={item.isDone}
+                        onChange={(e) =>
+                          setChecklist((prev) =>
+                            prev.map((it, i) =>
+                              i === index ? { ...it, isDone: e.target.checked } : it,
+                            ),
+                          )
+                        }
+                      />
+                      <input
+                        type="text"
+                        className="flex-1 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                        placeholder="Checklist item"
+                        value={item.label}
+                        onChange={(e) =>
+                          setChecklist((prev) =>
+                            prev.map((it, i) =>
+                              i === index ? { ...it, label: e.target.value } : it,
+                            ),
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setChecklist((prev) => prev.filter((_, i) => i !== index))
+                        }
+                        className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  {checklist.length === 0 && (
+                    <p className="text-[11px] text-slate-500">No checklist items yet. Add a few above.</p>
+                  )}
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <button
+                    type="button"
+                    disabled={checklistSaving}
+                    onClick={async () => {
+                      setChecklistStatus(null);
+                      setChecklistSaving(true);
+                      try {
+                        const res = await fetch(`/api/trips/${trip.id}/checklist`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            items: checklist,
+                          }),
+                        });
+
+                        if (!res.ok) {
+                          const data = await res.json().catch(() => null);
+                          throw new Error(data?.error ?? "Failed to save checklist");
+                        }
+
+                        setChecklistStatus("Checklist saved.");
+                      } catch (err: any) {
+                        setChecklistStatus(err.message ?? "Failed to save checklist");
+                      } finally {
+                        setChecklistSaving(false);
+                      }
+                    }}
+                    className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+                  >
+                    {checklistSaving ? "Saving..." : "Save checklist"}
+                  </button>
+                  {checklistStatus && (
+                    <p className="text-[11px] text-slate-300">{checklistStatus}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Waypoint editor */}
+          <WaypointEditor
+            tripId={trip.id}
+            waypoints={waypoints}
+            onWaypointsChange={(next) => {
+              setWaypoints(next);
               setIsDirty(true);
             }}
-            onMarkerClick={(index) => {
-              setWaypoints((prev) => prev.filter((_, i) => i !== index));
-              setIsDirty(true);
+            onSaveSuccess={() => {
+              setIsDirty(false);
             }}
           />
         </div>
-
-        {isDirty && (
-          <p className="text-[11px] text-amber-400">
-            You have unsaved waypoint changes. The route line reflects the last
-            saved version and will update after saving.
-          </p>
-        )}
-
-        <ElevationProfile tripId={trip.id} />
-
-        <div className="flex items-center justify-between text-xs text-slate-300">
-          <div>
-            <p>
-              Total distance: {trip.totalDistanceMeters != null
-                ? `${(trip.totalDistanceMeters / 1000).toFixed(1)} km`
-                : "--"}
-            </p>
-            <p>
-              Total duration: {trip.totalDurationSeconds != null
-                ? `${(trip.totalDurationSeconds / 3600).toFixed(1)} h`
-                : "--"}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <RecalculateRouteButton tripId={trip.id} />
-            <a
-              href={`/api/trips/${trip.id}/gpx`}
-              className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
-            >
-              Export GPX
-            </a>
-            <DeleteTripButton tripId={trip.id} />
-          </div>
-        </div>
-
-        <div className="mt-3 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-semibold text-slate-100">Sharing</p>
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3 accent-adv-accent"
-                  checked={shareEnabled}
-                  onChange={async (e) => {
-                    const enabled = e.target.checked;
-                    setShareSaving(true);
-                    setShareStatus(null);
-                    try {
-                      const res = await fetch(`/api/trips/${trip.id}/share`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ enabled }),
-                      });
-
-                      if (!res.ok) {
-                        const data = await res.json().catch(() => null);
-                        throw new Error(data?.error ?? "Failed to update sharing");
-                      }
-
-                      const data = await res.json();
-                      setShareEnabled(Boolean(data.isPublic && data.shareToken));
-                      setShareToken(data.shareToken ?? null);
-                      setShareStatus(
-                        data.isPublic ? "Sharing enabled." : "Sharing disabled.",
-                      );
-                    } catch (err: any) {
-                      setShareStatus(err.message ?? "Failed to update sharing");
-                    } finally {
-                      setShareSaving(false);
-                    }
-                  }}
-                />
-                <span>{shareEnabled ? "Anyone with the link can view" : "Sharing disabled"}</span>
-              </label>
-              {shareEnabled && shareToken && (
-                <button
-                  type="button"
-                  disabled={shareSaving}
-                  onClick={async () => {
-                    try {
-                      const origin = window.location.origin;
-                      const url = `${origin}/share/${shareToken}`;
-                      await navigator.clipboard.writeText(url);
-                      setShareStatus("Share link copied to clipboard.");
-                    } catch {
-                      setShareStatus("Unable to copy link; please copy it manually.");
-                    }
-                  }}
-                  className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
-                >
-                  Copy link
-                </button>
-              )}
-            </div>
-          </div>
-          {shareEnabled && shareToken && (
-            <div className="mt-1">
-              <p className="text-[11px] text-slate-400">Share URL</p>
-              <div className="mt-1 flex items-center gap-2">
-                <input
-                  readOnly
-                  className="flex-1 truncate rounded border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-300"
-                  value={`/share/${shareToken}`}
-                />
-              </div>
-            </div>
-          )}
-          {shareStatus && (
-            <p className="mt-1 text-[11px] text-slate-300">{shareStatus}</p>
-          )}
-        </div>
-
-        <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
-          <div className="flex items-center justify-between">
-            <p className="font-semibold text-slate-100">Fuel settings</p>
-          </div>
-          <p className="text-[11px] text-slate-400">
-            Set your bike&apos;s comfortable range between fuel stops. We&apos;ll use this to flag
-            risky legs between FUEL waypoints.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">
-                Range (km)
-              </span>
-              <input
-                type="number"
-                min={0}
-                className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                value={fuelRangeInput}
-                onChange={(e) => setFuelRangeInput(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">
-                Reserve (km, optional)
-              </span>
-              <input
-                type="number"
-                min={0}
-                className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                value={fuelReserveInput}
-                onChange={(e) => setFuelReserveInput(e.target.value)}
-              />
-            </label>
-            <div className="flex flex-1 items-end justify-end">
-              <button
-                type="button"
-                disabled={fuelSaving}
-                onClick={async () => {
-                  setFuelStatus(null);
-                  setFuelSaving(true);
-                  try {
-                    const rangeVal = fuelRangeInput.trim() === "" ? null : Number(fuelRangeInput);
-                    const reserveVal =
-                      fuelReserveInput.trim() === "" ? null : Number(fuelReserveInput);
-
-                    const res = await fetch(`/api/trips/${trip.id}`, {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        fuelRangeKm:
-                          typeof rangeVal === "number" && Number.isFinite(rangeVal)
-                            ? Math.round(rangeVal)
-                            : null,
-                        fuelReserveKm:
-                          typeof reserveVal === "number" && Number.isFinite(reserveVal)
-                            ? Math.round(reserveVal)
-                            : null,
-                      }),
-                    });
-
-                    if (!res.ok) {
-                      const data = await res.json().catch(() => null);
-                      throw new Error(data?.error ?? "Failed to save fuel settings");
-                    }
-
-                    setFuelStatus("Fuel settings saved.");
-                    router.refresh();
-                  } catch (err: any) {
-                    setFuelStatus(err.message ?? "Failed to save fuel settings");
-                  } finally {
-                    setFuelSaving(false);
-                  }
-                }}
-                className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
-              >
-                {fuelSaving ? "Saving..." : "Save fuel settings"}
-              </button>
-            </div>
-          </div>
-          {fuelStatus && (
-            <p className="text-[11px] text-slate-300">{fuelStatus}</p>
-          )}
-        </div>
-
-        <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
-          <div className="flex items-center justify-between">
-            <p className="font-semibold text-slate-100">Schedule settings</p>
-          </div>
-          <p className="text-[11px] text-slate-400">
-            Configure your ideal riding day to see when arrivals might push past your comfort
-            window.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">
-                Target riding time (h/day)
-              </span>
-              <input
-                type="number"
-                min={0}
-                className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                value={scheduleDailyHoursInput}
-                onChange={(e) => setScheduleDailyHoursInput(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">Earliest departure (hour)</span>
-              <input
-                type="number"
-                min={0}
-                max={23}
-                className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                value={scheduleEarliestInput}
-                onChange={(e) => setScheduleEarliestInput(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-[11px] text-slate-400">Latest arrival (hour)</span>
-              <input
-                type="number"
-                min={0}
-                max={23}
-                className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                value={scheduleLatestInput}
-                onChange={(e) => setScheduleLatestInput(e.target.value)}
-              />
-            </label>
-            <div className="flex flex-1 items-end justify-end">
-              <button
-                type="button"
-                disabled={scheduleSaving}
-                onClick={async () => {
-                  setScheduleStatus(null);
-                  setScheduleSaving(true);
-                  try {
-                    const dailyVal =
-                      scheduleDailyHoursInput.trim() === ""
-                        ? null
-                        : Number(scheduleDailyHoursInput);
-                    const earliestVal =
-                      scheduleEarliestInput.trim() === ""
-                        ? null
-                        : Number(scheduleEarliestInput);
-                    const latestVal =
-                      scheduleLatestInput.trim() === ""
-                        ? null
-                        : Number(scheduleLatestInput);
-
-                    const res = await fetch(`/api/trips/${trip.id}`, {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        plannedDailyRideHours:
-                          typeof dailyVal === "number" && Number.isFinite(dailyVal)
-                            ? Math.round(dailyVal)
-                            : null,
-                        earliestDepartureHour:
-                          typeof earliestVal === "number" && Number.isFinite(earliestVal)
-                            ? Math.round(earliestVal)
-                            : null,
-                        latestArrivalHour:
-                          typeof latestVal === "number" && Number.isFinite(latestVal)
-                            ? Math.round(latestVal)
-                            : null,
-                      }),
-                    });
-
-                    if (!res.ok) {
-                      const data = await res.json().catch(() => null);
-                      throw new Error(data?.error ?? "Failed to save schedule settings");
-                    }
-
-                    setScheduleStatus("Schedule settings saved.");
-                    router.refresh();
-                  } catch (err: any) {
-                    setScheduleStatus(err.message ?? "Failed to save schedule settings");
-                  } finally {
-                    setScheduleSaving(false);
-                  }
-                }}
-                className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
-              >
-                {scheduleSaving ? "Saving..." : "Save schedule settings"}
-              </button>
-            </div>
-          </div>
-          {scheduleStatus && (
-            <p className="text-[11px] text-slate-300">{scheduleStatus}</p>
-          )}
-        </div>
-
-        {dailyPlan.length > 0 && (
-          <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
-            <div className="flex items-center justify-between">
-              <p className="font-semibold text-slate-100">Daily plan</p>
-            </div>
-            <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
-              {dailyPlan.map((day) => {
-                const isHeavy = day.distanceKm > 600 || day.durationHours > 10;
-                return (
-                  <div
-                    key={day.day}
-                    className={`flex items-center justify-between rounded px-2 py-1 text-[11px] ${
-                      isHeavy
-                        ? "border border-amber-500/70 bg-amber-500/10"
-                        : "border border-slate-700 bg-slate-950/60"
-                    }`}
-                  >
-                    <span className="text-slate-300">Day {day.day}</span>
-                    <span className="text-slate-400">
-                      {day.distanceKm.toFixed(0)} km · {day.durationHours.toFixed(1)} h
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            {/**
-            <div className="mt-2 border-t border-slate-800 pt-2 text-[10px] text-slate-500">
-              <p className="mb-1 font-mono text-[10px] text-slate-500">waypoint dayIndex debug</p>
-              <div className="max-h-32 space-y-0.5 overflow-y-auto pr-1">
-                {waypoints.map((wp: WaypointDto, idx: number) => (
-                  <div key={wp.id ?? idx}>
-                    #{idx + 1}: dayIndex={wp.dayIndex ?? "(null)"}, lat={wp.lat.toFixed(3)}, lng={
-                      wp.lng.toFixed(3)
-                    }
-                  </div>
-                ))}
-              </div>
-            </div>
-            **/}
-          </div>
-        )}
-
-        {dailyPlan.length > 0 && (
-          <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
-            <div className="flex items-center justify-between">
-              <p className="font-semibold text-slate-100">Daily schedule</p>
-            </div>
-            <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
-              {dailyPlan.map((day) => {
-                const ride = day.durationHours;
-                const depart = earliestHour;
-                const arrive = depart + ride;
-                const isLate = latestHour != null && arrive > latestHour;
-                const overTarget =
-                  targetDailyHours != null && ride > targetDailyHours;
-                const heavy = isLate || overTarget;
-                return (
-                  <div
-                    key={day.day}
-                    className={`flex items-center justify-between rounded px-2 py-1 text-[11px] ${
-                      heavy
-                        ? "border border-amber-500/70 bg-amber-500/10"
-                        : "border border-slate-700 bg-slate-950/60"
-                    }`}
-                  >
-                    <span className="text-slate-300">Day {day.day}</span>
-                    <span className="text-slate-400">
-                      {formatTime(depart)} → {formatTime(arrive)} ({ride.toFixed(1)} h)
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {fuelPlan && fuelPlan.legs.length > 0 && (
-          <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
-            <div className="flex items-center justify-between">
-              <p className="font-semibold text-slate-100">Fuel plan</p>
-              <p className="text-[11px] text-slate-400">
-                Range: {trip.fuelRangeKm ? `${trip.fuelRangeKm} km` : "not set"}
-                {trip.fuelReserveKm
-                  ? ` · Reserve: ${trip.fuelReserveKm} km`
-                  : ""}
-              </p>
-            </div>
-            {fuelPlan.longestLegKm != null && (
-              <p className="text-[11px] text-slate-300">
-                Longest distance between fuel stops: {fuelPlan.longestLegKm.toFixed(0)} km
-              </p>
-            )}
-            <div className="space-y-1">
-              {fuelPlan.legs.map((leg) => (
-                <div
-                  key={leg.label}
-                  className="flex items-center justify-between text-[11px]"
-                >
-                  <span className="text-slate-300">{leg.label}</span>
-                  <span
-                    className={
-                      leg.risk === "high"
-                        ? "text-red-400"
-                        : leg.risk === "medium"
-                        ? "text-amber-300"
-                        : "text-slate-300"
-                    }
-                  >
-                    {leg.distanceKm.toFixed(0)} km
-                    {leg.risk === "high"
-                      ? " (beyond range)"
-                      : leg.risk === "medium"
-                      ? " (beyond reserve)"
-                      : ""}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {waypoints.length > 1 && (
-          <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
-            <div className="flex items-center justify-between">
-              <p className="font-semibold text-slate-100">Segment risk & notes</p>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Annotate tricky legs between waypoints: exposure, remoteness, weather risks, or surface changes.
-            </p>
-            <div className="mt-2 max-h-56 space-y-2 overflow-y-auto pr-1">
-              {waypoints.slice(0, -1).map((wp, index) => {
-                const next = waypoints[index + 1];
-                const approxKm = haversineKm(
-                  { lat: wp.lat, lng: wp.lng },
-                  { lat: next.lat, lng: next.lng },
-                );
-                const existing = segmentNotes.find((s) => s.index === index) ?? {
-                  index,
-                  risk: null as SegmentRiskLevel,
-                  note: "",
-                };
-                const labelFrom = wp.name || `#${index + 1}`;
-                const labelTo = next.name || `#${index + 2}`;
-                return (
-                  <div
-                    key={index}
-                    className="rounded border border-slate-700 bg-slate-950/60 p-2"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                      <span className="text-slate-300">
-                        {labelFrom} → {labelTo}
-                      </span>
-                      <span className="text-slate-500">~{approxKm.toFixed(0)} km</span>
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
-                      <select
-                        className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
-                        value={existing.risk ?? ""}
-                        onChange={(e) => {
-                          const value = e.target.value as SegmentRiskLevel | "";
-                          setSegmentNotes((prev) => {
-                            const without = prev.filter((s) => s.index !== index);
-                            const nextRisk = value === "" ? null : (value as SegmentRiskLevel);
-                            if (!nextRisk && !existing.note) {
-                              return without;
-                            }
-                            return [
-                              ...without,
-                              { index, risk: nextRisk, note: existing.note },
-                            ];
-                          });
-                        }}
-                      >
-                        <option value="">Risk: none</option>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="extreme">Extreme</option>
-                      </select>
-                      <input
-                        type="text"
-                        className="min-w-[160px] flex-1 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                        placeholder="Notes (sand, cliffs, no services, etc.)"
-                        value={existing.note}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setSegmentNotes((prev) => {
-                            const without = prev.filter((s) => s.index !== index);
-                            const nextNote = value;
-                            if (!nextNote && !existing.risk) {
-                              return without;
-                            }
-                            return [
-                              ...without,
-                              { index, risk: existing.risk, note: nextNote },
-                            ];
-                          });
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-2 flex items-center justify-between">
-              <button
-                type="button"
-                disabled={segmentNotesSaving}
-                onClick={async () => {
-                  setSegmentNotesStatus(null);
-                  setSegmentNotesSaving(true);
-                  try {
-                    const payload = segmentNotes
-                      .filter((s) => s.risk || s.note.trim() !== "")
-                      .map((s) => ({ index: s.index, risk: s.risk, note: s.note.trim() }));
-
-                    const res = await fetch(`/api/trips/${trip.id}`, {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ segmentNotes: payload }),
-                    });
-
-                    if (!res.ok) {
-                      const data = await res.json().catch(() => null);
-                      throw new Error(data?.error ?? "Failed to save segment notes");
-                    }
-
-                    setSegmentNotesStatus("Segment notes saved.");
-                  } catch (err: any) {
-                    setSegmentNotesStatus(err.message ?? "Failed to save segment notes");
-                  } finally {
-                    setSegmentNotesSaving(false);
-                  }
-                }}
-                className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
-              >
-                {segmentNotesSaving ? "Saving..." : "Save segment notes"}
-              </button>
-              {segmentNotesStatus && (
-                <p className="text-[11px] text-slate-300">{segmentNotesStatus}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-semibold text-slate-100">Pre-ride checklist</p>
-            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-              <select
-                defaultValue=""
-                className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[10px] text-slate-200"
-                onChange={(e) => {
-                  const value = e.target.value as ChecklistTemplateId | "";
-                  if (!value) return;
-                  const tpl = CHECKLIST_TEMPLATES.find((t) => t.id === value);
-                  if (!tpl) return;
-                  setChecklist(
-                    tpl.items.map((item) => ({
-                      label: item.label,
-                      isDone: false,
-                    })),
-                  );
-                  setChecklistStatus("Template applied (not yet saved).");
-                }}
-              >
-                <option value="">Apply template...</option>
-                {CHECKLIST_TEMPLATES.map((tpl) => (
-                  <option key={tpl.id} value={tpl.id}>
-                    {tpl.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => {
-                  setChecklist(
-                    ADV_DEFAULT_CHECKLIST.map((item) => ({
-                      label: item.label,
-                      isDone: false,
-                    })),
-                  );
-                  setChecklistStatus("Reset to ADV defaults (not yet saved).");
-                }}
-                className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
-              >
-                Reset ADV defaults
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setChecklist((prev) => [
-                    ...prev,
-                    { label: "", isDone: false },
-                  ])
-                }
-                className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
-              >
-                Add item
-              </button>
-            </div>
-          </div>
-          <p className="text-[11px] text-slate-400">
-            Capture the things you want to confirm before rolling out on this specific route.
-          </p>
-          <div className="mt-2 space-y-2">
-            {checklist.map((item, index) => (
-              <div
-                key={item.id ?? `${index}-${item.label}`}
-                className="flex items-center gap-2"
-              >
-                <input
-                  type="checkbox"
-                  className="h-3 w-3 accent-adv-accent"
-                  checked={item.isDone}
-                  onChange={(e) =>
-                    setChecklist((prev) =>
-                      prev.map((it, i) =>
-                        i === index ? { ...it, isDone: e.target.checked } : it,
-                      ),
-                    )
-                  }
-                />
-                <input
-                  type="text"
-                  className="flex-1 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                  placeholder="Checklist item"
-                  value={item.label}
-                  onChange={(e) =>
-                    setChecklist((prev) =>
-                      prev.map((it, i) =>
-                        i === index ? { ...it, label: e.target.value } : it,
-                      ),
-                    )
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setChecklist((prev) => prev.filter((_, i) => i !== index))
-                  }
-                  className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            {checklist.length === 0 && (
-              <p className="text-[11px] text-slate-500">No checklist items yet. Add a few above.</p>
-            )}
-          </div>
-          <div className="mt-2 flex items-center justify-between">
-            <button
-              type="button"
-              disabled={checklistSaving}
-              onClick={async () => {
-                setChecklistStatus(null);
-                setChecklistSaving(true);
-                try {
-                  const res = await fetch(`/api/trips/${trip.id}/checklist`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      items: checklist,
-                    }),
-                  });
-
-                  if (!res.ok) {
-                    const data = await res.json().catch(() => null);
-                    throw new Error(data?.error ?? "Failed to save checklist");
-                  }
-
-                  setChecklistStatus("Checklist saved.");
-                } catch (err: any) {
-                  setChecklistStatus(err.message ?? "Failed to save checklist");
-                } finally {
-                  setChecklistSaving(false);
-                }
-              }}
-              className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
-            >
-              {checklistSaving ? "Saving..." : "Save checklist"}
-            </button>
-            {checklistStatus && (
-              <p className="text-[11px] text-slate-300">{checklistStatus}</p>
-            )}
-          </div>
-        </div>
-
-        <WaypointEditor
-          tripId={trip.id}
-          waypoints={waypoints}
-          onWaypointsChange={(next) => {
-            setWaypoints(next);
-            setIsDirty(true);
-          }}
-          onSaveSuccess={() => {
-            setIsDirty(false);
-          }}
-        />
       </section>
     </>
   );
