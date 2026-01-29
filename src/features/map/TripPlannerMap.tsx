@@ -19,7 +19,7 @@ type PlaceMarker = {
   name?: string | null;
   rating?: number | null;
   openNow?: boolean | null;
-  category: "fuel" | "lodging" | "dining" | "poi";
+  category: "fuel" | "lodging" | "campground" | "dining" | "poi";
 };
 
 const MAX_PLACES_RESULTS = 25;
@@ -32,6 +32,7 @@ interface TripPlannerMapProps {
   routePath?: WaypointPosition[];
   showFuelPlaces?: boolean;
   showLodgingPlaces?: boolean;
+  showCampgroundPlaces?: boolean;
   showDiningPlaces?: boolean;
   showPoiPlaces?: boolean;
   minPlaceRating?: number | null;
@@ -46,6 +47,7 @@ export default function TripPlannerMap({
   routePath,
   showFuelPlaces,
   showLodgingPlaces,
+  showCampgroundPlaces,
   showDiningPlaces,
   showPoiPlaces,
   minPlaceRating,
@@ -62,13 +64,14 @@ export default function TripPlannerMap({
 
   const [fuelPlaces, setFuelPlaces] = useState<PlaceMarker[]>([]);
   const [lodgingPlaces, setLodgingPlaces] = useState<PlaceMarker[]>([]);
+  const [campgroundPlaces, setCampgroundPlaces] = useState<PlaceMarker[]>([]);
   const [diningPlaces, setDiningPlaces] = useState<PlaceMarker[]>([]);
   const [poiPlaces, setPoiPlaces] = useState<PlaceMarker[]>([]);
   const [placesCenter, setPlacesCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [highlightedPlace, setHighlightedPlace] = useState<{
     lat: number;
     lng: number;
-    category: "fuel" | "lodging" | "dining" | "poi";
+    category: "fuel" | "lodging" | "campground" | "dining" | "poi";
   } | null>(null);
   const highlightTimeoutRef = useRef<number | null>(null);
 
@@ -135,6 +138,8 @@ export default function TripPlannerMap({
       inferredType = "FUEL";
     } else if (types.includes("lodging")) {
       inferredType = "LODGING";
+    } else if (types.includes("campground")) {
+      inferredType = "CAMPGROUND";
     } else if (types.includes("restaurant") || types.includes("cafe") || types.includes("bar")) {
       inferredType = "DINING";
     } else if (types.includes("tourist_attraction") || types.includes("point_of_interest")) {
@@ -178,6 +183,7 @@ export default function TripPlannerMap({
       if (zoom < 7) {
         setFuelPlaces([]);
         setLodgingPlaces([]);
+        setCampgroundPlaces([]);
         setDiningPlaces([]);
         setPoiPlaces([]);
         return;
@@ -255,6 +261,40 @@ export default function TripPlannerMap({
         setLodgingPlaces([]);
       }
 
+      if (showCampgroundPlaces) {
+        service.nearbySearch(
+          {
+            bounds,
+            type: "campground",
+          },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk =
+                  !minPlaceRating ||
+                  (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk =
+                  !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              const limited = filtered.slice(0, MAX_PLACES_RESULTS);
+              setCampgroundPlaces(
+                limited.map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "campground",
+                })),
+              );
+            }
+          },
+        );
+      } else {
+        setCampgroundPlaces([]);
+      }
+
       if (showDiningPlaces) {
         service.nearbySearch(
           {
@@ -323,7 +363,7 @@ export default function TripPlannerMap({
         setPoiPlaces([]);
       }
     }, 500);
-  }, [showFuelPlaces, showLodgingPlaces, showDiningPlaces, showPoiPlaces, minPlaceRating, onlyOpenNow]);
+  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, minPlaceRating, onlyOpenNow]);
 
   function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
     const R = 6371;
@@ -343,7 +383,7 @@ export default function TripPlannerMap({
     if (!placesCenter)
       return [] as {
         name: string;
-        category: "fuel" | "lodging" | "dining" | "poi";
+        category: "fuel" | "lodging" | "campground" | "dining" | "poi";
         distanceKm: number;
         rating?: number | null;
         lat: number;
@@ -353,6 +393,7 @@ export default function TripPlannerMap({
     const all: PlaceMarker[] = [];
     if (showFuelPlaces) all.push(...fuelPlaces);
     if (showLodgingPlaces) all.push(...lodgingPlaces);
+    if (showCampgroundPlaces) all.push(...campgroundPlaces);
     if (showDiningPlaces) all.push(...diningPlaces);
     if (showPoiPlaces) all.push(...poiPlaces);
 
@@ -373,10 +414,10 @@ export default function TripPlannerMap({
     });
 
     return withDistance.slice(0, 10);
-  }, [placesCenter, showFuelPlaces, showLodgingPlaces, showPoiPlaces, fuelPlaces, lodgingPlaces, poiPlaces]);
+  }, [placesCenter, showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showPoiPlaces, fuelPlaces, lodgingPlaces, campgroundPlaces, poiPlaces]);
 
   const handlePanelItemClick = useCallback(
-    (item: { lat: number; lng: number; category: "fuel" | "lodging" | "dining" | "poi" }) => {
+    (item: { lat: number; lng: number; category: "fuel" | "lodging" | "campground" | "dining" | "poi" }) => {
       const map = mapRef.current;
       if (map) {
         map.panTo({ lat: item.lat, lng: item.lng });
@@ -481,6 +522,16 @@ export default function TripPlannerMap({
             fillColor: "#60a5fa", // blue for lodging
             fillOpacity: 0.95,
             strokeColor: "#1d4ed8",
+            strokeWeight: 1,
+          };
+          zIndex = 9;
+        } else if (wpType === "CAMPGROUND") {
+          icon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: "#14b8a6", // teal for campgrounds
+            fillOpacity: 0.95,
+            strokeColor: "#0f766e",
             strokeWeight: 1,
           };
           zIndex = 9;
@@ -589,6 +640,47 @@ export default function TripPlannerMap({
               return (
                 <Marker
                   key={`lodging-place-${idx}`}
+                  position={{ lat: p.lat, lng: p.lng }}
+                  title={p.name ?? undefined}
+                  clusterer={clusterer}
+                  icon={icon}
+                  zIndex={isHighlighted ? 20 : 4}
+                />
+              );
+            })}
+            </>
+          )}
+        </MarkerClusterer>
+      )}
+
+      {showCampgroundPlaces && campgroundPlaces.length > 0 && (
+        <MarkerClusterer>
+          {(clusterer) => (
+            <>
+              {campgroundPlaces.map((p, idx) => {
+              const isHighlighted =
+                highlightedPlace &&
+                highlightedPlace.category === "campground" &&
+                highlightedPlace.lat === p.lat &&
+                highlightedPlace.lng === p.lng;
+
+              const baseIcon: google.maps.Symbol = {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 4,
+                fillColor: "#14b8a6",
+                fillOpacity: 0.4,
+                strokeColor: "#14b8a6",
+                strokeOpacity: 0.8,
+                strokeWeight: 1,
+              };
+
+              const icon = isHighlighted
+                ? { ...baseIcon, scale: 6, fillOpacity: 0.9, strokeWeight: 2 }
+                : baseIcon;
+
+              return (
+                <Marker
+                  key={`campground-place-${idx}`}
                   position={{ lat: p.lat, lng: p.lng }}
                   title={p.name ?? undefined}
                   clusterer={clusterer}

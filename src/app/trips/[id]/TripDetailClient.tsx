@@ -324,6 +324,7 @@ export default function TripDetailClient({
 
   const [showFuelPlaces, setShowFuelPlaces] = useState(false);
   const [showLodgingPlaces, setShowLodgingPlaces] = useState(false);
+  const [showCampgroundPlaces, setShowCampgroundPlaces] = useState(false);
   const [showDiningPlaces, setShowDiningPlaces] = useState(false);
   const [showPoiPlaces, setShowPoiPlaces] = useState(false);
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
@@ -392,6 +393,10 @@ export default function TripDetailClient({
                 <span>Lodging</span>
               </div>
               <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-[#14b8a6]" />
+                <span>Campground</span>
+              </div>
+              <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-[#fb7185]" />
                 <span>Dining</span>
               </div>
@@ -417,6 +422,15 @@ export default function TripDetailClient({
                     onChange={(e) => setShowLodgingPlaces(e.target.checked)}
                   />
                   <span>Nearby lodging</span>
+                </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={showCampgroundPlaces}
+                    onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
+                  />
+                  <span>Nearby campgrounds</span>
                 </label>
                 <label className="flex items-center gap-1">
                   <input
@@ -468,6 +482,7 @@ export default function TripDetailClient({
               routePath={isDirty ? undefined : routePath}
               showFuelPlaces={showFuelPlaces}
               showLodgingPlaces={showLodgingPlaces}
+              showCampgroundPlaces={showCampgroundPlaces}
               showDiningPlaces={showDiningPlaces}
               showPoiPlaces={showPoiPlaces}
               minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}

@@ -159,6 +159,7 @@ model TripChecklistItem {
 enum WaypointType {
   FUEL
   LODGING
+  CAMPGROUND
   DINING
   POI
   CHECKPOINT
