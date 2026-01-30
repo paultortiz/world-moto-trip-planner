@@ -448,8 +448,9 @@ export default function TripPlannerMap({
     [],
   );
 
-  const center =
-    centerOverride ?? (waypoints[0] as WaypointPosition | undefined) ?? defaultCenter;
+  // Keep a stable logical center; actual viewport is managed imperatively in
+  // handleMapLoad (fitBounds / default seed) and by user interactions.
+  const center = centerOverride ?? defaultCenter;
 
   if (loadError) {
     return (
