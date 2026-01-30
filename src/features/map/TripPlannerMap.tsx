@@ -474,6 +474,9 @@ export default function TripPlannerMap({
       options={{
         disableDefaultUI: true,
         zoomControl: true,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.LEFT_CENTER,
+        },
       }}
     >
       {onAddWaypoint && (
