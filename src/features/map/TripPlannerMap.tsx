@@ -109,31 +109,38 @@ export default function TripPlannerMap({
     [onAddWaypoint, enableClickToAdd],
   );
 
+  const fitToRoute = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Prefer fitting the full route path if available; otherwise fit all waypoints.
+    const points = (routePath && routePath.length > 1 ? routePath : waypoints) ?? [];
+
+    if (!points || points.length === 0) {
+      // New-trip workflow or trips without stored waypoints: seed a sensible
+      // initial view so the rider doesn't see an empty gray map.
+      const initialCenter = (centerOverride as google.maps.LatLngLiteral | undefined) ?? defaultCenter;
+      map.setCenter(initialCenter);
+      map.setZoom(4);
+      return;
+    }
+
+    const bounds = new google.maps.LatLngBounds();
+    for (const p of points) {
+      bounds.extend(p as google.maps.LatLngLiteral);
+    }
+
+    // Guard against degenerate bounds (all points identical).
+    if (bounds.isEmpty()) return;
+    map.fitBounds(bounds);
+  }, [routePath, waypoints, centerOverride]);
+
   const handleMapLoad = useCallback(
     (map: google.maps.Map) => {
       mapRef.current = map;
-      // Prefer fitting the full route path if available; otherwise fit all waypoints.
-      const points = (routePath && routePath.length > 1 ? routePath : waypoints) ?? [];
-
-      if (!points || points.length === 0) {
-        // New-trip workflow or trips without stored waypoints: seed a sensible
-        // initial view so the rider doesn't see an empty gray map.
-        const initialCenter = (centerOverride as google.maps.LatLngLiteral | undefined) ?? defaultCenter;
-        map.setCenter(initialCenter);
-        map.setZoom(4);
-        return;
-      }
-
-      const bounds = new google.maps.LatLngBounds();
-      for (const p of points) {
-        bounds.extend(p as google.maps.LatLngLiteral);
-      }
-
-      // Guard against degenerate bounds (all points identical).
-      if (bounds.isEmpty()) return;
-      map.fitBounds(bounds);
+      fitToRoute();
     },
-    [routePath, waypoints, centerOverride],
+    [fitToRoute],
   );
 
   const handleSearchPlacesChanged = useCallback(() => {
@@ -530,6 +537,20 @@ export default function TripPlannerMap({
           </StandaloneSearchBox>
         </div>
       )}
+
+      {/* Fit route control */}
+      <div
+        className="pointer-events-auto"
+        style={{ position: "absolute", right: 8, top: 8, zIndex: 30 }}
+      >
+        <button
+          type="button"
+          onClick={fitToRoute}
+          className="rounded border border-adv-border bg-slate-950/80 px-2 py-1 text-[10px] text-slate-200 shadow-adv-glow hover:bg-slate-900"
+        >
+          Fit route
+        </button>
+      </div>
 
       {routePath && routePath.length > 0 && (
         <Polyline
