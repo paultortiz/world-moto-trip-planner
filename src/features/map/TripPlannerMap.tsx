@@ -30,6 +30,12 @@ interface TripPlannerMapProps {
   onMarkerClick?: (index: number) => void;
   centerOverride?: WaypointPosition;
   routePath?: WaypointPosition[];
+  /**
+   * When true, plain map clicks will call onAddWaypoint.
+   * When false or omitted, clicks are ignored so the rider can pan without
+   * accidentally creating waypoints.
+   */
+  enableClickToAdd?: boolean;
   showFuelPlaces?: boolean;
   showLodgingPlaces?: boolean;
   showCampgroundPlaces?: boolean;
@@ -45,6 +51,7 @@ export default function TripPlannerMap({
   onMarkerClick,
   centerOverride,
   routePath,
+  enableClickToAdd,
   showFuelPlaces,
   showLodgingPlaces,
   showCampgroundPlaces,
@@ -86,12 +93,13 @@ export default function TripPlannerMap({
   const handleMapClick = useCallback(
     (event: google.maps.MapMouseEvent) => {
       if (!onAddWaypoint) return;
+      if (!enableClickToAdd) return;
       if (!event.latLng) return;
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
       onAddWaypoint({ lat, lng });
     },
-    [onAddWaypoint],
+    [onAddWaypoint, enableClickToAdd],
   );
 
   const handleMapLoad = useCallback(

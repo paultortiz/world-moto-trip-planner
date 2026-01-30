@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TripPlannerMap, {
   type WaypointPosition,
@@ -302,6 +302,8 @@ export default function TripDetailClient({
   const [checklistStatus, setChecklistStatus] = useState<string | null>(null);
   const [checklistSaving, setChecklistSaving] = useState(false);
 
+  const [showClickToAddHint, setShowClickToAddHint] = useState(false);
+
   const [scheduleDailyHoursInput, setScheduleDailyHoursInput] = useState<string>(
     trip.plannedDailyRideHours != null ? String(trip.plannedDailyRideHours) : "",
   );
@@ -331,6 +333,7 @@ export default function TripDetailClient({
   const [showCampgroundPlaces, setShowCampgroundPlaces] = useState(false);
   const [showDiningPlaces, setShowDiningPlaces] = useState(false);
   const [showPoiPlaces, setShowPoiPlaces] = useState(false);
+  const [enableClickToAdd, setEnableClickToAdd] = useState(false);
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
 
@@ -355,6 +358,19 @@ export default function TripDetailClient({
     lng: wp.lng,
     type: wp.type ?? undefined,
   }));
+
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const key = "wm-click-to-add-hint-dismissed";
+      const stored = window.localStorage.getItem(key);
+      if (!stored) {
+        setShowClickToAddHint(true);
+      }
+    } catch {
+      // ignore localStorage errors
+    }
+  }, []);
 
   return (
     <>
@@ -385,8 +401,37 @@ export default function TripDetailClient({
             <h2 className="text-lg font-semibold">Trip overview map</h2>
             <p className="mt-1 text-xs text-slate-400">
               Saved waypoints and the calculated route for this trip are shown below.
-              Click on the map to add waypoints, and click markers to remove them while editing.
+              <span className="ml-1 font-semibold text-amber-300">
+                Turn on "Add waypoints by clicking the map" to place new points,
+              </span>
+              {" "}
+              or use the search box above the map.
             </p>
+            {showClickToAddHint && (
+              <div className="mt-2 flex items-start justify-between gap-2 rounded border border-amber-400/70 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-100">
+                <p className="pr-2">
+                  Tip: When you want to lay down waypoints, enable
+                  <span className="mx-1 font-semibold">"Add waypoints by clicking map"</span>
+                  below. Turn it off again to pan and explore without creating points.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowClickToAddHint(false);
+                    try {
+                      if (typeof window !== "undefined") {
+                        window.localStorage.setItem("wm-click-to-add-hint-dismissed", "1");
+                      }
+                    } catch {
+                      // ignore localStorage errors
+                    }
+                  }}
+                  className="ml-auto rounded border border-amber-400/60 px-1 text-[9px] leading-none text-amber-200 hover:bg-amber-500/20"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
@@ -454,6 +499,15 @@ export default function TripDetailClient({
                   />
                   <span>Nearby POIs</span>
                 </label>
+                <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={enableClickToAdd}
+                    onChange={(e) => setEnableClickToAdd(e.target.checked)}
+                  />
+                  <span className="font-semibold text-amber-300">Add waypoints by clicking map</span>
+                </label>
                 <label className="flex items-center gap-1">
                   <span className="text-slate-500">Min rating</span>
                   <select
@@ -484,6 +538,7 @@ export default function TripDetailClient({
             <TripPlannerMap
               waypoints={mapWaypoints}
               routePath={isDirty ? undefined : routePath}
+              enableClickToAdd={enableClickToAdd}
               showFuelPlaces={showFuelPlaces}
               showLodgingPlaces={showLodgingPlaces}
               showCampgroundPlaces={showCampgroundPlaces}
