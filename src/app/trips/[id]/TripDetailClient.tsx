@@ -270,6 +270,10 @@ export default function TripDetailClient({
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [shareSaving, setShareSaving] = useState(false);
 
+  const [aiPlanLoading, setAiPlanLoading] = useState(false);
+  const [aiPlanText, setAiPlanText] = useState<string | null>(null);
+  const [aiPlanError, setAiPlanError] = useState<string | null>(null);
+
   const initialSegmentNotes: SegmentNoteDto[] =
     Array.isArray(trip.segmentNotes)
       ? (trip.segmentNotes as any[]).map((s, idx) => ({
@@ -654,6 +658,62 @@ export default function TripDetailClient({
             )}
             {shareStatus && (
               <p className="mt-1 text-[11px] text-slate-300">{shareStatus}</p>
+            )}
+          </div>
+
+          {/* AI daily plan suggestion */}
+          <div className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold text-slate-100">AI daily plan suggestion</p>
+              <button
+                type="button"
+                disabled={aiPlanLoading || waypoints.length < 2}
+                onClick={async () => {
+                  setAiPlanError(null);
+                  setAiPlanText(null);
+                  setAiPlanLoading(true);
+                  try {
+                    const res = await fetch(`/api/ai/daily-plan`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ tripId: trip.id }),
+                    });
+
+                    if (!res.ok) {
+                      const data = await res.json().catch(() => null);
+                      throw new Error(data?.error ?? "Failed to generate plan");
+                    }
+
+                    const data = await res.json();
+                    setAiPlanText(typeof data.text === "string" ? data.text : "");
+                  } catch (err: any) {
+                    setAiPlanError(err?.message ?? "Failed to generate AI plan");
+                  } finally {
+                    setAiPlanLoading(false);
+                  }
+                }}
+                className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+              >
+                {aiPlanLoading
+                  ? "Thinking..."
+                  : waypoints.length < 2
+                  ? "Add more waypoints"
+                  : "Suggest daily plan"}
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Get a suggested multi-day riding plan that calls out scenic legs and nearby points of interest
+              along your waypoints.
+            </p>
+            {aiPlanError && (
+              <p className="text-[11px] text-red-400">{aiPlanError}</p>
+            )}
+            {aiPlanText && (
+              <div className="max-h-64 overflow-y-auto rounded border border-slate-700 bg-slate-950/70 p-2 text-[11px] text-slate-200">
+                <pre className="whitespace-pre-wrap font-sans text-[11px]">
+{aiPlanText}
+                </pre>
+              </div>
             )}
           </div>
 
