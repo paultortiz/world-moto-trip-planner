@@ -111,6 +111,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         for (let index = 0; index < safeWaypoints.length; index++) {
           const wp = safeWaypoints[index];
           await tx.waypoint.create({
+            // Cast data as any so we can include the optional googlePlaceId field
+            // without depending on generated Prisma client types being rebuilt
+            // before the Next.js type-checking step.
             data: {
               tripId: id,
               orderIndex: index,
@@ -119,11 +122,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
               name: wp.name ?? null,
               notes: wp.notes ?? null,
               type: wp.type ?? "CHECKPOINT",
+              googlePlaceId: (wp as any).googlePlaceId ?? null,
               dayIndex:
                 typeof wp.dayIndex === "number" && Number.isInteger(wp.dayIndex)
                   ? wp.dayIndex
                   : null,
-            },
+            } as any,
           });
         }
       }

@@ -18,6 +18,7 @@ interface WaypointDto {
   type?: string | null;
   notes?: string | null;
   dayIndex?: number | null;
+  googlePlaceId?: string | null;
 }
 
 interface DailyPlanEntry {
@@ -556,10 +557,11 @@ export default function TripDetailClient({
                     {
                       lat: wp.lat,
                       lng: wp.lng,
-                      name: null,
+                      name: (wp as any).name ?? null,
                       type: (wp.type as string | undefined) ?? "CHECKPOINT",
                       notes: null,
                       dayIndex: prev.length === 0 ? 1 : lastDay,
+                      googlePlaceId: (wp as any).googlePlaceId ?? null,
                     },
                   ];
                 });

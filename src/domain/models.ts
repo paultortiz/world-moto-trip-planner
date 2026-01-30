@@ -16,6 +16,7 @@ export interface Waypoint {
   name?: string;
   type: WaypointType;
   notes?: string;
+  googlePlaceId?: string | null;
 }
 
 export interface RouteSegment {
