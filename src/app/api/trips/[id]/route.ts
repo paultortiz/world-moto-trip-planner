@@ -119,6 +119,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
               name: wp.name ?? null,
               notes: wp.notes ?? null,
               type: wp.type ?? "CHECKPOINT",
+              googlePlaceId: (wp as any).googlePlaceId ?? null,
               dayIndex:
                 typeof wp.dayIndex === "number" && Number.isInteger(wp.dayIndex)
                   ? wp.dayIndex

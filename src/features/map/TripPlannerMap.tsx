@@ -11,7 +11,14 @@ const containerStyle = {
 const defaultCenter = { lat: 39.7392, lng: -104.9903 }; // Example default center (Denver)
 
 // Optional "type" is used to visually distinguish waypoints such as FUEL, LODGING, and POI.
-export type WaypointPosition = { lat: number; lng: number; type?: string | null };
+// "name" and "googlePlaceId" are used when a waypoint is created from a Places search.
+export type WaypointPosition = {
+  lat: number;
+  lng: number;
+  type?: string | null;
+  name?: string | null;
+  googlePlaceId?: string | null;
+};
 
 type PlaceMarker = {
   lat: number;
@@ -154,7 +161,13 @@ export default function TripPlannerMap({
       inferredType = "POI";
     }
 
-    onAddWaypoint({ lat, lng, type: inferredType });
+    onAddWaypoint({
+      lat,
+      lng,
+      type: inferredType,
+      name: (place.name as string | undefined) ?? null,
+      googlePlaceId: (place.place_id as string | undefined) ?? null,
+    });
 
     const map = mapRef.current;
     if (map) {
@@ -425,7 +438,7 @@ export default function TripPlannerMap({
   }, [placesCenter, showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showPoiPlaces, fuelPlaces, lodgingPlaces, campgroundPlaces, poiPlaces]);
 
   const handlePanelItemClick = useCallback(
-    (item: { lat: number; lng: number; category: "fuel" | "lodging" | "campground" | "dining" | "poi" }) => {
+    (item: { name: string; lat: number; lng: number; category: "fuel" | "lodging" | "campground" | "dining" | "poi" }) => {
       const map = mapRef.current;
       if (map) {
         map.panTo({ lat: item.lat, lng: item.lng });
@@ -433,6 +446,25 @@ export default function TripPlannerMap({
         if (zoom < 13) {
           map.setZoom(13);
         }
+      }
+
+      // If the parent provides an onAddWaypoint handler (trip detail editor),
+      // treat clicking a nearby place row as an explicit intent to create a
+      // waypoint at that place, with an inferred type and name.
+      if (onAddWaypoint) {
+        let inferredType: string | null = null;
+        if (item.category === "fuel") inferredType = "FUEL";
+        else if (item.category === "lodging") inferredType = "LODGING";
+        else if (item.category === "campground") inferredType = "CAMPGROUND";
+        else if (item.category === "dining") inferredType = "DINING";
+        else if (item.category === "poi") inferredType = "POI";
+
+        onAddWaypoint({
+          lat: item.lat,
+          lng: item.lng,
+          type: inferredType,
+          name: item.name,
+        });
       }
 
       setHighlightedPlace({ lat: item.lat, lng: item.lng, category: item.category });
@@ -445,7 +477,7 @@ export default function TripPlannerMap({
         highlightTimeoutRef.current = null;
       }, 2000);
     },
-    [],
+    [onAddWaypoint],
   );
 
   // Keep a stable logical center; actual viewport is managed imperatively in

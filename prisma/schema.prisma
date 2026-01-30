@@ -114,6 +114,9 @@ model Waypoint {
   type          WaypointType    @default(CHECKPOINT)
   notes         String?
 
+  // Optional Google Places metadata for this waypoint (when created from a place search)
+  googlePlaceId String?
+
   // Optional day index for multi-day planning (1-based)
   dayIndex      Int?
 

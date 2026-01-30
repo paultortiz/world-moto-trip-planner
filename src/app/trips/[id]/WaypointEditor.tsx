@@ -11,6 +11,7 @@ interface WaypointDto {
   type?: string | null;
   notes?: string | null;
   dayIndex?: number | null;
+  googlePlaceId?: string | null;
 }
 
 interface Props {
@@ -91,6 +92,7 @@ export default function WaypointEditor({
               type: wp.type ?? undefined,
               notes: wp.notes ?? undefined,
               dayIndex: wp.dayIndex ?? undefined,
+              googlePlaceId: wp.googlePlaceId ?? undefined,
             })),
           }),
         });
@@ -118,14 +120,6 @@ export default function WaypointEditor({
     });
   }
 
-  if (waypoints.length === 0) {
-    return (
-      <div className="mt-4 text-xs text-slate-400">
-        No waypoints for this trip yet.
-      </div>
-    );
-  }
-
   return (
     <div className="mt-6 space-y-3 text-xs">
       <div className="flex items-center justify-between">
@@ -143,77 +137,87 @@ export default function WaypointEditor({
       {status && <p className="text-slate-300">{status}</p>}
 
       <div className="divide-y divide-slate-800 rounded border border-adv-border bg-slate-900/70 shadow-adv-glow">
-        {waypoints.map((wp, index) => (
-          <div key={wp.id ?? `${wp.lat}-${wp.lng}-${index}`} className="flex flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p>
-                <span className="font-mono">lat:</span> {wp.lat.toFixed(5)}{" "}
-                <span className="font-mono">lng:</span> {wp.lng.toFixed(5)}
-              </p>
-              <div className="mt-1 flex flex-wrap gap-2">
-                <input
-                  className="w-40 rounded border border-slate-600 bg-slate-950 p-1 text-xs"
-                  placeholder="Name (optional)"
-                  value={wp.name ?? ""}
-                  onChange={(e) => updateWaypoint(index, { name: e.target.value })}
-                />
-                <select
-                  className="rounded border border-slate-600 bg-slate-950 p-1 text-xs"
-                  value={wp.type ?? "CHECKPOINT"}
-                  onChange={(e) => updateWaypoint(index, { type: e.target.value })}
-                >
-                  {WAYPOINT_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] uppercase text-slate-500">Day</span>
+        {waypoints.length === 0 ? (
+          <div className="p-3 text-[11px] text-slate-400">
+            No waypoints for this trip yet. Use the planning map or search box to add points, then save to
+            update the route.
+          </div>
+        ) : (
+          waypoints.map((wp, index) => (
+            <div
+              key={wp.id ?? `${wp.lat}-${wp.lng}-${index}`}
+              className="flex flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between"
+            >
+              <div>
+                <p>
+                  <span className="font-mono">lat:</span> {wp.lat.toFixed(5)}{" "}
+                  <span className="font-mono">lng:</span> {wp.lng.toFixed(5)}
+                </p>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  <input
+                    className="w-40 rounded border border-slate-600 bg-slate-950 p-1 text-xs"
+                    placeholder="Name (optional)"
+                    value={wp.name ?? ""}
+                    onChange={(e) => updateWaypoint(index, { name: e.target.value })}
+                  />
                   <select
-                    className="w-16 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                    value={wp.dayIndex ?? 1}
-                    onChange={(e) =>
-                      updateWaypoint(index, {
-                        dayIndex: Number(e.target.value) || null,
-                      })
-                    }
+                    className="rounded border border-slate-600 bg-slate-950 p-1 text-xs"
+                    value={wp.type ?? "CHECKPOINT"}
+                    onChange={(e) => updateWaypoint(index, { type: e.target.value })}
                   >
-                    {DAY_OPTIONS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
+                    {WAYPOINT_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
                       </option>
                     ))}
                   </select>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] uppercase text-slate-500">Day</span>
+                    <select
+                      className="w-16 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                      value={wp.dayIndex ?? 1}
+                      onChange={(e) =>
+                        updateWaypoint(index, {
+                          dayIndex: Number(e.target.value) || null,
+                        })
+                      }
+                    >
+                      {DAY_OPTIONS.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="mt-2 flex items-center gap-2 md:mt-0">
-              <button
-                type="button"
-                onClick={() => moveWaypoint(index, "up")}
-                className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-800"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                onClick={() => moveWaypoint(index, "down")}
-                className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-800"
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                onClick={() => removeWaypoint(index)}
-                className="rounded bg-red-600 px-2 py-1 text-[10px] text-white hover:bg-red-500"
-              >
-                Remove
-              </button>
+              <div className="mt-2 flex items-center gap-2 md:mt-0">
+                <button
+                  type="button"
+                  onClick={() => moveWaypoint(index, "up")}
+                  className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-800"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveWaypoint(index, "down")}
+                  className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-800"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeWaypoint(index)}
+                  className="rounded bg-red-600 px-2 py-1 text-[10px] text-white hover:bg-red-500"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
