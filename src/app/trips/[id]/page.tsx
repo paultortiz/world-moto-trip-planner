@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { decodePolyline } from "@/features/map/polyline";
+import type { WaypointPosition } from "@/features/map/TripPlannerMap";
 import TripDetailClient from "./TripDetailClient";
 
 interface TripDetailPageProps {
