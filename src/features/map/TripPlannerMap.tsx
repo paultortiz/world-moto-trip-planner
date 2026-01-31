@@ -442,7 +442,19 @@ export default function TripPlannerMap({
     });
 
     return withDistance.slice(0, 10);
-  }, [placesCenter, showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showPoiPlaces, fuelPlaces, lodgingPlaces, campgroundPlaces, poiPlaces]);
+  }, [
+    placesCenter,
+    showFuelPlaces,
+    showLodgingPlaces,
+    showCampgroundPlaces,
+    showDiningPlaces,
+    showPoiPlaces,
+    fuelPlaces,
+    lodgingPlaces,
+    campgroundPlaces,
+    diningPlaces,
+    poiPlaces,
+  ]);
 
   const handlePanelItemClick = useCallback(
     (item: { name: string; lat: number; lng: number; category: "fuel" | "lodging" | "campground" | "dining" | "poi" }) => {
@@ -517,6 +529,7 @@ export default function TripPlannerMap({
           position: google.maps.ControlPosition.LEFT_CENTER,
         },
       }}
+      aria-label="Trip overview map showing your route and waypoints; use the lists and controls outside the map to review and edit details."
     >
       {onAddWaypoint && (
         <div
@@ -849,16 +862,18 @@ export default function TripPlannerMap({
           <p className="mb-1 font-semibold text-[11px] text-slate-100">Nearby places</p>
           <ul className="space-y-1">
             {panelItems.map((p, idx) => (
-              <li
-                key={`${p.category}-${idx}`}
-                className="flex cursor-pointer items-center justify-between gap-2 rounded px-1 hover:bg-slate-800/60"
-                onClick={() => handlePanelItemClick(p)}
-              >
-                <span className="truncate">{p.name}</span>
-                <span className="text-slate-400">
-                  {p.rating != null ? `${p.rating.toFixed(1)}★ · ` : ""}
-                  {p.distanceKm.toFixed(0)} km
-                </span>
+              <li key={`${p.category}-${idx}`}>
+                <button
+                  type="button"
+                  className="flex w-full cursor-pointer items-center justify-between gap-2 rounded px-1 text-left hover:bg-slate-800/60"
+                  onClick={() => handlePanelItemClick(p)}
+                >
+                  <span className="truncate">{p.name}</span>
+                  <span className="text-slate-400">
+                    {p.rating != null ? `${p.rating.toFixed(1)}★ · ` : ""}
+                    {p.distanceKm.toFixed(0)} km
+                  </span>
+                </button>
               </li>
             ))}
           </ul>
