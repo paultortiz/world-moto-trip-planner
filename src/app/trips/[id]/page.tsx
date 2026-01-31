@@ -1,9 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import TripPlannerMap, {
-  type WaypointPosition,
-} from "@/features/map/TripPlannerMap";
 import { decodePolyline } from "@/features/map/polyline";
 import TripDetailClient from "./TripDetailClient";
 
@@ -37,11 +34,6 @@ export default async function TripDetailPage({
   if (!trip) {
     notFound();
   }
-
-  const waypoints: WaypointPosition[] = trip.waypoints.map((wp) => ({
-    lat: wp.lat,
-    lng: wp.lng,
-  }));
 
   const firstSegmentWithPolyline = trip.routeSegments.find(
     (seg) => !!seg.polyline,
