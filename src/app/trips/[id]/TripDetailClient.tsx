@@ -720,6 +720,21 @@ export default function TripDetailClient({
             </div>
           </section>
 
+          {/* Waypoint editor */}
+          <WaypointEditor
+            tripId={trip.id}
+            waypoints={waypoints}
+            onWaypointsChange={(next) => {
+              setWaypoints(next);
+              setIsDirty(true);
+            }}
+            onSaveSuccess={() => {
+              setIsDirty(false);
+            }}
+          />
+
+          <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Planning tools</h2>
+
           {/* AI daily plan suggestion */}
           <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="AI-generated daily riding plan">
             <div className="flex items-center justify-between gap-2">
@@ -1394,18 +1409,6 @@ export default function TripDetailClient({
             )}
           </section>
 
-          {/* Waypoint editor */}
-          <WaypointEditor
-            tripId={trip.id}
-            waypoints={waypoints}
-            onWaypointsChange={(next) => {
-              setWaypoints(next);
-              setIsDirty(true);
-            }}
-            onSaveSuccess={() => {
-              setIsDirty(false);
-            }}
-          />
         </div>
       </section>
     </>
