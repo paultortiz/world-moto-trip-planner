@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TripPlannerMap, { type WaypointPosition } from "@/features/map/TripPlannerMap";
@@ -16,7 +17,7 @@ interface SharedTripClientProps {
 }
 
 export default function SharedTripClient({
-  tripId,
+  tripId: _tripId,
   token,
   name,
   description,

@@ -392,7 +392,7 @@ export default function TripDetailClient({
             <div className="rounded border border-adv-border bg-slate-900/80 p-2 text-[11px] text-slate-200 shadow-adv-glow">
               <p className="font-semibold text-slate-100">Start planning this route</p>
               <p className="mt-1 text-slate-300">
-                Drop your first waypoint directly on the map below, or use the "Search address or place..." box
+                Drop your first waypoint directly on the map below, or use the &quot;Search address or place...&quot; box
                 to add a location. Then you can turn on nearby fuel, lodging, dining, and POI overlays.
               </p>
             </div>
@@ -403,7 +403,7 @@ export default function TripDetailClient({
             <p className="mt-1 text-xs text-slate-400">
               Saved waypoints and the calculated route for this trip are shown below.
               <span className="ml-1 font-semibold text-amber-300">
-                Turn on "Add waypoints by clicking the map" to place new points,
+                Turn on &quot;Add waypoints by clicking the map&quot; to place new points,
               </span>
               {" "}
               or use the search box above the map.
@@ -412,7 +412,7 @@ export default function TripDetailClient({
               <div className="mt-2 flex items-start justify-between gap-2 rounded border border-amber-400/70 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-100">
                 <p className="pr-2">
                   Tip: When you want to lay down waypoints, enable
-                  <span className="mx-1 font-semibold">"Add waypoints by clicking map"</span>
+                  <span className="mx-1 font-semibold">&quot;Add waypoints by clicking map&quot;</span>
                   below. Turn it off again to pan and explore without creating points.
                 </p>
                 <button
@@ -609,9 +609,9 @@ export default function TripDetailClient({
           </div>
 
           {dailyPlan.length > 0 && (
-            <div className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+            <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Daily distance and duration plan by day">
               <div className="flex items-center justify-between">
-                <p className="font-semibold text-slate-100">Daily plan</p>
+                <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Daily plan</h2>
               </div>
               <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
                 {dailyPlan.map((day) => {
@@ -633,16 +633,16 @@ export default function TripDetailClient({
                   );
                 })}
               </div>
-            </div>
+            </section>
           )}
         </div>
 
         {/* Right column: sharing, accordions, waypoint editor */}
         <div className="space-y-3">
           {/* Sharing panel */}
-          <div className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+          <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Trip sharing settings">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="font-semibold text-slate-100">Sharing</p>
+              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Sharing</h2>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-1 text-[11px] text-slate-300">
                   <input
@@ -713,15 +713,17 @@ export default function TripDetailClient({
                 </div>
               </div>
             )}
-            {shareStatus && (
-              <p className="mt-1 text-[11px] text-slate-300">{shareStatus}</p>
-            )}
-          </div>
+            <div aria-live="polite" role="status">
+              {shareStatus && (
+                <p className="mt-1 text-[11px] text-slate-300">{shareStatus}</p>
+              )}
+            </div>
+          </section>
 
           {/* AI daily plan suggestion */}
-          <div className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+          <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="AI-generated daily riding plan">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-semibold text-slate-100">AI daily plan suggestion</p>
+              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">AI daily plan suggestion</h2>
               <button
                 type="button"
                 disabled={aiPlanLoading || waypoints.length < 2}
@@ -762,9 +764,11 @@ export default function TripDetailClient({
               Get a suggested multi-day riding plan that calls out scenic legs and nearby points of interest
               along your waypoints.
             </p>
-            {aiPlanError && (
-              <p className="text-[11px] text-red-400">{aiPlanError}</p>
-            )}
+            <div aria-live="polite" role="status">
+              {aiPlanError && (
+                <p className="text-[11px] text-red-400">{aiPlanError}</p>
+              )}
+            </div>
             {aiPlanText && (
               <div className="max-h-64 overflow-y-auto rounded border border-slate-700 bg-slate-950/70 p-2 text-[11px] text-slate-200">
                 <pre className="whitespace-pre-wrap font-sans text-[11px]">
@@ -772,20 +776,28 @@ export default function TripDetailClient({
                 </pre>
               </div>
             )}
-          </div>
+          </section>
 
           {/* Fuel accordion */}
-          <div className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
             <button
               type="button"
+              id="fuel-settings-header"
               className="flex w-full items-center justify-between text-[11px]"
               onClick={() => setFuelPanelOpen((prev) => !prev)}
+              aria-expanded={fuelPanelOpen}
+              aria-controls="fuel-settings-panel"
             >
               <span className="font-semibold text-slate-100">Fuel settings & plan</span>
               <span className="text-slate-400">{fuelPanelOpen ? "−" : "+"}</span>
             </button>
             {fuelPanelOpen && (
-              <div className="mt-2 space-y-3">
+              <div
+                id="fuel-settings-panel"
+                role="region"
+                aria-labelledby="fuel-settings-header"
+                className="mt-2 space-y-3"
+              >
                 <div>
                   <p className="text-[11px] text-slate-400">
                     Set your bike&apos;s comfortable range between fuel stops. We&apos;ll use this to flag risky legs
@@ -859,15 +871,17 @@ export default function TripDetailClient({
                       </button>
                     </div>
                   </div>
-                  {fuelStatus && (
-                    <p className="mt-1 text-[11px] text-slate-300">{fuelStatus}</p>
-                  )}
+                  <div aria-live="polite" role="status">
+                    {fuelStatus && (
+                      <p className="mt-1 text-[11px] text-slate-300">{fuelStatus}</p>
+                    )}
+                  </div>
                 </div>
 
                 {fuelPlan && fuelPlan.legs.length > 0 && (
-                  <div className="space-y-2 rounded border border-slate-800 bg-slate-950/70 p-2">
+                  <section className="space-y-2 rounded border border-slate-800 bg-slate-950/70 p-2" aria-label="Fuel legs between fuel waypoints">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-slate-100">Fuel plan</p>
+                      <h3 className="font-semibold text-slate-100 text-xs md:text-sm">Fuel plan</h3>
                       <p className="text-[11px] text-slate-400">
                         Range: {trip.fuelRangeKm ? `${trip.fuelRangeKm} km` : "not set"}
                         {trip.fuelReserveKm ? ` · Reserve: ${trip.fuelReserveKm} km` : ""}
@@ -904,24 +918,32 @@ export default function TripDetailClient({
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </section>
                 )}
               </div>
             )}
-          </div>
+          </section>
 
           {/* Schedule accordion */}
-          <div className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
             <button
               type="button"
+              id="schedule-settings-header"
               className="flex w-full items-center justify-between text-[11px]"
               onClick={() => setSchedulePanelOpen((prev) => !prev)}
+              aria-expanded={schedulePanelOpen}
+              aria-controls="schedule-settings-panel"
             >
               <span className="font-semibold text-slate-100">Schedule settings & daily schedule</span>
               <span className="text-slate-400">{schedulePanelOpen ? "−" : "+"}</span>
             </button>
             {schedulePanelOpen && (
-              <div className="mt-2 space-y-3">
+              <div
+                id="schedule-settings-panel"
+                role="region"
+                aria-labelledby="schedule-settings-header"
+                className="mt-2 space-y-3"
+              >
                 <div>
                   <p className="text-[11px] text-slate-400">
                     Configure your ideal riding day to see when arrivals might push past your comfort window.
@@ -1018,15 +1040,17 @@ export default function TripDetailClient({
                       </button>
                     </div>
                   </div>
-                  {scheduleStatus && (
-                    <p className="mt-1 text-[11px] text-slate-300">{scheduleStatus}</p>
-                  )}
+                  <div aria-live="polite" role="status">
+                    {scheduleStatus && (
+                      <p className="mt-1 text-[11px] text-slate-300">{scheduleStatus}</p>
+                    )}
+                  </div>
                 </div>
 
                 {dailyPlan.length > 0 && (
-                  <div className="space-y-2 rounded border border-slate-800 bg-slate-950/70 p-2">
+                  <section className="space-y-2 rounded border border-slate-800 bg-slate-950/70 p-2" aria-label="Planned riding schedule by day">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-slate-100">Daily schedule</p>
+                      <h3 className="font-semibold text-slate-100 text-xs md:text-sm">Daily schedule</h3>
                     </div>
                     <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
                       {dailyPlan.map((day) => {
@@ -1054,25 +1078,33 @@ export default function TripDetailClient({
                         );
                       })}
                     </div>
-                  </div>
+                  </section>
                 )}
               </div>
             )}
-          </div>
+          </section>
 
           {/* Segment risk & notes accordion */}
           {waypoints.length > 1 && (
-            <div className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+            <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
               <button
                 type="button"
+                id="segment-notes-header"
                 className="flex w-full items-center justify-between text-[11px]"
                 onClick={() => setSegmentPanelOpen((prev) => !prev)}
+                aria-expanded={segmentPanelOpen}
+                aria-controls="segment-notes-panel"
               >
                 <span className="font-semibold text-slate-100">Segment risk & notes</span>
                 <span className="text-slate-400">{segmentPanelOpen ? "−" : "+"}</span>
               </button>
               {segmentPanelOpen && (
-                <div className="mt-2 space-y-2">
+                <div
+                  id="segment-notes-panel"
+                  role="region"
+                  aria-labelledby="segment-notes-header"
+                  className="mt-2 space-y-2"
+                >
                   <p className="text-[11px] text-slate-400">
                     Annotate tricky legs between waypoints: exposure, remoteness, weather risks, or surface changes.
                   </p>
@@ -1185,27 +1217,37 @@ export default function TripDetailClient({
                     >
                       {segmentNotesSaving ? "Saving..." : "Save segment notes"}
                     </button>
-                    {segmentNotesStatus && (
-                      <p className="text-[11px] text-slate-300">{segmentNotesStatus}</p>
-                    )}
+                    <div aria-live="polite" role="status">
+                      {segmentNotesStatus && (
+                        <p className="text-[11px] text-slate-300">{segmentNotesStatus}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
-            </div>
+            </section>
           )}
 
           {/* Checklist accordion */}
-          <div className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
             <button
               type="button"
+              id="checklist-header"
               className="flex w-full items-center justify-between text-[11px]"
               onClick={() => setChecklistPanelOpen((prev) => !prev)}
+              aria-expanded={checklistPanelOpen}
+              aria-controls="checklist-panel"
             >
               <span className="font-semibold text-slate-100">Pre-ride checklist</span>
               <span className="text-slate-400">{checklistPanelOpen ? "−" : "+"}</span>
             </button>
             {checklistPanelOpen && (
-              <div className="mt-2 space-y-2">
+              <div
+                id="checklist-panel"
+                role="region"
+                aria-labelledby="checklist-header"
+                className="mt-2 space-y-2"
+              >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <select
@@ -1342,13 +1384,15 @@ export default function TripDetailClient({
                   >
                     {checklistSaving ? "Saving..." : "Save checklist"}
                   </button>
-                  {checklistStatus && (
-                    <p className="text-[11px] text-slate-300">{checklistStatus}</p>
-                  )}
+                  <div aria-live="polite" role="status">
+                    {checklistStatus && (
+                      <p className="text-[11px] text-slate-300">{checklistStatus}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
-          </div>
+          </section>
 
           {/* Waypoint editor */}
           <WaypointEditor

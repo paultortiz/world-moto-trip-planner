@@ -14,7 +14,7 @@ export default function TermsPage() {
         </header>
 
         <p>
-          World Moto Trip Planner ("the app") is provided to help you plan motorcycle trips and
+          World Moto Trip Planner (&quot;the app&quot;) is provided to help you plan motorcycle trips and
           related route details. By using the app you agree to these Terms of Service.
         </p>
 
@@ -35,7 +35,7 @@ export default function TermsPage() {
         <section className="space-y-2">
           <h2 className="text-lg font-semibold text-slate-50">No warranty</h2>
           <p>
-            The app is provided on an "as is" and "as available" basis, without warranties of any
+            The app is provided on an &quot;as is&quot; and &quot;as available&quot; basis, without warranties of any
             kind, whether express or implied. We do not guarantee the accuracy, completeness, or
             availability of any routes, distances, times, elevation data, or other information in the
             app.
@@ -85,7 +85,7 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold text-slate-50">Changes to these terms</h2>
           <p>
             We may update these Terms of Service from time to time. When we do, we will update the
-            "Last updated" date at the top of this page. Your continued use of the app after changes
+            &quot;Last updated&quot; date at the top of this page. Your continued use of the app after changes
             take effect means you accept the revised terms.
           </p>
         </section>

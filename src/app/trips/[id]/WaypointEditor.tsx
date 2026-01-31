@@ -123,7 +123,7 @@ export default function WaypointEditor({
   return (
     <div className="mt-6 space-y-3 text-xs">
       <div className="flex items-center justify-between">
-        <p className="font-semibold text-slate-100">Edit waypoints</p>
+        <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Edit waypoints</h2>
         <button
           type="button"
           onClick={handleSave}

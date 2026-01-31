@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         </header>
 
         <p>
-          World Moto Trip Planner ("the app") helps you plan long-distance motorcycle routes and
+          World Moto Trip Planner (&quot;the app&quot;) helps you plan long-distance motorcycle routes and
           related trip details. This page describes what data we collect, how it is used, and the
           choices you have.
         </p>
