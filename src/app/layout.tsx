@@ -70,6 +70,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link href="/privacy" className="hover:text-adv-accent">
                   Privacy policy
                 </Link>
+                <Link href="/accessibility" className="hover:text-adv-accent">
+                  Accessibility commitment
+                </Link>
                 <Link href="/data-deletion" className="hover:text-adv-accent">
                   Data deletion instructions
                 </Link>
