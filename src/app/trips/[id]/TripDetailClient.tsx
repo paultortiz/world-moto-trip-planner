@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import TripPlannerMap, {
   type WaypointPosition,
 } from "@/features/map/TripPlannerMap";
@@ -249,6 +249,13 @@ export default function TripDetailClient({
   routePath,
 }: TripDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const sponsorDemoEnabled =
+    process.env.NEXT_PUBLIC_SPONSOR_DEMO === "true" ||
+    searchParams?.get("demoSponsors") === "1" ||
+    searchParams?.get("demoSponsors") === "true";
+
   const [waypoints, setWaypoints] = useState<WaypointDto[]>(
     () => trip.waypoints ?? [],
   );
@@ -607,6 +614,39 @@ export default function TripDetailClient({
               <DeleteTripButton tripId={trip.id} />
             </div>
           </div>
+
+          {sponsorDemoEnabled && (
+            <section
+              className="mt-2 space-y-1 rounded border border-amber-500/60 bg-amber-500/5 p-2 text-[11px] text-slate-100"
+              aria-label="Featured ADV gear sponsor demo"
+            >
+              <p className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-amber-200">Featured ADV gear for this trip (Mosko Moto demo)</span>
+                <span className="rounded border border-amber-400/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">
+                  Demo only
+                </span>
+              </p>
+              <p className="text-[11px] text-amber-100/90">
+                Show how gear partners can appear where riders are reviewing distance, duration, and exporting GPX files for
+                navigation.
+              </p>
+              <p className="mt-1 text-[11px] text-amber-100">
+                Example:
+                <span className="ml-1 font-semibold">waterproof soft panniers and duffels</span> sized for multi-day ADV
+                routes like this one.
+              </p>
+              <p className="mt-1">
+                <a
+                  href="https://moskomoto.com"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="font-semibold text-amber-300 underline hover:text-amber-200"
+                >
+                  Visit Mosko Moto (example sponsor link)
+                </a>
+              </p>
+            </section>
+          )}
 
           {dailyPlan.length > 0 && (
             <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Daily distance and duration plan by day">
@@ -1321,6 +1361,39 @@ export default function TripDetailClient({
                 <p className="text-[11px] text-slate-400">
                   Capture the things you want to confirm before rolling out on this specific route.
                 </p>
+
+                {/* Demo: sponsored ADV gear block for potential partners */}
+                <section
+                  className="mt-2 space-y-1 rounded border border-amber-500/60 bg-amber-500/5 p-2 text-[11px] text-slate-100"
+                  aria-label="Sponsored ADV gear suggestions demo"
+                >
+                  <p className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-amber-200">Sponsored gear: Mosko Moto (demo)</span>
+                    <span className="rounded border border-amber-400/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">
+                      Demo only
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-amber-100/90">
+                    This is a demonstration of how a gear partner&apos;s products could be highlighted directly alongside your
+                    trip-specific checklist.
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-[11px] text-amber-100">
+                    <li>Waterproof soft luggage systems for multi-day ADV routes.</li>
+                    <li>Armored, abrasion-resistant jackets and pants for mixed terrain.</li>
+                    <li>Packing cubes and organizers tuned for motorcycle travel.</li>
+                  </ul>
+                  <p className="mt-1">
+                    <a
+                      href="https://moskomoto.com"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="font-semibold text-amber-300 underline hover:text-amber-200"
+                    >
+                      Visit Mosko Moto (example sponsor link)
+                    </a>
+                  </p>
+                </section>
+
                 <div className="mt-2 space-y-2">
                   {checklist.map((item, index) => (
                     <div
