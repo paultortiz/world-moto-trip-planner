@@ -324,6 +324,15 @@ export default function TripDetailClient({
   const [scheduleStatus, setScheduleStatus] = useState<string | null>(null);
   const [scheduleSaving, setScheduleSaving] = useState(false);
 
+  const [startDateInput, setStartDateInput] = useState<string>(
+    trip.startDate ? new Date(trip.startDate as string).toISOString().slice(0, 10) : "",
+  );
+  const [endDateInput, setEndDateInput] = useState<string>(
+    trip.endDate ? new Date(trip.endDate as string).toISOString().slice(0, 10) : "",
+  );
+  const [datesStatus, setDatesStatus] = useState<string | null>(null);
+  const [datesSaving, setDatesSaving] = useState(false);
+
   const dailyPlan = computeDailyPlan(
     waypoints,
     trip.totalDistanceMeters,
@@ -335,6 +344,66 @@ export default function TripDetailClient({
     trip.fuelRangeKm,
     trip.fuelReserveKm,
   );
+
+  // Derive simple seasonal and route-type signals for demo gear recommendations.
+  const tripStartDate: Date | null =
+    startDateInput && typeof startDateInput === "string"
+      ? new Date(`${startDateInput}T00:00:00Z`)
+      : trip.startDate
+      ? new Date(trip.startDate as string)
+      : null;
+  const tripStartMonth = tripStartDate ? tripStartDate.getUTCMonth() + 1 : null;
+
+  type ClimateBand = "cold" | "mild" | "hot" | null;
+  let climateBand: ClimateBand = null;
+  if (tripStartMonth != null) {
+    if ([12, 1, 2].includes(tripStartMonth)) {
+      climateBand = "cold";
+    } else if ([6, 7, 8].includes(tripStartMonth)) {
+      climateBand = "hot";
+    } else {
+      climateBand = "mild";
+    }
+  }
+
+  const hasCamping = waypoints.some((wp) => wp.type === "CAMPGROUND");
+  const hasLodging = waypoints.some((wp) => wp.type === "LODGING");
+  const hasLongDistance =
+    typeof trip.totalDistanceMeters === "number" && trip.totalDistanceMeters > 150_000; // >150 km
+
+  const tripGearHighlights: string[] = [];
+
+  if (hasCamping) {
+    tripGearHighlights.push(
+      "Lightweight, waterproof soft luggage systems that are easy to pack/unpack at camp each night.",
+    );
+  }
+
+  if (hasLodging) {
+    tripGearHighlights.push(
+      "Compact duffels and packing cubes that move easily between bike and lodging at the end of each day.",
+    );
+  }
+
+  if (climateBand === "cold") {
+    tripGearHighlights.push(
+      "Insulating base layers, thermal liners, and waterproof outer shells for early/late-season riding.",
+    );
+  } else if (climateBand === "hot") {
+    tripGearHighlights.push(
+      "Well-ventilated mesh or hybrid jackets and pants with good armor for hot-weather ADV travel.",
+    );
+  } else if (climateBand === "mild") {
+    tripGearHighlights.push(
+      "Layerable ADV jacket and pant systems that cover cool mornings and warmer afternoons.",
+    );
+  }
+
+  if (hasLongDistance) {
+    tripGearHighlights.push(
+      "Durable luggage and organizers that can handle multi-day mileage without digging through a single big duffel.",
+    );
+  }
 
   const [showFuelPlaces, setShowFuelPlaces] = useState(false);
   const [showLodgingPlaces, setShowLodgingPlaces] = useState(false);
@@ -390,6 +459,71 @@ export default function TripDetailClient({
         <p className="mt-1 text-xs text-slate-500">
           Trip ID: <span className="font-mono">{trip.id}</span>
         </p>
+
+        <div className="mt-2 flex flex-wrap items-end gap-3 text-xs text-slate-300">
+          <div className="flex flex-col">
+            <label htmlFor="trip-start-date" className="text-[11px] text-slate-400">
+              Planned start date
+            </label>
+            <input
+              id="trip-start-date"
+              type="date"
+              className="mt-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
+              value={startDateInput}
+              onChange={(e) => setStartDateInput(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="trip-end-date" className="text-[11px] text-slate-400">
+              Planned end date (optional)
+            </label>
+            <input
+              id="trip-end-date"
+              type="date"
+              className="mt-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
+              value={endDateInput}
+              onChange={(e) => setEndDateInput(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            disabled={datesSaving}
+            onClick={async () => {
+              setDatesStatus(null);
+              setDatesSaving(true);
+              try {
+                const res = await fetch(`/api/trips/${trip.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    startDate: startDateInput || null,
+                    endDate: endDateInput || null,
+                  }),
+                });
+
+                if (!res.ok) {
+                  const data = await res.json().catch(() => null);
+                  throw new Error(data?.error ?? "Failed to save dates");
+                }
+
+                setDatesStatus("Trip dates saved.");
+                router.refresh();
+              } catch (err: any) {
+                setDatesStatus(err.message ?? "Failed to save dates");
+              } finally {
+                setDatesSaving(false);
+              }
+            }}
+            className="ml-auto rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+          >
+            {datesSaving ? "Saving..." : "Save dates"}
+          </button>
+        </div>
+        <div className="mt-1" aria-live="polite" role="status">
+          {datesStatus && (
+            <p className="text-[11px] text-slate-300">{datesStatus}</p>
+          )}
+        </div>
       </header>
 
       <section className="mt-4 grid gap-4 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.6fr)]">
@@ -1481,6 +1615,63 @@ export default function TripDetailClient({
               </div>
             )}
           </section>
+
+          {sponsorDemoEnabled && (
+            <section
+              className="rounded border border-amber-500/60 bg-amber-500/5 p-3 text-xs text-slate-100 shadow-adv-glow"
+              aria-label="Trip gear plan demo based on season and route"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold text-amber-200 text-xs md:text-sm">Trip gear plan (Mosko Moto demo)</h2>
+                <span className="rounded border border-amber-400/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">
+                  Demo only
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-amber-100/90">
+                This demo shows how an ADV gear partner&apos;s recommendations could adapt to your trip&apos;s timing and route style.
+              </p>
+              {tripStartDate && (
+                <p className="mt-1 text-[11px] text-amber-100/90">
+                  Planned start date:
+                  <span className="ml-1 font-semibold">
+                    {tripStartDate.toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  .
+                </p>
+              )}
+              {tripGearHighlights.length > 0 && (
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-100">
+                  {tripGearHighlights.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              )}
+              {tripGearHighlights.length === 0 && (
+                <p className="mt-2 text-[11px] text-amber-100">
+                  Add a planned start date and a few waypoints (including campgrounds or lodging) to see tailored gear highlights
+                  here.
+                </p>
+              )}
+              <p className="mt-2 text-[11px] text-amber-100/90">
+                In a live sponsorship, each highlight could deep-link to specific Mosko Moto luggage or apparel collections tuned
+                for this route.
+              </p>
+              <p className="mt-1">
+                <a
+                  href="https://moskomoto.com"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="font-semibold text-amber-300 underline hover:text-amber-200"
+                >
+                  Visit Mosko Moto (example sponsor link)
+                </a>
+              </p>
+            </section>
+          )}
 
         </div>
       </section>

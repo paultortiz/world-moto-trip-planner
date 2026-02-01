@@ -27,7 +27,15 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, description, waypoints, fuelRangeKm, fuelReserveKm } = body ?? {};
+    const {
+      name,
+      description,
+      startDate,
+      endDate,
+      waypoints,
+      fuelRangeKm,
+      fuelReserveKm,
+    } = body ?? {};
 
     if (!name || typeof name !== "string") {
       return NextResponse.json(
@@ -60,6 +68,8 @@ export async function POST(req: NextRequest) {
         userId,
         name,
         description,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
         fuelRangeKm:
           typeof fuelRangeKm === "number" && Number.isFinite(fuelRangeKm)
             ? Math.round(fuelRangeKm)

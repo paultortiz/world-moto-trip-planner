@@ -7,6 +7,7 @@ export default function NewTripClient() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [startDate, setStartDate] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +20,11 @@ export default function NewTripClient() {
       const res = await fetch("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({
+          name,
+          description,
+          startDate: startDate || null,
+        }),
       });
 
       const data = await res.json().catch(() => null);
@@ -85,6 +90,16 @@ export default function NewTripClient() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Planned start date (optional)</label>
+            <input
+              type="date"
+              className="mt-1 w-full rounded border border-slate-600 bg-slate-950 p-2 text-sm"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
 
