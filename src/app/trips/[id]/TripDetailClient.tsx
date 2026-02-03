@@ -384,6 +384,26 @@ export default function TripDetailClient({
   const totalHours = typeof trip.totalDurationSeconds === "number" ? trip.totalDurationSeconds / 3600 : null;
   const numDays = dailyPlan.length;
 
+  // Derive a reasonable upper bound for waypoint day selection.
+  let dateDays: number | null = null;
+  if (trip.startDate && trip.endDate) {
+    const start = new Date(trip.startDate as string);
+    const end = new Date(trip.endDate as string);
+    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+      const diffMs = end.getTime() - start.getTime();
+      const rawDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+      if (rawDays >= 1 && rawDays <= 365) {
+        dateDays = rawDays;
+      }
+    }
+  }
+
+  const baseDayHint = Math.max(
+    10,
+    numDays || 0,
+    dateDays ?? 0,
+  );
+
   // Climate band based on start month (northern hemisphere oriented).
   type ClimateBand = "cold" | "mild" | "hot" | null;
   let climateBand: ClimateBand = null;
@@ -1024,6 +1044,8 @@ export default function TripDetailClient({
             onSaveSuccess={() => {
               setIsDirty(false);
             }}
+            maxDayHint={baseDayHint}
+            startDateLabelBase={startDateInput || null}
           />
 
           <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Planning tools</h2>

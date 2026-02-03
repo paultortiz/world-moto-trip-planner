@@ -19,6 +19,18 @@ interface Props {
   waypoints: WaypointDto[];
   onWaypointsChange: (wps: WaypointDto[]) => void;
   onSaveSuccess?: () => void;
+  /**
+   * Optional hint for the maximum number of logical trip days based on
+   * trip dates and/or computed daily plan. The editor will ensure the
+   * dropdown always covers at least this many days, plus any higher
+   * dayIndex already used on waypoints.
+   */
+  maxDayHint?: number;
+  /**
+   * Optional ISO-like YYYY-MM-DD string representing the trip start date,
+   * used only for labeling day options (e.g. "5 – Jun 04").
+   */
+  startDateLabelBase?: string | null;
 }
 
 const WAYPOINT_TYPES = [
@@ -30,17 +42,55 @@ const WAYPOINT_TYPES = [
   "POI",
   "OTHER",
 ] as const;
-const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 export default function WaypointEditor({
   tripId,
   waypoints,
   onWaypointsChange,
   onSaveSuccess,
+  maxDayHint,
+  startDateLabelBase,
 }: Props) {
   const router = useRouter();
   const [saving, startTransition] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
+
+  const maxExistingDay = waypoints.reduce((max, wp) => {
+    const d = typeof wp.dayIndex === "number" && wp.dayIndex > 0 ? wp.dayIndex : 0;
+    return d > max ? d : max;
+  }, 0);
+
+  const baseHint = typeof maxDayHint === "number" && Number.isFinite(maxDayHint) ? maxDayHint : 0;
+  const rawMaxDay = Math.max(10, baseHint, maxExistingDay);
+  const MAX_DAY_CAP = 60;
+  const maxDayForDropdown = Math.min(MAX_DAY_CAP, rawMaxDay);
+  const dayOptions = Array.from({ length: maxDayForDropdown }, (_, i) => i + 1);
+
+  // Derive a base Date object for labeling days when we have a start date.
+  let startDateForLabels: Date | null = null;
+  if (startDateLabelBase && typeof startDateLabelBase === "string") {
+    const parts = startDateLabelBase.split("-");
+    if (parts.length === 3) {
+      const year = Number(parts[0]);
+      const monthIndex = Number(parts[1]) - 1;
+      const day = Number(parts[2]);
+      if (Number.isFinite(year) && Number.isFinite(monthIndex) && Number.isFinite(day)) {
+        startDateForLabels = new Date(year, monthIndex, day);
+      }
+    }
+  }
+
+  function formatDayOptionLabel(day: number): string {
+    if (!startDateForLabels) return String(day);
+    const d = new Date(startDateForLabels.getTime());
+    d.setDate(d.getDate() + (day - 1));
+    const dateLabel = d.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+    return `${day} – ${dateLabel}`;
+  }
 
   function updateWaypoint(index: number, patch: Partial<WaypointDto>) {
     onWaypointsChange(
@@ -174,7 +224,7 @@ export default function WaypointEditor({
                   <div className="flex items-center gap-1">
                     <span className="text-[10px] uppercase text-slate-500">Day</span>
                     <select
-                      className="w-16 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                      className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
                       value={wp.dayIndex ?? 1}
                       onChange={(e) =>
                         updateWaypoint(index, {
@@ -182,9 +232,9 @@ export default function WaypointEditor({
                         })
                       }
                     >
-                      {DAY_OPTIONS.map((d) => (
+                      {dayOptions.map((d) => (
                         <option key={d} value={d}>
-                          {d}
+                          {formatDayOptionLabel(d)}
                         </option>
                       ))}
                     </select>
