@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import TripPlannerMap, {
   type WaypointPosition,
 } from "@/features/map/TripPlannerMap";
@@ -249,6 +249,13 @@ export default function TripDetailClient({
   routePath,
 }: TripDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const sponsorDemoEnabled =
+    process.env.NEXT_PUBLIC_SPONSOR_DEMO === "true" ||
+    searchParams?.get("demoSponsors") === "1" ||
+    searchParams?.get("demoSponsors") === "true";
+
   const [waypoints, setWaypoints] = useState<WaypointDto[]>(
     () => trip.waypoints ?? [],
   );
@@ -317,6 +324,15 @@ export default function TripDetailClient({
   const [scheduleStatus, setScheduleStatus] = useState<string | null>(null);
   const [scheduleSaving, setScheduleSaving] = useState(false);
 
+  const [startDateInput, setStartDateInput] = useState<string>(
+    trip.startDate ? new Date(trip.startDate as string).toISOString().slice(0, 10) : "",
+  );
+  const [endDateInput, setEndDateInput] = useState<string>(
+    trip.endDate ? new Date(trip.endDate as string).toISOString().slice(0, 10) : "",
+  );
+  const [datesStatus, setDatesStatus] = useState<string | null>(null);
+  const [datesSaving, setDatesSaving] = useState(false);
+
   const dailyPlan = computeDailyPlan(
     waypoints,
     trip.totalDistanceMeters,
@@ -328,6 +344,196 @@ export default function TripDetailClient({
     trip.fuelRangeKm,
     trip.fuelReserveKm,
   );
+
+  const earliestHour =
+    typeof trip.earliestDepartureHour === "number"
+      ? trip.earliestDepartureHour
+      : 8;
+  const latestHour =
+    typeof trip.latestArrivalHour === "number" ? trip.latestArrivalHour : 20;
+  const targetDailyHours =
+    typeof trip.plannedDailyRideHours === "number"
+      ? trip.plannedDailyRideHours
+      : null;
+
+  // Derive seasonal, distance, duration, camping mix, and fuel signals for demo gear recommendations.
+  let tripStartDate: Date | null = null;
+  let tripStartMonth: number | null = null;
+
+  if (startDateInput && typeof startDateInput === "string") {
+    const parts = startDateInput.split("-");
+    if (parts.length === 3) {
+      const year = Number(parts[0]);
+      const monthIndex = Number(parts[1]) - 1;
+      const day = Number(parts[2]);
+      if (Number.isFinite(year) && Number.isFinite(monthIndex) && Number.isFinite(day)) {
+        const localDate = new Date(year, monthIndex, day);
+        tripStartDate = localDate;
+        tripStartMonth = localDate.getMonth() + 1;
+      }
+    }
+  } else if (trip.startDate) {
+    const d = new Date(trip.startDate as string);
+    if (!Number.isNaN(d.getTime())) {
+      tripStartDate = d;
+      tripStartMonth = d.getMonth() + 1;
+    }
+  }
+
+  const totalKm = typeof trip.totalDistanceMeters === "number" ? trip.totalDistanceMeters / 1000 : null;
+  const totalHours = typeof trip.totalDurationSeconds === "number" ? trip.totalDurationSeconds / 3600 : null;
+  const numDays = dailyPlan.length;
+
+  // Climate band based on start month (northern hemisphere oriented).
+  type ClimateBand = "cold" | "mild" | "hot" | null;
+  let climateBand: ClimateBand = null;
+  if (tripStartMonth != null) {
+    if ([11, 12, 1, 2, 3].includes(tripStartMonth)) {
+      climateBand = "cold";
+    } else if ([6, 7, 8, 9].includes(tripStartMonth)) {
+      climateBand = "hot";
+    } else {
+      climateBand = "mild";
+    }
+  }
+
+  // Trip length tiers.
+  type TripLengthTier = "day" | "weekend" | "tour" | "expedition" | null;
+  let lengthTier: TripLengthTier = null;
+  if (totalKm != null || numDays > 0 || totalHours != null) {
+    const km = totalKm ?? 0;
+    if (km < 350 || numDays === 1 || (totalHours != null && totalHours < 6)) {
+      lengthTier = "day";
+    } else if ((km >= 350 && km <= 1200) || (numDays >= 2 && numDays <= 3)) {
+      lengthTier = "weekend";
+    } else if ((km > 1200 && km <= 3500) || (numDays >= 4 && numDays <= 10)) {
+      lengthTier = "tour";
+    } else if (km > 3500 || numDays > 10) {
+      lengthTier = "expedition";
+    }
+  }
+
+  // Daily riding intensity.
+  const maxDayHours =
+    dailyPlan.length > 0 ? Math.max(...dailyPlan.map((d) => d.durationHours)) : null;
+
+  type Intensity = "easy" | "moderate" | "hard" | null;
+  let intensity: Intensity = null;
+  if (maxDayHours != null) {
+    if (maxDayHours <= 6) {
+      intensity = "easy";
+    } else if (maxDayHours <= 8) {
+      intensity = "moderate";
+    } else {
+      intensity = "hard";
+    }
+  }
+
+  if (targetDailyHours != null && targetDailyHours > 8) {
+    intensity = "hard";
+  }
+
+  // Camping vs lodging mix.
+  const campWaypoints = waypoints.filter((wp) => wp.type === "CAMPGROUND");
+  const lodgeWaypoints = waypoints.filter((wp) => wp.type === "LODGING");
+  const campNights = campWaypoints.length;
+  const lodgeNights = lodgeWaypoints.length;
+  const totalNights = campNights + lodgeNights;
+  const campShare = totalNights > 0 ? campNights / totalNights : 0;
+
+  type NightMix = "mostlyCamping" | "mixed" | "mostlyLodging" | null;
+  let nightMix: NightMix = null;
+  if (totalNights > 0) {
+    if (campShare >= 0.6) {
+      nightMix = "mostlyCamping";
+    } else if (campShare >= 0.3) {
+      nightMix = "mixed";
+    } else {
+      nightMix = "mostlyLodging";
+    }
+  }
+
+  // Fuel/remoteness based on longest leg vs range.
+  const longestLegKm = fuelPlan?.longestLegKm ?? null;
+  const fuelRangeKm = trip.fuelRangeKm ?? null;
+
+  type FuelRiskBand = "comfortable" | "nearReserve" | "beyondRange" | null;
+  let fuelBand: FuelRiskBand = null;
+  if (longestLegKm != null && fuelRangeKm != null && fuelRangeKm > 0) {
+    const comfortableThreshold = 0.7 * fuelRangeKm;
+    if (longestLegKm <= comfortableThreshold) {
+      fuelBand = "comfortable";
+    } else if (longestLegKm <= fuelRangeKm) {
+      fuelBand = "nearReserve";
+    } else {
+      fuelBand = "beyondRange";
+    }
+  }
+
+  const tripGearHighlights: string[] = [];
+
+  // Length tier driven bullets.
+  if (lengthTier === "weekend") {
+    tripGearHighlights.push(
+      "Compact duffel or small soft panniers with a couple of packing cubes are ideal for a long weekend route like this.",
+    );
+  } else if (lengthTier === "tour") {
+    tripGearHighlights.push(
+      "A full soft luggage system (panniers plus tail bag) keeps multi-day ADV gear organized over this tour-length route.",
+    );
+  } else if (lengthTier === "expedition") {
+    tripGearHighlights.push(
+      "Expedition-length mileage benefits from maximum-capacity, highly durable luggage that shrugs off repeated packing and drops.",
+    );
+  }
+
+  // Camping / lodging mix bullets.
+  if (nightMix === "mostlyCamping") {
+    tripGearHighlights.push(
+      "Rackless or soft luggage that is easy to carry to camp, plus separate dry bags for tent and sleep system, suits a camp-heavy plan.",
+    );
+  } else if (nightMix === "mixed") {
+    tripGearHighlights.push(
+      "Modular luggage and packing cubes make it simple to grab a small \"hotel bag\" while the rest stays on the bike between camp and lodging nights.",
+    );
+  } else if (nightMix === "mostlyLodging") {
+    tripGearHighlights.push(
+      "Smaller duffels and well-organized packing cubes are ideal when most nights end at lodging instead of camp.",
+    );
+  }
+
+  // Climate bullets.
+  if (climateBand === "cold") {
+    tripGearHighlights.push(
+      "Thermal base layers, liners, and fully waterproof outer shells help cover cold-season starts and high-elevation sections.",
+    );
+  } else if (climateBand === "hot") {
+    tripGearHighlights.push(
+      "Well-ventilated mesh or hybrid jackets and pants with good armor, plus space for a hydration system, fit hot-weather ADV travel.",
+    );
+  } else if (climateBand === "mild") {
+    tripGearHighlights.push(
+      "Layerable ADV jacket and pant systems let you handle cool mornings and warmer afternoons without overpacking.",
+    );
+  }
+
+  // Intensity / long-day comfort bullets.
+  if (intensity === "hard") {
+    tripGearHighlights.push(
+      "Comfort-focused base layers and a stable luggage layout help with long days in the saddle and reduce fatigue on this route.",
+    );
+  }
+
+  // Fuel/remoteness bullets.
+  if (fuelBand === "nearReserve") {
+    tripGearHighlights.push(
+      "Leaving flexible space in your luggage for extra water or fuel on select legs adds safety when some days brush your fuel range.",
+    );
+  } else if (fuelBand === "beyondRange") {
+    tripGearHighlights.push(
+      "Auxiliary fuel storage, repair kits, and emergency essentials become more important where segments can exceed your comfortable range.",
+    );
+  }
 
   const [showFuelPlaces, setShowFuelPlaces] = useState(false);
   const [showLodgingPlaces, setShowLodgingPlaces] = useState(false);
@@ -342,17 +548,6 @@ export default function TripDetailClient({
   const [schedulePanelOpen, setSchedulePanelOpen] = useState(false);
   const [segmentPanelOpen, setSegmentPanelOpen] = useState(false);
   const [checklistPanelOpen, setChecklistPanelOpen] = useState(false);
-
-  const earliestHour =
-    typeof trip.earliestDepartureHour === "number"
-      ? trip.earliestDepartureHour
-      : 8;
-  const latestHour =
-    typeof trip.latestArrivalHour === "number" ? trip.latestArrivalHour : 20;
-  const targetDailyHours =
-    typeof trip.plannedDailyRideHours === "number"
-      ? trip.plannedDailyRideHours
-      : null;
 
   const mapWaypoints: WaypointPosition[] = waypoints.map((wp) => ({
     lat: wp.lat,
@@ -383,6 +578,71 @@ export default function TripDetailClient({
         <p className="mt-1 text-xs text-slate-500">
           Trip ID: <span className="font-mono">{trip.id}</span>
         </p>
+
+        <div className="mt-2 flex flex-wrap items-end gap-3 text-xs text-slate-300">
+          <div className="flex flex-col">
+            <label htmlFor="trip-start-date" className="text-[11px] text-slate-400">
+              Planned start date
+            </label>
+            <input
+              id="trip-start-date"
+              type="date"
+              className="mt-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
+              value={startDateInput}
+              onChange={(e) => setStartDateInput(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="trip-end-date" className="text-[11px] text-slate-400">
+              Planned end date (optional)
+            </label>
+            <input
+              id="trip-end-date"
+              type="date"
+              className="mt-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
+              value={endDateInput}
+              onChange={(e) => setEndDateInput(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            disabled={datesSaving}
+            onClick={async () => {
+              setDatesStatus(null);
+              setDatesSaving(true);
+              try {
+                const res = await fetch(`/api/trips/${trip.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    startDate: startDateInput || null,
+                    endDate: endDateInput || null,
+                  }),
+                });
+
+                if (!res.ok) {
+                  const data = await res.json().catch(() => null);
+                  throw new Error(data?.error ?? "Failed to save dates");
+                }
+
+                setDatesStatus("Trip dates saved.");
+                router.refresh();
+              } catch (err: any) {
+                setDatesStatus(err.message ?? "Failed to save dates");
+              } finally {
+                setDatesSaving(false);
+              }
+            }}
+            className="ml-auto rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+          >
+            {datesSaving ? "Saving..." : "Save dates"}
+          </button>
+        </div>
+        <div className="mt-1" aria-live="polite" role="status">
+          {datesStatus && (
+            <p className="text-[11px] text-slate-300">{datesStatus}</p>
+          )}
+        </div>
       </header>
 
       <section className="mt-4 grid gap-4 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.6fr)]">
@@ -607,6 +867,39 @@ export default function TripDetailClient({
               <DeleteTripButton tripId={trip.id} />
             </div>
           </div>
+
+          {sponsorDemoEnabled && (
+            <section
+              className="mt-2 space-y-1 rounded border border-amber-500/60 bg-amber-500/5 p-2 text-[11px] text-slate-100"
+              aria-label="Featured ADV gear sponsor demo"
+            >
+              <p className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-amber-200">Featured ADV gear for this trip (Mosko Moto demo)</span>
+                <span className="rounded border border-amber-400/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">
+                  Demo only
+                </span>
+              </p>
+              <p className="text-[11px] text-amber-100/90">
+                Show how gear partners can appear where riders are reviewing distance, duration, and exporting GPX files for
+                navigation.
+              </p>
+              <p className="mt-1 text-[11px] text-amber-100">
+                Example:
+                <span className="ml-1 font-semibold">waterproof soft panniers and duffels</span> sized for multi-day ADV
+                routes like this one.
+              </p>
+              <p className="mt-1">
+                <a
+                  href="https://moskomoto.com"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="font-semibold text-amber-300 underline hover:text-amber-200"
+                >
+                  Visit Mosko Moto (example sponsor link)
+                </a>
+              </p>
+            </section>
+          )}
 
           {dailyPlan.length > 0 && (
             <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Daily distance and duration plan by day">
@@ -1321,6 +1614,39 @@ export default function TripDetailClient({
                 <p className="text-[11px] text-slate-400">
                   Capture the things you want to confirm before rolling out on this specific route.
                 </p>
+
+                {/* Demo: sponsored ADV gear block for potential partners */}
+                <section
+                  className="mt-2 space-y-1 rounded border border-amber-500/60 bg-amber-500/5 p-2 text-[11px] text-slate-100"
+                  aria-label="Sponsored ADV gear suggestions demo"
+                >
+                  <p className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-amber-200">Sponsored gear: Mosko Moto (demo)</span>
+                    <span className="rounded border border-amber-400/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">
+                      Demo only
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-amber-100/90">
+                    This is a demonstration of how a gear partner&apos;s products could be highlighted directly alongside your
+                    trip-specific checklist.
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-[11px] text-amber-100">
+                    <li>Waterproof soft luggage systems for multi-day ADV routes.</li>
+                    <li>Armored, abrasion-resistant jackets and pants for mixed terrain.</li>
+                    <li>Packing cubes and organizers tuned for motorcycle travel.</li>
+                  </ul>
+                  <p className="mt-1">
+                    <a
+                      href="https://moskomoto.com"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="font-semibold text-amber-300 underline hover:text-amber-200"
+                    >
+                      Visit Mosko Moto (example sponsor link)
+                    </a>
+                  </p>
+                </section>
+
                 <div className="mt-2 space-y-2">
                   {checklist.map((item, index) => (
                     <div
@@ -1408,6 +1734,67 @@ export default function TripDetailClient({
               </div>
             )}
           </section>
+
+          {sponsorDemoEnabled && (
+            <section
+              className="rounded border border-amber-500/60 bg-amber-500/5 p-3 text-xs text-slate-100 shadow-adv-glow"
+              aria-label="Trip gear plan demo based on season and route"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold text-amber-200 text-xs md:text-sm">Trip gear plan (Mosko Moto demo)</h2>
+                <span className="rounded border border-amber-400/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">
+                  Demo only
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-amber-100/90">
+                This demo shows how an ADV gear partner&apos;s recommendations could adapt to your trip&apos;s timing and route style.
+              </p>
+              {tripStartDate && (
+                <p className="mt-1 text-[11px] text-amber-100/90">
+                  Planned start date:
+                  <span className="ml-1 font-semibold">
+                    {tripStartDate.toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  .
+                </p>
+              )}
+              {tripGearHighlights.length > 0 && (
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-100">
+                  {tripGearHighlights.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              )}
+              {tripGearHighlights.length === 0 && (
+                <p className="mt-2 text-[11px] text-amber-100">
+                  Add a planned start date and a few waypoints (including campgrounds or lodging) to see tailored gear highlights
+                  here.
+                </p>
+              )}
+              <p className="mt-2 text-[11px] text-amber-100/90">
+                In this demo, highlights are derived from trip distance, days, camping vs lodging mix, season, daily ride hours,
+                and longest fuel legs.
+              </p>
+              <p className="mt-1 text-[11px] text-amber-100/90">
+                In a live sponsorship, each highlight could deep-link to specific Mosko Moto luggage or apparel collections tuned
+                for this route.
+              </p>
+              <p className="mt-1">
+                <a
+                  href="https://moskomoto.com"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="font-semibold text-amber-300 underline hover:text-amber-200"
+                >
+                  Visit Mosko Moto (example sponsor link)
+                </a>
+              </p>
+            </section>
+          )}
 
         </div>
       </section>
