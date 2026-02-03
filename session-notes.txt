@@ -1,0 +1,198 @@
+Session notes – demo-sponsor-monetization
+========================================
+
+Branch & high-level goal
+------------------------
+- Active branch: demo-sponsor-monetization
+- Purpose: Explore sponsor monetization for adventure motorcycle gear/services using Mosko Moto as the example sponsor.
+- Theme: Integrate **native, contextual sponsor placements** into the trip planner (rather than generic ads), and demonstrate to potential sponsors how the app can drive targeted traffic based on real trip data.
+
+Key sponsor demo features implemented
+------------------------------------
+
+1) Mosko Moto demo placements on trip detail page
+
+File: src/app/trips/[id]/TripDetailClient.tsx
+
+- Right column – Pre-ride checklist accordion:
+  - Added a "Sponsored gear: Mosko Moto (demo)" block at the top of the checklist body.
+  - It explains that a partner’s products can be highlighted next to the route-specific checklist.
+  - Bulleted examples:
+    - Waterproof soft luggage systems for multi-day ADV routes.
+    - Armored jackets/pants for mixed terrain.
+    - Packing cubes/organizers tuned for moto travel.
+  - Includes a "Visit Mosko Moto (example sponsor link)" CTA (opens in new tab with noreferrer/noopener).
+
+- Left column – under distance/duration/GPX row:
+  - Added a "Featured ADV gear for this trip (Mosko Moto demo)" card.
+  - Positioned under the total distance/duration + Recalc + Export GPX + Delete row.
+  - Describes how a sponsor can appear near export/summary actions.
+  - Example copy emphasizes waterproof soft panniers/duffels sized for multi-day routes.
+  - Includes the same example sponsor link.
+
+- Right column – Trip gear plan panel:
+  - New panel titled "Trip gear plan (Mosko Moto demo)".
+  - Located near the bottom of the right column, below the Pre-ride checklist accordion.
+  - Explains that the panel is demo-only.
+  - Shows a "Planned start date: <formatted date>" if a start date is set.
+  - Renders a list of **data-driven gear highlights** based on trip properties (see below).
+  - Includes explanatory text:
+    - "This demo shows how an ADV gear partner's recommendations could adapt to your trip's timing and route style."
+    - "In this demo, highlights are derived from trip distance, days, camping vs lodging mix, season, daily ride hours, and longest fuel legs."
+  - Ends with the Mosko Moto example sponsor link.
+
+2) Sponsor demo feature flag
+
+- The sponsor UI is gated by `sponsorDemoEnabled` in `TripDetailClient.tsx`:
+  - Enabled if **any** of:
+    - `process.env.NEXT_PUBLIC_SPONSOR_DEMO === "true"`
+    - `?demoSponsors=1` in the URL
+    - `?demoSponsors=true` in the URL
+- All sponsor demo components (checklist block, left-column card, Trip gear plan panel) are wrapped in `sponsorDemoEnabled && (...)`.
+- This keeps production UX clean; we can turn on demos in dev or for specific sponsor pitches via query param.
+
+Trip start/end date handling
+----------------------------
+
+Schema (already present before this session):
+- `Trip` in prisma/schema.prisma has `startDate` and `endDate` fields of type `DateTime?`.
+
+Changes made:
+
+1) Trip creation (`POST /api/trips` – src/app/api/trips/route.ts)
+- The POST handler now accepts:
+  - `startDate` and `endDate` in the JSON body.
+- These are persisted via Prisma:
+  - `startDate: startDate ? new Date(startDate) : undefined`
+  - `endDate: endDate ? new Date(endDate) : undefined`
+
+2) New trip UI (src/app/trips/new/NewTripClient.tsx)
+- Added state: `startDate` (string).
+- Added an optional date field:
+  - Label: "Planned start date (optional)".
+  - `<input type="date" ... value={startDate} onChange={...} />`.
+- On submit, POST body now includes:
+  - `{ name, description, startDate: startDate || null }`.
+
+3) Editing dates on trip detail page (TripDetailClient header)
+- Added state in `TripDetailClient`:
+  - `startDateInput`, `endDateInput` initialized from `trip.startDate` / `trip.endDate` (ISO date string slice 0–10).
+  - `datesStatus`, `datesSaving` for live status.
+- In the header, below Trip ID, we now render:
+  - `Planned start date` – `type="date"` input bound to `startDateInput`.
+  - `Planned end date (optional)` – `type="date"` input bound to `endDateInput`.
+  - A "Save dates" button that:
+    - Sends `PUT /api/trips/[id]` with `{ startDate: startDateInput || null, endDate: endDateInput || null }`.
+    - Updates `datesStatus` with success/error and calls `router.refresh()` on success.
+  - A status line under the controls wrapped in an aria-live region.
+
+4) Avoiding off-by-one date errors in the Trip gear plan
+- We previously constructed `new Date(`${startDateInput}T00:00:00Z`)`, which could shift a day in some timezones.
+- Now we parse the date **as a local calendar date**:
+  - Split `startDateInput` as `YYYY-MM-DD`, construct `new Date(year, monthIndex, day)`.
+  - Store that as `tripStartDate` and `tripStartMonth = localDate.getMonth() + 1`.
+- If there is no `startDateInput` but `trip.startDate` exists, we fall back to `new Date(trip.startDate)` and use its local month.
+- The Trip gear plan panel displays `tripStartDate.toLocaleDateString` for the "Planned start date" text.
+
+Trip gear plan demo logic (data-driven rules)
+--------------------------------------------
+
+Location: `TripDetailClient.tsx` (Trip gear plan panel).
+Supporting data:
+- `trip.totalDistanceMeters` and `trip.totalDurationSeconds`.
+- `dailyPlan` from `computeDailyPlan` (per-day distance and hours).
+- `waypoints` (especially types: `CAMPGROUND`, `LODGING`).
+- `trip.startDate` or `startDateInput` from header.
+- `trip.plannedDailyRideHours`, `trip.earliestDepartureHour`, `trip.latestArrivalHour`.
+- `fuelPlan` from `computeFuelPlan`, including `fuelPlan.longestLegKm`.
+- `trip.fuelRangeKm`.
+
+Derived signals:
+
+1) Climate band (season):
+- Based on `tripStartMonth` (1–12) from local start date.
+- Bands:
+  - Cold: months in `[11, 12, 1, 2, 3]` (Nov–Mar).
+  - Hot: `[6, 7, 8, 9]` (Jun–Sep).
+  - Mild: others.
+
+2) Trip length tier (distance + days + total hours):
+- `totalKm = totalDistanceMeters / 1000` (if defined).
+- `numDays = dailyPlan.length`.
+- `totalHours = totalDurationSeconds / 3600` (if defined).
+- Tiers:
+  - Day: `totalKm < 350` OR `numDays === 1` OR `totalHours < 6`.
+  - Weekend: `350 ≤ totalKm ≤ 1200` OR `2 ≤ numDays ≤ 3`.
+  - Tour: `1200 < totalKm ≤ 3500` OR `4 ≤ numDays ≤ 10`.
+  - Expedition: `totalKm > 3500` OR `numDays > 10`.
+
+3) Daily riding intensity:
+- `maxDayHours = max(dailyPlan.durationHours)` (if any days) and `targetDailyHours` from `trip.plannedDailyRideHours`.
+- Intensity levels:
+  - Easy: `maxDayHours ≤ 6`.
+  - Moderate: `6 < maxDayHours ≤ 8`.
+  - Hard: `maxDayHours > 8` OR `targetDailyHours > 8`.
+
+4) Camping vs lodging mix:
+- Count `CAMPGROUND` vs `LODGING` waypoints:
+  - `campNights = #CAMPGROUND waypoints`.
+  - `lodgeNights = #LODGING waypoints`.
+  - `totalNights = campNights + lodgeNights`.
+  - `campShare = campNights / totalNights` if `totalNights > 0`.
+- Night mix categories:
+  - Mostly camping: `campShare ≥ 0.6`.
+  - Mixed: `0.3 ≤ campShare < 0.6`.
+  - Mostly lodging: `< 0.3`.
+
+5) Fuel/remoteness:
+- Use `fuelPlan.longestLegKm` and `trip.fuelRangeKm` if both defined.
+- Fuel bands:
+  - Comfortable: `longestLegKm ≤ 0.7 * fuelRangeKm`.
+  - Near reserve: `0.7 * fuelRangeKm < longestLegKm ≤ fuelRangeKm`.
+  - Beyond range: `longestLegKm > fuelRangeKm`.
+
+Gear highlight bullets (Trip gear plan panel):
+- A `tripGearHighlights: string[]` is assembled from the signals above.
+- Each rule adds at most one bullet:
+  - Trip length tier:
+    - Weekend: compact duffel / small soft panniers with a couple of packing cubes.
+    - Tour: full soft luggage system (panniers + tail bag) for multi-day organization.
+    - Expedition: maximum-capacity, highly durable luggage for expedition-length mileage.
+  - Night mix:
+    - Mostly camping: rackless or soft luggage + separate dry bags for tent and sleep system.
+    - Mixed: modular luggage + packing cubes; easy to grab a small "hotel bag".
+    - Mostly lodging: smaller duffels + well-organized cubes for hotel-centric trips.
+  - Climate band:
+    - Cold: thermal base layers, liners, waterproof shells for cold-season starts/elevation.
+    - Hot: vented/mesh or hybrid gear with armor and hydration capacity.
+    - Mild: layerable systems to handle cool mornings and warmer afternoons.
+  - Intensity (hard days):
+    - Comfort-focused base layers + stable luggage layout to reduce fatigue on long days.
+  - Fuel/remoteness:
+    - Near reserve: keep flexible luggage space for extra water/fuel on certain legs.
+    - Beyond range: emphasize auxiliary fuel storage, repair kits, emergency essentials.
+- The Trip gear plan panel shows these as a bulleted list if any are present, or a prompt to add start date + waypoints if `tripGearHighlights` is empty.
+
+Important implementation notes for future sessions
+-----------------------------------------------
+
+- Branch to continue work on: `demo-sponsor-monetization`.
+- Sponsor demo visibility:
+  - Use `?demoSponsors=1` on `/trips/[id]` in dev, or set `NEXT_PUBLIC_SPONSOR_DEMO=true` in env.
+- Main files involved in this session:
+  - `src/app/trips/[id]/TripDetailClient.tsx` – most sponsor and gear-plan logic, date editing, and demo panels.
+  - `src/app/trips/new/NewTripClient.tsx` – new trip start-date field.
+  - `src/app/api/trips/route.ts` – startDate/endDate support on trip creation.
+  - `src/app/api/trips/[id]/route.ts` – already handled start/end dates and is used by the header "Save dates" button.
+- There are still ESLint `no-explicit-any` warnings across the project; they are configured as warnings, not errors, so builds/lint pass.
+- Accessibility has been considered for new UI (headings, aria-live for statuses, buttons instead of bare interactive text), but we may want to do a focused a11y pass over the new sponsor elements in a future session.
+
+Ideas for future work
+---------------------
+
+- Extend the sponsor demo to show:
+  - Service partners along the route (shops, training schools, tours) based on waypoints/segments.
+  - Sponsored route templates (e.g., Mosko Moto-branded sample routes) that users can clone.
+- Add a small "Demo mode" badge somewhere on the trip detail page when `sponsorDemoEnabled` is true.
+- Start tightening the most important `any` types (Trip, session, API payloads) now that the sponsor logic is more complex.
+- If we pitch to a real sponsor, parameterize the brand (logo, name, URLs, product families) instead of hardcoding Mosko Moto.
