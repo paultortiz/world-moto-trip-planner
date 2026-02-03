@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
     }`;
 
     const via = trip.waypoints.slice(1, -1);
+
     const waypointsParam =
       via.length > 0
         ? `&waypoints=${encodeURIComponent(
@@ -62,18 +63,25 @@ export async function POST(req: NextRequest) {
     const res = await fetch(url);
     if (!res.ok) {
       const text = await res.text();
-      console.error("Directions API error", res.status, text);
+      console.error("Directions API HTTP error", res.status, text);
       return NextResponse.json(
-        { error: "Failed to fetch directions" },
+        { error: `Failed to fetch directions (HTTP ${res.status})` },
         { status: 502 },
       );
     }
 
     const data = await res.json();
 
-    if (!data.routes || data.routes.length === 0) {
+    if (!data.routes || data.routes.length === 0 || data.status !== "OK") {
+      console.error("Directions API status", data.status, data.error_message ?? "(no error_message)");
       return NextResponse.json(
-        { error: "No route found from Directions API" },
+        {
+          error:
+            data.error_message ||
+            (data.status && typeof data.status === "string"
+              ? `Directions API returned status ${data.status}`
+              : "No route found from Directions API"),
+        },
         { status: 502 },
       );
     }
