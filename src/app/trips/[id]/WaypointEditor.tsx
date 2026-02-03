@@ -152,16 +152,66 @@ export default function WaypointEditor({
           throw new Error(data?.error ?? "Failed to save waypoints");
         }
 
-        // Recalculate route after waypoint changes.
-        await fetch("/api/routes/calculate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tripId }),
-        }).catch(() => {
-          // Ignore route calc errors here; user can retry from the button.
-        });
+        // Recalculate route after waypoint changes, then refresh elevation
+        // profile when route recalculation succeeds.
+        let recalcMessage = "Waypoints saved; route and elevation recalculated.";
+        let routeOk = false;
+        try {
+          const recalcRes = await fetch("/api/routes/calculate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tripId }),
+          });
 
-        setStatus("Waypoints saved and route recalculation triggered.");
+          if (!recalcRes.ok) {
+            const data = await recalcRes.json().catch(() => null);
+            const rawError = (data?.error as string | undefined) ?? "Failed to recalculate route";
+            let friendly = rawError;
+
+            if (rawError.includes("Directions API returned status ZERO_RESULTS")) {
+              friendly =
+                "Google's routing service couldn't find a drivable route between some of these waypoints. " +
+                "Try adjusting waypoints or splitting this trip into smaller segments. Your trip data is still intact.";
+            } else if (rawError.startsWith("Failed to fetch directions (HTTP")) {
+              friendly =
+                "We couldn't reach Google's routing service (" +
+                rawError.replace("Failed to fetch directions ", "") +
+                "). Please try again in a bit. Your trip data is still intact.";
+            }
+
+            recalcMessage = `Waypoints saved, but route could not be recalculated: ${friendly}`;
+          } else {
+            routeOk = true;
+          }
+        } catch {
+          recalcMessage =
+            "Waypoints saved, but we couldn't reach Google's routing service to recalculate the route. " +
+            "You can try again later from the Recalculate route button.";
+        }
+
+        // If route recalculation succeeded, refresh elevation profile as well.
+        if (routeOk) {
+          try {
+            const elevRes = await fetch("/api/routes/elevation", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ tripId }),
+            });
+
+            if (!elevRes.ok) {
+              const data = await elevRes.json().catch(() => null);
+              const rawError = (data?.error as string | undefined) ?? "Failed to calculate elevation profile";
+              recalcMessage =
+                "Waypoints saved and route recalculated, but elevation could not be updated: " + rawError;
+            }
+          } catch {
+            recalcMessage =
+              "Waypoints saved and route recalculated, but we couldn't update the elevation profile. " +
+              "You can try again later by refreshing the page.";
+          }
+        }
+
+        setStatus(recalcMessage);
         onSaveSuccess?.();
         router.refresh();
       } catch (err: any) {

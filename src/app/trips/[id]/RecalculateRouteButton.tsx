@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   tripId: string;
+  onRouteRecalculated?: () => void;
 }
 
-export default function RecalculateRouteButton({ tripId }: Props) {
+export default function RecalculateRouteButton({ tripId, onRouteRecalculated }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
@@ -28,9 +29,24 @@ export default function RecalculateRouteButton({ tripId }: Props) {
         }
 
         setStatus("Route recalculated.");
+        onRouteRecalculated?.();
         router.refresh();
       } catch (err: any) {
-        setStatus(`Error: ${err.message ?? "Failed to recalculate route"}`);
+        const rawMessage = err?.message ?? "Failed to recalculate route";
+        let friendly = rawMessage;
+
+        if (rawMessage.includes("Directions API returned status ZERO_RESULTS")) {
+          friendly =
+            "Google's routing service couldn't find a drivable route between some of these waypoints. " +
+            "Try adjusting waypoints or splitting this trip into smaller segments. Your trip data is still intact.";
+        } else if (rawMessage.startsWith("Failed to fetch directions (HTTP")) {
+          friendly =
+            "We couldn't reach Google's routing service (" +
+            rawMessage.replace("Failed to fetch directions ", "") +
+            "). Please try again in a bit. Your trip data is still intact.";
+        }
+
+        setStatus(`Error: ${friendly}`);
       }
     });
   }

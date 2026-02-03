@@ -9,9 +9,15 @@ interface ElevationPoint {
 
 interface Props {
   tripId: string;
+  /**
+   * When this value changes, the elevation profile will be re-fetched even if
+   * the trip id stays the same. This lets parent components explicitly signal
+   * that the route has changed.
+   */
+  refreshKey?: number;
 }
 
-export default function ElevationProfile({ tripId }: Props) {
+export default function ElevationProfile({ tripId, refreshKey }: Props) {
   const [profile, setProfile] = useState<ElevationPoint[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +107,7 @@ export default function ElevationProfile({ tripId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [tripId]);
+  }, [tripId, refreshKey]);
 
   if (loading && !profile) {
     return (

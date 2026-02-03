@@ -324,6 +324,8 @@ export default function TripDetailClient({
   const [scheduleStatus, setScheduleStatus] = useState<string | null>(null);
   const [scheduleSaving, setScheduleSaving] = useState(false);
 
+  const [elevationRefreshKey, setElevationRefreshKey] = useState(0);
+
   const [startDateInput, setStartDateInput] = useState<string>(
     trip.startDate ? new Date(trip.startDate as string).toISOString().slice(0, 10) : "",
   );
@@ -861,7 +863,10 @@ export default function TripDetailClient({
             </p>
           )}
 
-          <ElevationProfile tripId={trip.id} />
+          <ElevationProfile
+            tripId={trip.id}
+            refreshKey={elevationRefreshKey}
+          />
 
           <div className="flex items-center justify-between text-xs text-slate-300">
             <div>
@@ -877,7 +882,10 @@ export default function TripDetailClient({
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <RecalculateRouteButton tripId={trip.id} />
+              <RecalculateRouteButton
+                tripId={trip.id}
+                onRouteRecalculated={() => setElevationRefreshKey((k) => k + 1)}
+              />
               <a
                 href={`/api/trips/${trip.id}/gpx`}
                 className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
@@ -1043,6 +1051,7 @@ export default function TripDetailClient({
             }}
             onSaveSuccess={() => {
               setIsDirty(false);
+              setElevationRefreshKey((k) => k + 1);
             }}
             maxDayHint={baseDayHint}
             startDateLabelBase={startDateInput || null}
