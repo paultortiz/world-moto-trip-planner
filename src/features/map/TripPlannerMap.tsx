@@ -29,6 +29,15 @@ type PlaceMarker = {
   category: "fuel" | "lodging" | "campground" | "dining" | "poi";
 };
 
+type PanelPlaceItem = {
+  name: string;
+  category: "fuel" | "lodging" | "campground" | "dining" | "poi";
+  distanceKm: number;
+  rating?: number | null;
+  lat: number;
+  lng: number;
+};
+
 const MAX_PLACES_RESULTS = 25;
 
 interface TripPlannerMapProps {
@@ -89,10 +98,18 @@ export default function TripPlannerMap({
   } | null>(null);
   const highlightTimeoutRef = useRef<number | null>(null);
 
+  const [recentWaypointName, setRecentWaypointName] = useState<string | null>(null);
+  const waypointToastTimeoutRef = useRef<number | null>(null);
+
+  const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
+
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current !== null) {
         window.clearTimeout(highlightTimeoutRef.current);
+      }
+      if (waypointToastTimeoutRef.current !== null) {
+        window.clearTimeout(waypointToastTimeoutRef.current);
       }
     };
   }, []);
@@ -144,7 +161,7 @@ export default function TripPlannerMap({
   );
 
   const handleSearchPlacesChanged = useCallback(() => {
-    if (!onAddWaypoint || !searchBoxRef.current) return;
+    if (!searchBoxRef.current) return;
     const places = searchBoxRef.current.getPlaces();
     if (!places || places.length === 0) return;
     const place = places[0];
@@ -154,27 +171,19 @@ export default function TripPlannerMap({
     const lng = place.geometry.location.lng();
 
     const types = place.types ?? [];
-    let inferredType: string | null = null;
+    let category: PanelPlaceItem["category"] = "poi";
 
     if (types.includes("gas_station")) {
-      inferredType = "FUEL";
+      category = "fuel";
     } else if (types.includes("lodging")) {
-      inferredType = "LODGING";
+      category = "lodging";
     } else if (types.includes("campground")) {
-      inferredType = "CAMPGROUND";
+      category = "campground";
     } else if (types.includes("restaurant") || types.includes("cafe") || types.includes("bar")) {
-      inferredType = "DINING";
+      category = "dining";
     } else if (types.includes("tourist_attraction") || types.includes("point_of_interest")) {
-      inferredType = "POI";
+      category = "poi";
     }
-
-    onAddWaypoint({
-      lat,
-      lng,
-      type: inferredType,
-      name: (place.name as string | undefined) ?? null,
-      googlePlaceId: (place.place_id as string | undefined) ?? null,
-    });
 
     const map = mapRef.current;
     if (map) {
@@ -183,6 +192,29 @@ export default function TripPlannerMap({
       if (zoom < 12) {
         map.setZoom(12);
       }
+    }
+
+    // Approximate distance from current map center if available.
+    let distanceKm = 0;
+    if (mapRef.current) {
+      const center = mapRef.current.getCenter();
+      if (center) {
+        distanceKm = haversineKm(
+          { lat: center.lat(), lng: center.lng() },
+          { lat, lng },
+        );
+      }
+    }
+
+    if (onAddWaypoint) {
+      setPendingPlace({
+        name: (place.name as string | undefined) ?? "Unnamed",
+        category,
+        distanceKm,
+        rating: typeof place.rating === "number" ? place.rating : null,
+        lat,
+        lng,
+      });
     }
   }, [onAddWaypoint]);
 
@@ -407,16 +439,8 @@ export default function TripPlannerMap({
     return R * c;
   }
 
-  const panelItems = useMemo(() => {
-    if (!placesCenter)
-      return [] as {
-        name: string;
-        category: "fuel" | "lodging" | "campground" | "dining" | "poi";
-        distanceKm: number;
-        rating?: number | null;
-        lat: number;
-        lng: number;
-      }[];
+  const panelItems: PanelPlaceItem[] = useMemo(() => {
+    if (!placesCenter) return [];
 
     const all: PlaceMarker[] = [];
     if (showFuelPlaces) all.push(...fuelPlaces);
@@ -457,7 +481,7 @@ export default function TripPlannerMap({
   ]);
 
   const handlePanelItemClick = useCallback(
-    (item: { name: string; lat: number; lng: number; category: "fuel" | "lodging" | "campground" | "dining" | "poi" }) => {
+    (item: PanelPlaceItem) => {
       const map = mapRef.current;
       if (map) {
         map.panTo({ lat: item.lat, lng: item.lng });
@@ -468,22 +492,11 @@ export default function TripPlannerMap({
       }
 
       // If the parent provides an onAddWaypoint handler (trip detail editor),
-      // treat clicking a nearby place row as an explicit intent to create a
-      // waypoint at that place, with an inferred type and name.
+      // treat clicking a nearby place row as intent, but confirm with the
+      // rider before actually creating the waypoint. This is especially
+      // helpful on small screens where new markers may be partially off-view.
       if (onAddWaypoint) {
-        let inferredType: string | null = null;
-        if (item.category === "fuel") inferredType = "FUEL";
-        else if (item.category === "lodging") inferredType = "LODGING";
-        else if (item.category === "campground") inferredType = "CAMPGROUND";
-        else if (item.category === "dining") inferredType = "DINING";
-        else if (item.category === "poi") inferredType = "POI";
-
-        onAddWaypoint({
-          lat: item.lat,
-          lng: item.lng,
-          type: inferredType,
-          name: item.name,
-        });
+        setPendingPlace(item);
       }
 
       setHighlightedPlace({ lat: item.lat, lng: item.lng, category: item.category });
@@ -531,6 +544,87 @@ export default function TripPlannerMap({
       }}
       aria-label="Trip overview map showing your route and waypoints; use the lists and controls outside the map to review and edit details."
     >
+      {recentWaypointName && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
+        >
+          <div
+            className="pointer-events-auto rounded border border-adv-border bg-slate-950/90 px-3 py-1.5 text-[11px] text-slate-100 shadow-adv-glow"
+            role="status"
+            aria-live="polite"
+          >
+            Waypoint added: <span className="font-semibold">{recentWaypointName}</span>
+          </div>
+        </div>
+      )}
+
+      {pendingPlace && onAddWaypoint && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, bottom: 24, zIndex: 40 }}
+        >
+          <div
+            className="pointer-events-auto w-[min(280px,90%)] rounded border border-adv-border bg-slate-950/95 px-3 py-2 text-[11px] text-slate-100 shadow-adv-glow"
+            role="dialog"
+            aria-modal="false"
+            aria-label="Add nearby place as waypoint"
+          >
+            <p className="font-semibold text-slate-100">Add this place as a waypoint?</p>
+            <p className="mt-1 truncate text-slate-200">{pendingPlace.name}</p>
+            {pendingPlace.distanceKm > 0 || pendingPlace.rating != null ? (
+              <p className="mt-0.5 text-[10px] text-slate-400">
+                {pendingPlace.distanceKm > 0 ? `${pendingPlace.distanceKm.toFixed(0)} km away` : ""}
+                {pendingPlace.rating != null ? ` · ${pendingPlace.rating.toFixed(1)}★` : ""}
+              </p>
+            ) : null}
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800"
+                onClick={() => setPendingPlace(null)}
+              >
+                No thanks
+              </button>
+              <button
+                type="button"
+                className="rounded bg-adv-accent px-2 py-1 text-[10px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted"
+                onClick={() => {
+                  const item = pendingPlace;
+                  setPendingPlace(null);
+                  if (!item || !onAddWaypoint) return;
+
+                  let inferredType: string | null = null;
+                  if (item.category === "fuel") inferredType = "FUEL";
+                  else if (item.category === "lodging") inferredType = "LODGING";
+                  else if (item.category === "campground") inferredType = "CAMPGROUND";
+                  else if (item.category === "dining") inferredType = "DINING";
+                  else if (item.category === "poi") inferredType = "POI";
+
+                  onAddWaypoint({
+                    lat: item.lat,
+                    lng: item.lng,
+                    type: inferredType,
+                    name: item.name,
+                  });
+
+                  setRecentWaypointName(item.name || "Waypoint");
+                  if (waypointToastTimeoutRef.current !== null) {
+                    window.clearTimeout(waypointToastTimeoutRef.current);
+                  }
+                  waypointToastTimeoutRef.current = window.setTimeout(() => {
+                    setRecentWaypointName(null);
+                    waypointToastTimeoutRef.current = null;
+                  }, 1800);
+                }}
+              >
+                Add waypoint
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {onAddWaypoint && (
         <div
           className="pointer-events-auto"
