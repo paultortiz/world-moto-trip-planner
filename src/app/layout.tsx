@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const role = (session?.user as any)?.role as string | undefined;
 
   return (
     <html lang="en">
@@ -35,6 +36,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <Link href="/trips/new" className="text-slate-200 hover:text-adv-accent">
                       New trip
                     </Link>
+                    {(role === "SPONSOR" || role === "ADMIN") && (
+                      <Link href="/sponsor" className="text-slate-200 hover:text-adv-accent">
+                        Sponsor
+                      </Link>
+                    )}
+                    {role === "ADMIN" && (
+                      <Link href="/administrator" className="text-slate-200 hover:text-adv-accent">
+                        Admin
+                      </Link>
+                    )}
                     <span className="hidden text-slate-400 sm:inline">
                       {session.user?.email}
                     </span>

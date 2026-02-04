@@ -17,8 +17,9 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, user }) {
       if (session.user) {
-        // Expose user id on the session so we can use it in route handlers.
+        // Expose user id and role on the session so we can use them in route handlers.
         (session.user as any).id = (user as any).id;
+        (session.user as any).role = (user as any).role;
       }
       return session;
     },
