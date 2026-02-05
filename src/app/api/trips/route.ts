@@ -111,9 +111,9 @@ export async function POST(req: NextRequest) {
             : typeof motorcycleId === "string" && motorcycleId.trim() !== ""
             ? true
             : undefined,
-        motorcycle:
+        motorcycleId:
           typeof motorcycleId === "string" && motorcycleId.trim() !== ""
-            ? { connect: { id: motorcycleId } }
+            ? motorcycleId
             : undefined,
         waypoints:
           safeWaypoints.length > 0
