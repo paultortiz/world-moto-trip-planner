@@ -19,6 +19,7 @@ model User {
   accounts       Account[]
   sessions       Session[]
   trips          Trip[]
+  motorcycles    Motorcycle[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -81,6 +82,7 @@ model Trip {
   // Optional fuel planning settings (range in kilometers)
   fuelRangeKm          Int?
   fuelReserveKm        Int?
+  fuelAutoFromMotorcycle Boolean? @default(true)
 
   // Optional elevation summary (meters)
   totalAscentMeters    Int?
@@ -95,6 +97,10 @@ model Trip {
   // Optional per-segment risk/notes metadata, indexed by segment order
   // (0 = segment from waypoint[0] → waypoint[1], etc.)
   segmentNotes          Json?
+
+  // Optional associated motorcycle for this trip
+  motorcycleId          String?
+  motorcycle            Motorcycle?    @relation(fields: [motorcycleId], references: [id])
 
   waypoints            Waypoint[]
   routeSegments        RouteSegment[]
@@ -159,6 +165,39 @@ model TripChecklistItem {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Motorcycle {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  year        Int?
+  make        String?
+  model       String?
+  displayName String?
+
+  engineDisplacementCc Int?
+  wetWeightKg          Int?
+  fuelCapacityLiters   Float?
+  estimatedRangeKm     Int?
+  seatHeightMm         Int?
+  offroadBias          Float?
+  highwayComfort       Float?
+
+  preferredRangeKm     Int?
+  preferredReserveKm   Int?
+
+  isDefaultForNewTrips Boolean  @default(false)
+
+  specs       Json?
+
+  trips       Trip[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, year, make, model])
 }
 
 enum WaypointType {

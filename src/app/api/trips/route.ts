@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
       waypoints,
       fuelRangeKm,
       fuelReserveKm,
+      motorcycleId,
+      fuelAutoFromMotorcycle,
     } = body ?? {};
 
     if (!name || typeof name !== "string") {
@@ -63,6 +65,31 @@ export async function POST(req: NextRequest) {
         )
       : [];
 
+    let derivedRange: number | undefined;
+    let derivedReserve: number | undefined;
+
+    if (typeof motorcycleId === "string" && motorcycleId.trim() !== "") {
+      const moto = await prisma.motorcycle.findFirst({
+        where: { id: motorcycleId, userId },
+      });
+      if (moto) {
+        const baseRange =
+          typeof moto.preferredRangeKm === "number" && Number.isFinite(moto.preferredRangeKm)
+            ? moto.preferredRangeKm
+            : typeof moto.estimatedRangeKm === "number" && Number.isFinite(moto.estimatedRangeKm)
+            ? moto.estimatedRangeKm
+            : undefined;
+        if (baseRange != null) {
+          derivedRange = Math.round(baseRange);
+          const baseReserve =
+            typeof moto.preferredReserveKm === "number" && Number.isFinite(moto.preferredReserveKm)
+              ? moto.preferredReserveKm
+              : Math.round(baseRange * 0.8);
+          derivedReserve = Math.round(baseReserve);
+        }
+      }
+    }
+
     const trip = await prisma.trip.create({
       data: {
         userId,
@@ -73,10 +100,20 @@ export async function POST(req: NextRequest) {
         fuelRangeKm:
           typeof fuelRangeKm === "number" && Number.isFinite(fuelRangeKm)
             ? Math.round(fuelRangeKm)
-            : undefined,
+            : derivedRange,
         fuelReserveKm:
           typeof fuelReserveKm === "number" && Number.isFinite(fuelReserveKm)
             ? Math.round(fuelReserveKm)
+            : derivedReserve,
+        fuelAutoFromMotorcycle:
+          typeof fuelAutoFromMotorcycle === "boolean"
+            ? fuelAutoFromMotorcycle
+            : typeof motorcycleId === "string" && motorcycleId.trim() !== ""
+            ? true
+            : undefined,
+        motorcycle:
+          typeof motorcycleId === "string" && motorcycleId.trim() !== ""
+            ? { connect: { id: motorcycleId } }
             : undefined,
         waypoints:
           safeWaypoints.length > 0

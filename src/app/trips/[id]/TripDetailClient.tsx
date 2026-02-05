@@ -102,6 +102,7 @@ const CHECKLIST_TEMPLATES: { id: ChecklistTemplateId; label: string; items: Trip
 interface TripDetailClientProps {
   trip: any; // structural typing via runtime shape
   routePath?: WaypointPosition[];
+  motorcycles?: any[];
 }
 
 function haversineKm(a: WaypointPosition, b: WaypointPosition): number {
@@ -247,6 +248,7 @@ function formatTime(hours: number): string {
 export default function TripDetailClient({
   trip,
   routePath,
+  motorcycles = [],
 }: TripDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -325,6 +327,21 @@ export default function TripDetailClient({
   const [scheduleSaving, setScheduleSaving] = useState(false);
 
   const [elevationRefreshKey, setElevationRefreshKey] = useState(0);
+
+  const [fuelAutoSync, setFuelAutoSync] = useState<boolean>(
+    trip.fuelAutoFromMotorcycle !== false,
+  );
+
+  const [bikeYearInput, setBikeYearInput] = useState<string>(
+    typeof trip.motorcycle?.year === "number" ? String(trip.motorcycle.year) : "",
+  );
+  const [bikeMakeInput, setBikeMakeInput] = useState<string>(trip.motorcycle?.make ?? "");
+  const [bikeModelInput, setBikeModelInput] = useState<string>(trip.motorcycle?.model ?? "");
+  const [bikeStatus, setBikeStatus] = useState<string | null>(null);
+  const [bikeSaving, setBikeSaving] = useState(false);
+  const [selectedMotorcycleId, setSelectedMotorcycleId] = useState<string>(
+    trip.motorcycle?.id ?? "",
+  );
 
   const [startDateInput, setStartDateInput] = useState<string>(
     trip.startDate ? new Date(trip.startDate as string).toISOString().slice(0, 10) : "",
@@ -1117,6 +1134,189 @@ export default function TripDetailClient({
             )}
           </section>
 
+          {/* Motorcycle section */}
+          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Motorcycle for this trip">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Motorcycle for this trip</h2>
+              {trip.motorcycle?.displayName && (
+                <span className="text-[11px] text-slate-400">{trip.motorcycle.displayName}</span>
+              )}
+            </div>
+            <div className="mt-2 flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-[11px] text-slate-400">Select from garage</span>
+                <select
+                  className="min-w-[180px] rounded border border-slate-600 bg-slate-950 p-1 text-[11px] text-slate-200"
+                  value={selectedMotorcycleId}
+                  onChange={async (e) => {
+                    const nextId = e.target.value;
+                    setSelectedMotorcycleId(nextId);
+                    setBikeStatus(null);
+                    setBikeSaving(true);
+                    try {
+                      const payload: any = {
+                        motorcycleId: nextId || null,
+                      };
+                      if (nextId) {
+                        payload.fuelAutoFromMotorcycle = true;
+                      }
+                      const res = await fetch(`/api/trips/${trip.id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                      });
+
+                      if (!res.ok) {
+                        const data = await res.json().catch(() => null);
+                        throw new Error(data?.error ?? "Failed to update motorcycle");
+                      }
+
+                      setBikeStatus(
+                        nextId
+                          ? "Motorcycle attached to this trip and fuel settings adjusted."
+                          : "Motorcycle detached from this trip.",
+                      );
+                      router.refresh();
+                    } catch (err: any) {
+                      setBikeStatus(err?.message ?? "Failed to update motorcycle");
+                    } finally {
+                      setBikeSaving(false);
+                    }
+                  }}
+                >
+                  <option value="">No motorcycle selected</option>
+                  {motorcycles.map((moto: any) => {
+                    const baseLabel =
+                      moto.displayName ||
+                      `${moto.year ?? ""} ${moto.make ?? ""} ${moto.model ?? ""}`.trim() ||
+                      "Motorcycle";
+                    const suffix = moto.isDefaultForNewTrips ? " (default for new trips)" : "";
+                    return (
+                      <option key={moto.id} value={moto.id}>
+                        {baseLabel}
+                        {suffix}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <a
+                href="/motorcycles"
+                className="text-[11px] text-adv-accent hover:text-adv-accentMuted underline-offset-2 hover:underline"
+              >
+                Manage in Garage
+              </a>
+            </div>
+            <p className="mt-3 text-[11px] text-slate-400">
+              Or describe the bike you plan to ride and let AI estimate specs:
+            </p>
+            <div className="mt-2 flex flex-wrap gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-slate-400">Year</span>
+                <input
+                  type="number"
+                  min={1970}
+                  max={2100}
+                  className="w-20 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                  value={bikeYearInput}
+                  onChange={(e) => setBikeYearInput(e.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-slate-400">Make</span>
+                <input
+                  type="text"
+                  className="w-32 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                  placeholder="Yamaha"
+                  value={bikeMakeInput}
+                  onChange={(e) => setBikeMakeInput(e.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] text-slate-400">Model</span>
+                <input
+                  type="text"
+                  className="w-40 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
+                  placeholder="Tenere 700"
+                  value={bikeModelInput}
+                  onChange={(e) => setBikeModelInput(e.target.value)}
+                />
+              </label>
+              <div className="flex flex-1 items-end justify-end">
+                <button
+                  type="button"
+                  disabled={bikeSaving}
+                  onClick={async () => {
+                    setBikeStatus(null);
+                    setBikeSaving(true);
+                    try {
+                      const res = await fetch("/api/ai/motorcycle-specs", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          tripId: trip.id,
+                          year: bikeYearInput ? Number(bikeYearInput) : null,
+                          make: bikeMakeInput,
+                          model: bikeModelInput,
+                        }),
+                      });
+
+                      if (!res.ok) {
+                        const data = await res.json().catch(() => null);
+                        throw new Error(data?.error ?? "Failed to fetch motorcycle specs");
+                      }
+
+                      setBikeStatus("Motorcycle specs updated from AI.");
+                      router.refresh();
+                    } catch (err: any) {
+                      setBikeStatus(err?.message ?? "Failed to fetch motorcycle specs");
+                    } finally {
+                      setBikeSaving(false);
+                    }
+                  }}
+                  className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+                >
+                  {bikeSaving ? "Fetching specs..." : "Fetch specs"}
+                </button>
+              </div>
+            </div>
+            {trip.motorcycle && (
+              <div className="mt-3 rounded border border-slate-800 bg-slate-950/70 p-2 text-[11px] text-slate-300">
+                <p className="font-semibold text-slate-100">
+                  {trip.motorcycle.displayName || `${trip.motorcycle.year ?? ""} ${trip.motorcycle.make ?? ""} ${trip.motorcycle.model ?? ""}`.trim()}
+                </p>
+                <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
+                  {typeof trip.motorcycle.engineDisplacementCc === "number" && (
+                    <p>Engine: {trip.motorcycle.engineDisplacementCc} cc</p>
+                  )}
+                  {typeof trip.motorcycle.wetWeightKg === "number" && (
+                    <p>Wet weight: {trip.motorcycle.wetWeightKg} kg</p>
+                  )}
+                  {typeof trip.motorcycle.fuelCapacityLiters === "number" && (
+                    <p>Fuel capacity: {trip.motorcycle.fuelCapacityLiters.toFixed(1)} L</p>
+                  )}
+                  {typeof trip.motorcycle.estimatedRangeKm === "number" && (
+                    <p>Estimated range: {trip.motorcycle.estimatedRangeKm} km</p>
+                  )}
+                  {typeof trip.motorcycle.seatHeightMm === "number" && (
+                    <p>Seat height: {trip.motorcycle.seatHeightMm} mm</p>
+                  )}
+                </div>
+                {trip.motorcycle.specs?.notes && (
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    Notes: {(trip.motorcycle.specs as any).notes}
+                  </p>
+                )}
+                <p className="mt-1 text-[10px] text-slate-500">
+                  Specs are approximate and inferred from typical data. Verify against your specific bike and setup.
+                </p>
+              </div>
+            )}
+            <div className="mt-1" aria-live="polite" role="status">
+              {bikeStatus && <p className="text-[11px] text-slate-300">{bikeStatus}</p>}
+            </div>
+          </section>
+
           {/* Fuel accordion */}
           <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
             <button
@@ -1142,6 +1342,55 @@ export default function TripDetailClient({
                     Set your bike&apos;s comfortable range between fuel stops. We&apos;ll use this to flag risky legs
                     between FUEL waypoints.
                   </p>
+                  {trip.motorcycle && (
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Use <span className="font-semibold">Reset to bike defaults</span> to pull range and reserve from the attached
+                      motorcycle&apos;s preferred (or estimated) values.
+                    </p>
+                  )}
+                  {trip.motorcycle && (
+                    <label className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
+                      <input
+                        type="checkbox"
+                        className="h-3 w-3 accent-adv-accent"
+                        checked={fuelAutoSync}
+                        onChange={async (e) => {
+                          const next = e.target.checked;
+                          setFuelAutoSync(next);
+                          try {
+                            const res = await fetch(`/api/trips/${trip.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                fuelAutoFromMotorcycle: next,
+                              }),
+                            });
+                            if (!res.ok) {
+                              const data = await res.json().catch(() => null);
+                              throw new Error(data?.error ?? "Failed to update fuel sync setting");
+                            }
+                            // If turning sync on and a motorcycle is present, backend may recompute fuel
+                            // based on the bike. Refresh to pick up any changes.
+                            if (next && trip.motorcycle) {
+                              router.refresh();
+                            }
+                          } catch (err: any) {
+                            setFuelAutoSync(!next);
+                            setFuelStatus(err?.message ?? "Failed to update fuel sync setting");
+                          }
+                        }}
+                      />
+                      <span>
+                        Keep this trip&apos;s fuel settings in sync with
+                        {" "}
+                        <span className="font-semibold">
+                          {trip.motorcycle.displayName ?? "selected motorcycle"}
+                        </span>
+                        {" "}
+                        when possible.
+                      </span>
+                    </label>
+                  )}
                   <div className="mt-2 flex flex-wrap gap-3">
                     <label className="flex flex-col gap-1">
                       <span className="text-[11px] text-slate-400">Range (km)</span>
@@ -1163,7 +1412,50 @@ export default function TripDetailClient({
                         onChange={(e) => setFuelReserveInput(e.target.value)}
                       />
                     </label>
-                    <div className="flex flex-1 items-end justify-end">
+                    <div className="flex flex-1 items-end justify-end gap-2">
+                      <button
+                        type="button"
+                        disabled={fuelSaving || !trip.motorcycle}
+                        onClick={async () => {
+                          if (!trip.motorcycle) return;
+                          setFuelStatus(null);
+                          setFuelSaving(true);
+                          try {
+                            const res = await fetch(`/api/trips/${trip.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                resetFuelFromMotorcycle: true,
+                              }),
+                            });
+
+                            if (!res.ok) {
+                              const data = await res.json().catch(() => null);
+                              throw new Error(data?.error ?? "Failed to reset fuel from motorcycle");
+                            }
+
+                            const data = await res.json().catch(() => null);
+                            if (data?.fuelRangeKm != null) {
+                              setFuelRangeInput(String(data.fuelRangeKm));
+                            }
+                            if (data?.fuelReserveKm != null) {
+                              setFuelReserveInput(String(data.fuelReserveKm));
+                            } else {
+                              setFuelReserveInput("");
+                            }
+                            setFuelAutoSync(true);
+                            setFuelStatus("Fuel settings reset from motorcycle.");
+                            router.refresh();
+                          } catch (err: any) {
+                            setFuelStatus(err.message ?? "Failed to reset fuel from motorcycle");
+                          } finally {
+                            setFuelSaving(false);
+                          }
+                        }}
+                        className="rounded border border-slate-500 px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                      >
+                        Reset to bike defaults
+                      </button>
                       <button
                         type="button"
                         disabled={fuelSaving}
@@ -1229,6 +1521,25 @@ export default function TripDetailClient({
                     {fuelPlan.longestLegKm != null && (
                       <p className="text-[11px] text-slate-300">
                         Longest distance between fuel stops: {fuelPlan.longestLegKm.toFixed(0)} km
+                      </p>
+                    )}
+                    {trip.motorcycle && (
+                      <p className="text-[11px] text-slate-400">
+                        Fuel range for this trip: {trip.fuelRangeKm != null ? `${trip.fuelRangeKm} km` : "not set"}
+                        {" "}
+                        {trip.motorcycle.preferredRangeKm != null &&
+                          trip.fuelRangeKm === trip.motorcycle.preferredRangeKm && (
+                            <span className="ml-1 text-emerald-300">
+                              (using preferred range from {trip.motorcycle.displayName ?? "motorcycle"})
+                            </span>
+                          )}
+                        {trip.motorcycle.preferredRangeKm == null &&
+                          trip.motorcycle.estimatedRangeKm != null &&
+                          trip.fuelRangeKm === trip.motorcycle.estimatedRangeKm && (
+                            <span className="ml-1 text-emerald-300">
+                              (based on estimated range from {trip.motorcycle.displayName ?? "motorcycle"})
+                            </span>
+                          )}
                       </p>
                     )}
                     <div className="space-y-1">

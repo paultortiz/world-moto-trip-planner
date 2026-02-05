@@ -36,6 +36,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <Link href="/trips/new" className="text-slate-200 hover:text-adv-accent">
                       New trip
                     </Link>
+                    <Link href="/motorcycles" className="text-slate-200 hover:text-adv-accent">
+                      Garage
+                    </Link>
                     {(role === "SPONSOR" || role === "ADMIN") && (
                       <Link href="/sponsor" className="text-slate-200 hover:text-adv-accent">
                         Sponsor
