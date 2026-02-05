@@ -120,23 +120,28 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       const shouldDeriveFromMoto = (resetFuel || bikeChanged || autoSyncTurnedOn) && autoSyncEnabled;
 
       if (shouldDeriveFromMoto && fuelRangeForUpdate == null && fuelReserveForUpdate == null) {
-        const moto = await tx.motorcycle.findFirst({
-          where: { id: nextMotorcycleId, userId },
-        });
-        if (moto) {
-          const baseRange =
-            typeof moto.preferredRangeKm === "number" && Number.isFinite(moto.preferredRangeKm)
-              ? moto.preferredRangeKm
-              : typeof moto.estimatedRangeKm === "number" && Number.isFinite(moto.estimatedRangeKm)
-              ? moto.estimatedRangeKm
-              : undefined;
-          if (baseRange != null) {
-            fuelRangeForUpdate = Math.round(baseRange);
-            const baseReserve =
-              typeof moto.preferredReserveKm === "number" && Number.isFinite(moto.preferredReserveKm)
-                ? moto.preferredReserveKm
-                : Math.round(baseRange * 0.8);
-            fuelReserveForUpdate = Math.round(baseReserve);
+        // If we have no motorcycle to derive from, skip lookup.
+        if (!nextMotorcycleId) {
+          // This should be rare, but it keeps types and runtime consistent.
+        } else {
+          const moto = await tx.motorcycle.findFirst({
+            where: { id: nextMotorcycleId, userId },
+          });
+          if (moto) {
+            const baseRange =
+              typeof moto.preferredRangeKm === "number" && Number.isFinite(moto.preferredRangeKm)
+                ? moto.preferredRangeKm
+                : typeof moto.estimatedRangeKm === "number" && Number.isFinite(moto.estimatedRangeKm)
+                ? moto.estimatedRangeKm
+                : undefined;
+            if (baseRange != null) {
+              fuelRangeForUpdate = Math.round(baseRange);
+              const baseReserve =
+                typeof moto.preferredReserveKm === "number" && Number.isFinite(moto.preferredReserveKm)
+                  ? moto.preferredReserveKm
+                  : Math.round(baseRange * 0.8);
+              fuelReserveForUpdate = Math.round(baseReserve);
+            }
           }
         }
       }
