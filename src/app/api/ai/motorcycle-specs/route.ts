@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
             seatHeightMm: specs.seatHeightMm ?? null,
             offroadBias: specs.offroadBias ?? null,
             highwayComfort: specs.highwayComfort ?? null,
-            specs,
+            specs: specs as any,
           },
         });
       } else {
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
             seatHeightMm: specs.seatHeightMm ?? null,
             offroadBias: specs.offroadBias ?? null,
             highwayComfort: specs.highwayComfort ?? null,
-            specs,
+            specs: specs as any,
           },
         });
       }
