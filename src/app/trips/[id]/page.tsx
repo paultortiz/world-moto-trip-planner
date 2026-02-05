@@ -29,12 +29,23 @@ export default async function TripDetailPage({
     include: {
       waypoints: { orderBy: { orderIndex: "asc" } },
       routeSegments: true,
+      motorcycle: true,
     },
   });
 
   if (!trip) {
     notFound();
   }
+
+  const motorcycles = await prisma.motorcycle.findMany({
+    where: { userId },
+    orderBy: [
+      { isDefaultForNewTrips: "desc" },
+      { year: "desc" },
+      { make: "asc" },
+      { model: "asc" },
+    ],
+  });
 
   const firstSegmentWithPolyline = trip.routeSegments.find(
     (seg) => !!seg.polyline,
@@ -47,7 +58,7 @@ export default async function TripDetailPage({
 
   return (
     <main className="min-h-screen p-6 space-y-6">
-      <TripDetailClient trip={trip} routePath={routePath} />
+      <TripDetailClient trip={trip} routePath={routePath} motorcycles={motorcycles} />
     </main>
   );
 }

@@ -59,6 +59,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       earliestDepartureHour,
       latestArrivalHour,
       segmentNotes,
+      motorcycleId,
+      fuelAutoFromMotorcycle,
+      resetFuelFromMotorcycle,
     } = body ?? {};
 
     const safeWaypoints = Array.isArray(waypoints)
@@ -71,6 +74,78 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       : null;
 
     const updatedTrip = await prisma.$transaction(async (tx) => {
+      // Load existing trip so we can reason about motorcycle and fuel defaults.
+      const existing = await tx.trip.findFirst({
+        where: { id, userId },
+        include: { motorcycle: true },
+      });
+
+      if (!existing) {
+        throw new Error("Trip not found");
+      }
+
+      let nextMotorcycleId: string | null | undefined = existing.motorcycleId;
+      if (motorcycleId === null) {
+        nextMotorcycleId = null;
+      } else if (typeof motorcycleId === "string") {
+        nextMotorcycleId = motorcycleId;
+      }
+
+      let nextFuelAutoFromMoto: boolean | undefined = existing.fuelAutoFromMotorcycle ?? undefined;
+      if (typeof fuelAutoFromMotorcycle === "boolean") {
+        nextFuelAutoFromMoto = fuelAutoFromMotorcycle;
+      }
+
+      const resetFuel = resetFuelFromMotorcycle === true;
+      if (resetFuel && nextMotorcycleId) {
+        nextFuelAutoFromMoto = true;
+      }
+
+      let fuelRangeForUpdate: number | undefined =
+        typeof fuelRangeKm === "number" && Number.isFinite(fuelRangeKm)
+          ? Math.round(fuelRangeKm)
+          : undefined;
+      let fuelReserveForUpdate: number | undefined =
+        typeof fuelReserveKm === "number" && Number.isFinite(fuelReserveKm)
+          ? Math.round(fuelReserveKm)
+          : undefined;
+
+      // If the client selected or re-synced a motorcycle and left fuel fields blank,
+      // derive from the bike.
+      const bikeChanged = nextMotorcycleId && nextMotorcycleId !== existing.motorcycleId;
+      const autoSyncEnabled = nextFuelAutoFromMoto !== false;
+      const autoSyncTurnedOn =
+        existing.fuelAutoFromMotorcycle === false && nextFuelAutoFromMoto === true && nextMotorcycleId;
+
+      const shouldDeriveFromMoto = (resetFuel || bikeChanged || autoSyncTurnedOn) && autoSyncEnabled;
+
+      if (shouldDeriveFromMoto && fuelRangeForUpdate == null && fuelReserveForUpdate == null) {
+        // If we have no motorcycle to derive from, skip lookup.
+        if (!nextMotorcycleId) {
+          // This should be rare, but it keeps types and runtime consistent.
+        } else {
+          const moto = await tx.motorcycle.findFirst({
+            where: { id: nextMotorcycleId, userId },
+          });
+          if (moto) {
+            const baseRange =
+              typeof moto.preferredRangeKm === "number" && Number.isFinite(moto.preferredRangeKm)
+                ? moto.preferredRangeKm
+                : typeof moto.estimatedRangeKm === "number" && Number.isFinite(moto.estimatedRangeKm)
+                ? moto.estimatedRangeKm
+                : undefined;
+            if (baseRange != null) {
+              fuelRangeForUpdate = Math.round(baseRange);
+              const baseReserve =
+                typeof moto.preferredReserveKm === "number" && Number.isFinite(moto.preferredReserveKm)
+                  ? moto.preferredReserveKm
+                  : Math.round(baseRange * 0.8);
+              fuelReserveForUpdate = Math.round(baseReserve);
+            }
+          }
+        }
+      }
+
       // Update basic trip fields if provided.
       await tx.trip.update({
         where: { id, userId },
@@ -79,14 +154,8 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
           description,
           startDate: startDate ? new Date(startDate) : undefined,
           endDate: endDate ? new Date(endDate) : undefined,
-          fuelRangeKm:
-            typeof fuelRangeKm === "number" && Number.isFinite(fuelRangeKm)
-              ? Math.round(fuelRangeKm)
-              : undefined,
-          fuelReserveKm:
-            typeof fuelReserveKm === "number" && Number.isFinite(fuelReserveKm)
-              ? Math.round(fuelReserveKm)
-              : undefined,
+          fuelRangeKm: fuelRangeForUpdate,
+          fuelReserveKm: fuelReserveForUpdate,
           plannedDailyRideHours:
             typeof plannedDailyRideHours === "number" && Number.isFinite(plannedDailyRideHours)
               ? Math.round(plannedDailyRideHours)
@@ -100,6 +169,8 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
               ? Math.round(latestArrivalHour)
               : undefined,
           segmentNotes: segmentNotes ?? undefined,
+          motorcycleId: nextMotorcycleId,
+          fuelAutoFromMotorcycle: nextFuelAutoFromMoto,
         },
       });
 

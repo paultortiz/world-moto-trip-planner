@@ -3,13 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function NewTripClient() {
+interface NewTripClientProps {
+  motorcycles: any[];
+}
+
+export default function NewTripClient({ motorcycles }: NewTripClientProps) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const defaultFromGarage = motorcycles.find((m) => m.isDefaultForNewTrips);
+  const [selectedMotorcycleId, setSelectedMotorcycleId] = useState<string>(
+    defaultFromGarage?.id ?? "",
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,6 +32,7 @@ export default function NewTripClient() {
           name,
           description,
           startDate: startDate || null,
+          motorcycleId: selectedMotorcycleId || null,
         }),
       });
 
@@ -69,6 +78,10 @@ export default function NewTripClient() {
           Give this route a name and optional description. After creating it, you&apos;ll be
           taken to the full trip editor to add waypoints, fuel plan, schedule, and notes.
         </p>
+        <p className="mt-1 text-xs text-slate-500">
+          If you&apos;ve picked a default bike in your <span className="font-semibold">Garage</span>, it&apos;s pre-selected below. You can
+          change it for this trip at any time.
+        </p>
       </header>
 
       <section className="max-w-md rounded border border-adv-border bg-slate-900/80 p-4 shadow-adv-glow">
@@ -101,6 +114,33 @@ export default function NewTripClient() {
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Motorcycle (optional)</label>
+            <select
+              className="mt-1 w-full rounded border border-slate-600 bg-slate-950 p-2 text-sm text-slate-200"
+              value={selectedMotorcycleId}
+              onChange={(e) => setSelectedMotorcycleId(e.target.value)}
+            >
+              <option value="">No motorcycle selected</option>
+              {motorcycles.map((moto: any) => {
+                const baseLabel =
+                  moto.displayName ||
+                  `${moto.year ?? ""} ${moto.make ?? ""} ${moto.model ?? ""}`.trim() ||
+                  "Motorcycle";
+                const suffix = moto.isDefaultForNewTrips ? " (default for new trips)" : "";
+                return (
+                  <option key={moto.id} value={moto.id}>
+                    {baseLabel}
+                    {suffix}
+                  </option>
+                );
+              })}
+            </select>
+            <p className="mt-1 text-xs text-slate-400">
+              You can manage motorcycles in your <span className="font-semibold">Garage</span> from the top nav.
+            </p>
           </div>
 
           <button
