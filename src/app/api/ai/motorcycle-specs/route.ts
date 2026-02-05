@@ -60,7 +60,6 @@ export async function POST(req: NextRequest) {
     if (tripId && typeof tripId === "string") {
       trip = await prisma.trip.findFirst({
         where: { id: tripId, userId },
-        include: { motorcycle: true },
       });
 
       if (!trip) {
