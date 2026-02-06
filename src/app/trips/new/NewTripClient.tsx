@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface NewTripClientProps {
   motorcycles: any[];
@@ -9,6 +10,7 @@ interface NewTripClientProps {
 
 export default function NewTripClient({ motorcycles }: NewTripClientProps) {
   const router = useRouter();
+  const t = useTranslations("newTrip");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -60,11 +62,11 @@ export default function NewTripClient({ motorcycles }: NewTripClientProps) {
         return;
       }
 
-      setStatus("Trip created.");
+      setStatus(t("tripCreated"));
       setName("");
       setDescription("");
     } catch (err: any) {
-      setStatus(`Error: ${err.message ?? "Failed to create trip"}`);
+      setStatus(`${t("error")}: ${err.message ?? t("failedToCreate")}`);
     } finally {
       setLoading(false);
     }
@@ -73,21 +75,19 @@ export default function NewTripClient({ motorcycles }: NewTripClientProps) {
   return (
     <main className="min-h-screen p-6 space-y-4">
       <header className="max-w-5xl">
-        <h1 className="text-2xl font-bold">Plan a new route</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Give this route a name and optional description. After creating it, you&apos;ll be
-          taken to the full trip editor to add waypoints, fuel plan, schedule, and notes.
+          {t("subtitle")}
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          If you&apos;ve picked a default bike in your <span className="font-semibold">Garage</span>, it&apos;s pre-selected below. You can
-          change it for this trip at any time.
+          {t("garageHint")}
         </p>
       </header>
 
       <section className="max-w-md rounded border border-adv-border bg-slate-900/80 p-4 shadow-adv-glow">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium">Trip name</label>
+            <label className="block text-sm font-medium">{t("tripName")}</label>
             <input
               className="mt-1 w-full rounded border border-slate-600 bg-slate-950 p-2 text-sm"
               value={name}
@@ -97,7 +97,7 @@ export default function NewTripClient({ motorcycles }: NewTripClientProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Description (optional)</label>
+            <label className="block text-sm font-medium">{t("description")}</label>
             <textarea
               className="mt-1 w-full rounded border border-slate-600 bg-slate-950 p-2 text-sm"
               value={description}
@@ -107,7 +107,7 @@ export default function NewTripClient({ motorcycles }: NewTripClientProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Planned start date (optional)</label>
+            <label className="block text-sm font-medium">{t("startDate")}</label>
             <input
               type="date"
               className="mt-1 w-full rounded border border-slate-600 bg-slate-950 p-2 text-sm"
@@ -117,19 +117,19 @@ export default function NewTripClient({ motorcycles }: NewTripClientProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Motorcycle (optional)</label>
+            <label className="block text-sm font-medium">{t("motorcycle")}</label>
             <select
               className="mt-1 w-full rounded border border-slate-600 bg-slate-950 p-2 text-sm text-slate-200"
               value={selectedMotorcycleId}
               onChange={(e) => setSelectedMotorcycleId(e.target.value)}
             >
-              <option value="">No motorcycle selected</option>
+              <option value="">{t("noMotorcycle")}</option>
               {motorcycles.map((moto: any) => {
                 const baseLabel =
                   moto.displayName ||
                   `${moto.year ?? ""} ${moto.make ?? ""} ${moto.model ?? ""}`.trim() ||
                   "Motorcycle";
-                const suffix = moto.isDefaultForNewTrips ? " (default for new trips)" : "";
+                const suffix = moto.isDefaultForNewTrips ? ` ${t("defaultForTrips")}` : "";
                 return (
                   <option key={moto.id} value={moto.id}>
                     {baseLabel}
@@ -139,7 +139,7 @@ export default function NewTripClient({ motorcycles }: NewTripClientProps) {
               })}
             </select>
             <p className="mt-1 text-xs text-slate-400">
-              You can manage motorcycles in your <span className="font-semibold">Garage</span> from the top nav.
+              {t("motorcycleHint")}
             </p>
           </div>
 
@@ -148,7 +148,7 @@ export default function NewTripClient({ motorcycles }: NewTripClientProps) {
             disabled={loading}
             className="rounded bg-adv-accent px-4 py-2 text-sm font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Trip"}
+            {loading ? t("creating") : t("createTrip")}
           </button>
         </form>
 

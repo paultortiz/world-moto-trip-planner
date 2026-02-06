@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface ElevationPoint {
   distanceMeters: number;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function ElevationProfile({ tripId, refreshKey }: Props) {
+  const t = useTranslations("tripDetail");
   const [profile, setProfile] = useState<ElevationPoint[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,13 +113,13 @@ export default function ElevationProfile({ tripId, refreshKey }: Props) {
 
   if (loading && !profile) {
     return (
-      <div className="mt-4 text-xs text-slate-400">Fetching elevation profile...</div>
+      <div className="mt-4 text-xs text-slate-400">{t("fetchingElevation")}</div>
     );
   }
 
   if (error) {
     return (
-      <div className="mt-4 text-xs text-red-400">Elevation: {error}</div>
+      <div className="mt-4 text-xs text-red-400">{t("elevationProfile")}: {error}</div>
     );
   }
 
@@ -143,10 +145,10 @@ export default function ElevationProfile({ tripId, refreshKey }: Props) {
   return (
     <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
       <div className="flex items-center justify-between">
-        <p className="font-semibold text-slate-100">Elevation profile</p>
+        <p className="font-semibold text-slate-100">{t("elevationProfile")}</p>
         {summary && (
           <p className="text-[11px] text-slate-400">
-            Ascent: {(summary.totalAscentMeters / 1000).toFixed(1)} km · Max: {" "}
+            {t("ascent")}: {(summary.totalAscentMeters / 1000).toFixed(1)} km · {t("max")}: {" "}
             {summary.maxElevationMeters.toFixed(0)} m
           </p>
         )}
@@ -171,13 +173,13 @@ export default function ElevationProfile({ tripId, refreshKey }: Props) {
       </div>
       {summary && (
         <p className="text-[11px] text-slate-400">
-          Total ascent {summary.totalAscentMeters.toFixed(0)} m, descent {" "}
+          {t("totalAscent")} {summary.totalAscentMeters.toFixed(0)} m, {t("descent")} {" "}
           {summary.totalDescentMeters.toFixed(0)} m.
         </p>
       )}
       {climbs.length > 0 && (
         <div className="mt-1 text-[11px] text-slate-400">
-          <p className="font-semibold text-slate-200">Notable climbs</p>
+          <p className="font-semibold text-slate-200">{t("notableClimbs")}</p>
           <ul className="mt-1 space-y-0.5">
             {climbs.map((c, idx) => (
               <li key={`${c.startKm}-${c.endKm}-${idx}`}>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import TripPlannerMap, {
   type WaypointPosition,
 } from "@/features/map/TripPlannerMap";
@@ -250,6 +251,7 @@ export default function TripDetailClient({
   routePath,
   motorcycles = [],
 }: TripDetailClientProps) {
+  const t = useTranslations("tripDetail");
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -615,13 +617,13 @@ export default function TripDetailClient({
           <p className="mt-2 text-sm text-slate-300">{trip.description}</p>
         )}
         <p className="mt-1 text-xs text-slate-500">
-          Trip ID: <span className="font-mono">{trip.id}</span>
+          {t("tripId")}: <span className="font-mono">{trip.id}</span>
         </p>
 
         <div className="mt-2 flex flex-wrap items-end gap-3 text-xs text-slate-300">
           <div className="flex flex-col">
             <label htmlFor="trip-start-date" className="text-[11px] text-slate-400">
-              Planned start date
+              {t("plannedStartDate")}
             </label>
             <input
               id="trip-start-date"
@@ -633,7 +635,7 @@ export default function TripDetailClient({
           </div>
           <div className="flex flex-col">
             <label htmlFor="trip-end-date" className="text-[11px] text-slate-400">
-              Planned end date (optional)
+              {t("plannedEndDate")}
             </label>
             <input
               id="trip-end-date"
@@ -661,20 +663,20 @@ export default function TripDetailClient({
 
                 if (!res.ok) {
                   const data = await res.json().catch(() => null);
-                  throw new Error(data?.error ?? "Failed to save dates");
+                  throw new Error(data?.error ?? t("failedToSaveDates"));
                 }
 
-                setDatesStatus("Trip dates saved.");
+                setDatesStatus(t("datesSaved"));
                 router.refresh();
               } catch (err: any) {
-                setDatesStatus(err.message ?? "Failed to save dates");
+                setDatesStatus(err.message ?? t("failedToSaveDates"));
               } finally {
                 setDatesSaving(false);
               }
             }}
             className="ml-auto rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
           >
-            {datesSaving ? "Saving..." : "Save dates"}
+            {datesSaving ? t("savingDates") : t("saveDates")}
           </button>
         </div>
         <div className="mt-1" aria-live="polite" role="status">
@@ -689,30 +691,29 @@ export default function TripDetailClient({
         <div className="space-y-3">
           {waypoints.length === 0 && (
             <div className="rounded border border-adv-border bg-slate-900/80 p-2 text-[11px] text-slate-200 shadow-adv-glow">
-              <p className="font-semibold text-slate-100">Start planning this route</p>
+              <p className="font-semibold text-slate-100">{t("startPlanning")}</p>
               <p className="mt-1 text-slate-300">
-                Drop your first waypoint directly on the map below, or use the &quot;Search address or place...&quot; box
-                to add a location. Then you can turn on nearby fuel, lodging, dining, and POI overlays.
+                {t("startPlanningHint")}
               </p>
             </div>
           )}
 
           <div>
-            <h2 className="text-lg font-semibold">Trip overview map</h2>
+            <h2 className="text-lg font-semibold">{t("mapTitle")}</h2>
             <p className="mt-1 text-xs text-slate-400">
-              Saved waypoints and the calculated route for this trip are shown below.
+              {t("mapDescription")}
               <span className="ml-1 font-semibold text-amber-300">
-                Turn on &quot;Add waypoints by clicking the map&quot; to place new points,
+                {t("mapClickHint")}
               </span>
               {" "}
-              or use the search box above the map.
+              {t("mapSearchHint")}
             </p>
             {showClickToAddHint && (
               <div className="mt-2 flex items-start justify-between gap-2 rounded border border-amber-400/70 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-100">
                 <p className="pr-2">
-                  Tip: When you want to lay down waypoints, enable
-                  <span className="mx-1 font-semibold">&quot;Add waypoints by clicking map&quot;</span>
-                  below. Turn it off again to pan and explore without creating points.
+                  {t("clickToAddTip")}
+                  <span className="mx-1 font-semibold">{t("clickToAddLabel")}</span>
+                  {t("clickToAddTipEnd")}
                 </p>
                 <button
                   type="button"
@@ -728,30 +729,30 @@ export default function TripDetailClient({
                   }}
                   className="ml-auto rounded border border-amber-400/60 px-1 text-[9px] leading-none text-amber-200 hover:bg-amber-500/20"
                 >
-                  Dismiss
+                  {t("dismiss")}
                 </button>
               </div>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
-                <span>Fuel</span>
+                <span>{t("fuel")}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-[#60a5fa]" />
-                <span>Lodging</span>
+                <span>{t("lodging")}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-[#14b8a6]" />
-                <span>Campground</span>
+                <span>{t("campground")}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-[#fb7185]" />
-                <span>Dining</span>
+                <span>{t("dining")}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
-                <span>POI</span>
+                <span>{t("poi")}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="flex items-center gap-1">
@@ -761,7 +762,7 @@ export default function TripDetailClient({
                     checked={showFuelPlaces}
                     onChange={(e) => setShowFuelPlaces(e.target.checked)}
                   />
-                  <span>Nearby fuel</span>
+                  <span>{t("nearbyFuel")}</span>
                 </label>
                 <label className="flex items-center gap-1">
                   <input
@@ -770,7 +771,7 @@ export default function TripDetailClient({
                     checked={showLodgingPlaces}
                     onChange={(e) => setShowLodgingPlaces(e.target.checked)}
                   />
-                  <span>Nearby lodging</span>
+                  <span>{t("nearbyLodging")}</span>
                 </label>
                 <label className="flex items-center gap-1">
                   <input
@@ -779,7 +780,7 @@ export default function TripDetailClient({
                     checked={showCampgroundPlaces}
                     onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
                   />
-                  <span>Nearby campgrounds</span>
+                  <span>{t("nearbyCampgrounds")}</span>
                 </label>
                 <label className="flex items-center gap-1">
                   <input
@@ -788,7 +789,7 @@ export default function TripDetailClient({
                     checked={showDiningPlaces}
                     onChange={(e) => setShowDiningPlaces(e.target.checked)}
                   />
-                  <span>Nearby dining</span>
+                  <span>{t("nearbyDining")}</span>
                 </label>
                 <label className="flex items-center gap-1">
                   <input
@@ -797,7 +798,7 @@ export default function TripDetailClient({
                     checked={showPoiPlaces}
                     onChange={(e) => setShowPoiPlaces(e.target.checked)}
                   />
-                  <span>Nearby POIs</span>
+                  <span>{t("nearbyPois")}</span>
                 </label>
                 <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
                   <input
@@ -806,16 +807,16 @@ export default function TripDetailClient({
                     checked={enableClickToAdd}
                     onChange={(e) => setEnableClickToAdd(e.target.checked)}
                   />
-                  <span className="font-semibold text-amber-300">Add waypoints by clicking map</span>
+                  <span className="font-semibold text-amber-300">{t("addWaypointsByClick")}</span>
                 </label>
                 <label className="flex items-center gap-1">
-                  <span className="text-slate-500">Min rating</span>
+                  <span className="text-slate-500">{t("minRating")}</span>
                   <select
                     className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px]"
                     value={minPlaceRating}
                     onChange={(e) => setMinPlaceRating(e.target.value)}
                   >
-                    <option value="any">Any</option>
+                    <option value="any">{t("any")}</option>
                     <option value="3.5">3.5+</option>
                     <option value="4.0">4.0+</option>
                     <option value="4.5">4.5+</option>
@@ -828,7 +829,7 @@ export default function TripDetailClient({
                     checked={onlyOpenNow}
                     onChange={(e) => setOnlyOpenNow(e.target.checked)}
                   />
-                  <span>Open now only</span>
+                  <span>{t("openNowOnly")}</span>
                 </label>
               </div>
             </div>
@@ -875,8 +876,7 @@ export default function TripDetailClient({
 
           {isDirty && (
             <p className="text-[11px] text-amber-400">
-              You have unsaved waypoint changes. The route line reflects the last saved version and
-              will update after saving.
+              {t("unsavedChanges")}
             </p>
           )}
 
@@ -888,12 +888,12 @@ export default function TripDetailClient({
           <div className="flex items-center justify-between text-xs text-slate-300">
             <div>
               <p>
-                Total distance: {trip.totalDistanceMeters != null
+                {t("totalDistance")}: {trip.totalDistanceMeters != null
                   ? `${(trip.totalDistanceMeters / 1000).toFixed(1)} km`
                   : "--"}
               </p>
               <p>
-                Total duration: {trip.totalDurationSeconds != null
+                {t("totalDuration")}: {trip.totalDurationSeconds != null
                   ? `${(trip.totalDurationSeconds / 3600).toFixed(1)} h`
                   : "--"}
               </p>
@@ -907,7 +907,7 @@ export default function TripDetailClient({
                 href={`/api/trips/${trip.id}/gpx`}
                 className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
               >
-                Export GPX
+                {t("exportGpx")}
               </a>
               <DeleteTripButton tripId={trip.id} />
             </div>
@@ -949,7 +949,7 @@ export default function TripDetailClient({
           {dailyPlan.length > 0 && (
             <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Daily distance and duration plan by day">
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Daily plan</h2>
+                <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("dailyPlan")}</h2>
               </div>
               <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
                 {dailyPlan.map((day) => {
@@ -963,7 +963,7 @@ export default function TripDetailClient({
                           : "border border-slate-700 bg-slate-950/60"
                       }`}
                     >
-                      <span className="text-slate-300">Day {day.day}</span>
+                      <span className="text-slate-300">{t("day")} {day.day}</span>
                       <span className="text-slate-400">
                         {day.distanceKm.toFixed(0)} km · {day.durationHours.toFixed(1)} h
                       </span>
@@ -980,7 +980,7 @@ export default function TripDetailClient({
           {/* Sharing panel */}
           <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Trip sharing settings">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Sharing</h2>
+              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("sharing")}</h2>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-1 text-[11px] text-slate-300">
                   <input
@@ -1007,16 +1007,16 @@ export default function TripDetailClient({
                         setShareEnabled(Boolean(data.isPublic && data.shareToken));
                         setShareToken(data.shareToken ?? null);
                         setShareStatus(
-                          data.isPublic ? "Sharing enabled." : "Sharing disabled.",
+                          data.isPublic ? t("sharingEnabledStatus") : t("sharingDisabledStatus"),
                         );
                       } catch (err: any) {
-                        setShareStatus(err.message ?? "Failed to update sharing");
+                        setShareStatus(err.message ?? t("failedToUpdateSharing"));
                       } finally {
                         setShareSaving(false);
                       }
                     }}
                   />
-                  <span>{shareEnabled ? "Anyone with the link can view" : "Sharing disabled"}</span>
+                  <span>{shareEnabled ? t("sharingEnabled") : t("sharingDisabled")}</span>
                 </label>
                 {shareEnabled && shareToken && (
                   <button
@@ -1027,21 +1027,21 @@ export default function TripDetailClient({
                         const origin = window.location.origin;
                         const url = `${origin}/share/${shareToken}`;
                         await navigator.clipboard.writeText(url);
-                        setShareStatus("Share link copied to clipboard.");
+                        setShareStatus(t("linkCopied"));
                       } catch {
-                        setShareStatus("Unable to copy link; please copy it manually.");
+                        setShareStatus(t("copyFailed"));
                       }
                     }}
                     className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
                   >
-                    Copy link
+                    {t("copyLink")}
                   </button>
                 )}
               </div>
             </div>
             {shareEnabled && shareToken && (
               <div className="mt-1">
-                <p className="text-[11px] text-slate-400">Share URL</p>
+                <p className="text-[11px] text-slate-400">{t("shareUrl")}</p>
                 <div className="mt-1 flex items-center gap-2">
                   <input
                     readOnly
@@ -1074,12 +1074,12 @@ export default function TripDetailClient({
             startDateLabelBase={startDateInput || null}
           />
 
-          <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Planning tools</h2>
+          <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("planningTools")}</h2>
 
           {/* AI daily plan suggestion */}
           <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="AI-generated daily riding plan">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">AI daily plan suggestion</h2>
+              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("aiDailyPlan")}</h2>
               <button
                 type="button"
                 disabled={aiPlanLoading || waypoints.length < 2}
@@ -1110,15 +1110,14 @@ export default function TripDetailClient({
                 className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
               >
                 {aiPlanLoading
-                  ? "Thinking..."
+                  ? t("thinking")
                   : waypoints.length < 2
-                  ? "Add more waypoints"
-                  : "Suggest daily plan"}
+                  ? t("addMoreWaypoints")
+                  : t("suggestDailyPlan")}
               </button>
             </div>
             <p className="text-[11px] text-slate-400">
-              Get a suggested multi-day riding plan that calls out scenic legs and nearby points of interest
-              along your waypoints.
+              {t("aiPlanDescription")}
             </p>
             <div aria-live="polite" role="status">
               {aiPlanError && (
@@ -1137,14 +1136,14 @@ export default function TripDetailClient({
           {/* Motorcycle section */}
           <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Motorcycle for this trip">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Motorcycle for this trip</h2>
+              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("motorcycleForTrip")}</h2>
               {trip.motorcycle?.displayName && (
                 <span className="text-[11px] text-slate-400">{trip.motorcycle.displayName}</span>
               )}
             </div>
             <div className="mt-2 flex flex-wrap items-end gap-3">
               <div className="flex flex-col gap-1">
-                <span className="text-[11px] text-slate-400">Select from garage</span>
+                <span className="text-[11px] text-slate-400">{t("selectFromGarage")}</span>
                 <select
                   className="min-w-[180px] rounded border border-slate-600 bg-slate-950 p-1 text-[11px] text-slate-200"
                   value={selectedMotorcycleId}
@@ -1173,24 +1172,24 @@ export default function TripDetailClient({
 
                       setBikeStatus(
                         nextId
-                          ? "Motorcycle attached to this trip and fuel settings adjusted."
-                          : "Motorcycle detached from this trip.",
+                          ? t("motorcycleAttached")
+                          : t("motorcycleDetached"),
                       );
                       router.refresh();
                     } catch (err: any) {
-                      setBikeStatus(err?.message ?? "Failed to update motorcycle");
+                      setBikeStatus(err?.message ?? t("failedToUpdateMotorcycle"));
                     } finally {
                       setBikeSaving(false);
                     }
                   }}
                 >
-                  <option value="">No motorcycle selected</option>
+                <option value="">{t("noMotorcycleSelected")}</option>
                   {motorcycles.map((moto: any) => {
                     const baseLabel =
                       moto.displayName ||
                       `${moto.year ?? ""} ${moto.make ?? ""} ${moto.model ?? ""}`.trim() ||
                       "Motorcycle";
-                    const suffix = moto.isDefaultForNewTrips ? " (default for new trips)" : "";
+                    const suffix = moto.isDefaultForNewTrips ? ` ${t("defaultForNewTrips")}` : "";
                     return (
                       <option key={moto.id} value={moto.id}>
                         {baseLabel}
@@ -1204,15 +1203,15 @@ export default function TripDetailClient({
                 href="/motorcycles"
                 className="text-[11px] text-adv-accent hover:text-adv-accentMuted underline-offset-2 hover:underline"
               >
-                Manage in Garage
+                {t("manageInGarage")}
               </a>
             </div>
             <p className="mt-3 text-[11px] text-slate-400">
-              Or describe the bike you plan to ride and let AI estimate specs:
+              {t("aiSpecsHint")}
             </p>
             <div className="mt-2 flex flex-wrap gap-3">
               <label className="flex flex-col gap-1">
-                <span className="text-[11px] text-slate-400">Year</span>
+                <span className="text-[11px] text-slate-400">{t("year")}</span>
                 <input
                   type="number"
                   min={1970}
@@ -1223,7 +1222,7 @@ export default function TripDetailClient({
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[11px] text-slate-400">Make</span>
+                <span className="text-[11px] text-slate-400">{t("make")}</span>
                 <input
                   type="text"
                   className="w-32 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
@@ -1233,7 +1232,7 @@ export default function TripDetailClient({
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[11px] text-slate-400">Model</span>
+                <span className="text-[11px] text-slate-400">{t("model")}</span>
                 <input
                   type="text"
                   className="w-40 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
@@ -1266,17 +1265,17 @@ export default function TripDetailClient({
                         throw new Error(data?.error ?? "Failed to fetch motorcycle specs");
                       }
 
-                      setBikeStatus("Motorcycle specs updated from AI.");
+                      setBikeStatus(t("specsUpdated"));
                       router.refresh();
                     } catch (err: any) {
-                      setBikeStatus(err?.message ?? "Failed to fetch motorcycle specs");
+                      setBikeStatus(err?.message ?? t("failedToFetchSpecs"));
                     } finally {
                       setBikeSaving(false);
                     }
                   }}
                   className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
                 >
-                  {bikeSaving ? "Fetching specs..." : "Fetch specs"}
+                  {bikeSaving ? t("fetchingSpecs") : t("fetchSpecs")}
                 </button>
               </div>
             </div>
@@ -1287,28 +1286,28 @@ export default function TripDetailClient({
                 </p>
                 <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
                   {typeof trip.motorcycle.engineDisplacementCc === "number" && (
-                    <p>Engine: {trip.motorcycle.engineDisplacementCc} cc</p>
+                    <p>{t("engine")}: {trip.motorcycle.engineDisplacementCc} cc</p>
                   )}
                   {typeof trip.motorcycle.wetWeightKg === "number" && (
-                    <p>Wet weight: {trip.motorcycle.wetWeightKg} kg</p>
+                    <p>{t("wetWeight")}: {trip.motorcycle.wetWeightKg} kg</p>
                   )}
                   {typeof trip.motorcycle.fuelCapacityLiters === "number" && (
-                    <p>Fuel capacity: {trip.motorcycle.fuelCapacityLiters.toFixed(1)} L</p>
+                    <p>{t("fuelCapacity")}: {trip.motorcycle.fuelCapacityLiters.toFixed(1)} L</p>
                   )}
                   {typeof trip.motorcycle.estimatedRangeKm === "number" && (
-                    <p>Estimated range: {trip.motorcycle.estimatedRangeKm} km</p>
+                    <p>{t("estimatedRange")}: {trip.motorcycle.estimatedRangeKm} km</p>
                   )}
                   {typeof trip.motorcycle.seatHeightMm === "number" && (
-                    <p>Seat height: {trip.motorcycle.seatHeightMm} mm</p>
+                    <p>{t("seatHeight")}: {trip.motorcycle.seatHeightMm} mm</p>
                   )}
                 </div>
                 {trip.motorcycle.specs?.notes && (
                   <p className="mt-1 text-[11px] text-slate-400">
-                    Notes: {(trip.motorcycle.specs as any).notes}
+                    {t("notes")}: {(trip.motorcycle.specs as any).notes}
                   </p>
                 )}
                 <p className="mt-1 text-[10px] text-slate-500">
-                  Specs are approximate and inferred from typical data. Verify against your specific bike and setup.
+                  {t("specsApproximate")}
                 </p>
               </div>
             )}
@@ -1327,7 +1326,7 @@ export default function TripDetailClient({
               aria-expanded={fuelPanelOpen}
               aria-controls="fuel-settings-panel"
             >
-              <span className="font-semibold text-slate-100">Fuel settings & plan</span>
+              <span className="font-semibold text-slate-100">{t("fuelSettings")}</span>
               <span className="text-slate-400">{fuelPanelOpen ? "−" : "+"}</span>
             </button>
             {fuelPanelOpen && (
@@ -1339,8 +1338,7 @@ export default function TripDetailClient({
               >
                 <div>
                   <p className="text-[11px] text-slate-400">
-                    Set your bike&apos;s comfortable range between fuel stops. We&apos;ll use this to flag risky legs
-                    between FUEL waypoints.
+                    {t("fuelSettingsDescription")}
                   </p>
                   {trip.motorcycle && (
                     <p className="mt-1 text-[11px] text-slate-500">
@@ -1393,7 +1391,7 @@ export default function TripDetailClient({
                   )}
                   <div className="mt-2 flex flex-wrap gap-3">
                     <label className="flex flex-col gap-1">
-                      <span className="text-[11px] text-slate-400">Range (km)</span>
+                      <span className="text-[11px] text-slate-400">{t("rangeKm")}</span>
                       <input
                         type="number"
                         min={0}
@@ -1403,7 +1401,7 @@ export default function TripDetailClient({
                       />
                     </label>
                     <label className="flex flex-col gap-1">
-                      <span className="text-[11px] text-slate-400">Reserve (km, optional)</span>
+                      <span className="text-[11px] text-slate-400">{t("reserveKm")}</span>
                       <input
                         type="number"
                         min={0}
@@ -1444,17 +1442,17 @@ export default function TripDetailClient({
                               setFuelReserveInput("");
                             }
                             setFuelAutoSync(true);
-                            setFuelStatus("Fuel settings reset from motorcycle.");
+                            setFuelStatus(t("fuelResetFromMotorcycle"));
                             router.refresh();
                           } catch (err: any) {
-                            setFuelStatus(err.message ?? "Failed to reset fuel from motorcycle");
+                            setFuelStatus(err.message ?? t("failedToResetFuel"));
                           } finally {
                             setFuelSaving(false);
                           }
                         }}
                         className="rounded border border-slate-500 px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-800 disabled:opacity-50"
                       >
-                        Reset to bike defaults
+                        {t("resetToDefaults")}
                       </button>
                       <button
                         type="button"
@@ -1488,17 +1486,17 @@ export default function TripDetailClient({
                               throw new Error(data?.error ?? "Failed to save fuel settings");
                             }
 
-                            setFuelStatus("Fuel settings saved.");
+                            setFuelStatus(t("fuelSettingsSaved"));
                             router.refresh();
                           } catch (err: any) {
-                            setFuelStatus(err.message ?? "Failed to save fuel settings");
+                            setFuelStatus(err.message ?? t("failedToSaveFuel"));
                           } finally {
                             setFuelSaving(false);
                           }
                         }}
                         className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
                       >
-                        {fuelSaving ? "Saving..." : "Save fuel settings"}
+                        {fuelSaving ? t("savingFuel") : t("saveFuelSettings")}
                       </button>
                     </div>
                   </div>
@@ -1512,15 +1510,15 @@ export default function TripDetailClient({
                 {fuelPlan && fuelPlan.legs.length > 0 && (
                   <section className="space-y-2 rounded border border-slate-800 bg-slate-950/70 p-2" aria-label="Fuel legs between fuel waypoints">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-slate-100 text-xs md:text-sm">Fuel plan</h3>
+                      <h3 className="font-semibold text-slate-100 text-xs md:text-sm">{t("fuelPlan")}</h3>
                       <p className="text-[11px] text-slate-400">
-                        Range: {trip.fuelRangeKm ? `${trip.fuelRangeKm} km` : "not set"}
-                        {trip.fuelReserveKm ? ` · Reserve: ${trip.fuelReserveKm} km` : ""}
+                        {t("range")}: {trip.fuelRangeKm ? `${trip.fuelRangeKm} km` : t("notSet")}
+                        {trip.fuelReserveKm ? ` · ${t("reserve")}: ${trip.fuelReserveKm} km` : ""}
                       </p>
                     </div>
                     {fuelPlan.longestLegKm != null && (
                       <p className="text-[11px] text-slate-300">
-                        Longest distance between fuel stops: {fuelPlan.longestLegKm.toFixed(0)} km
+                        {t("longestFuelLeg")}: {fuelPlan.longestLegKm.toFixed(0)} km
                       </p>
                     )}
                     {trip.motorcycle && (
@@ -1560,9 +1558,9 @@ export default function TripDetailClient({
                           >
                             {leg.distanceKm.toFixed(0)} km
                             {leg.risk === "high"
-                              ? " (beyond range)"
+                              ? ` ${t("beyondRange")}`
                               : leg.risk === "medium"
-                              ? " (beyond reserve)"
+                              ? ` ${t("beyondReserve")}`
                               : ""}
                           </span>
                         </div>
@@ -1584,7 +1582,7 @@ export default function TripDetailClient({
               aria-expanded={schedulePanelOpen}
               aria-controls="schedule-settings-panel"
             >
-              <span className="font-semibold text-slate-100">Schedule settings & daily schedule</span>
+              <span className="font-semibold text-slate-100">{t("scheduleSettings")}</span>
               <span className="text-slate-400">{schedulePanelOpen ? "−" : "+"}</span>
             </button>
             {schedulePanelOpen && (
@@ -1596,11 +1594,11 @@ export default function TripDetailClient({
               >
                 <div>
                   <p className="text-[11px] text-slate-400">
-                    Configure your ideal riding day to see when arrivals might push past your comfort window.
+                    {t("scheduleDescription")}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-3">
                     <label className="flex flex-col gap-1">
-                      <span className="text-[11px] text-slate-400">Target riding time (h/day)</span>
+                      <span className="text-[11px] text-slate-400">{t("targetRidingTime")}</span>
                       <input
                         type="number"
                         min={0}
@@ -1610,7 +1608,7 @@ export default function TripDetailClient({
                       />
                     </label>
                     <label className="flex flex-col gap-1">
-                      <span className="text-[11px] text-slate-400">Earliest departure (hour)</span>
+                      <span className="text-[11px] text-slate-400">{t("earliestDeparture")}</span>
                       <input
                         type="number"
                         min={0}
@@ -1621,7 +1619,7 @@ export default function TripDetailClient({
                       />
                     </label>
                     <label className="flex flex-col gap-1">
-                      <span className="text-[11px] text-slate-400">Latest arrival (hour)</span>
+                      <span className="text-[11px] text-slate-400">{t("latestArrival")}</span>
                       <input
                         type="number"
                         min={0}
@@ -1676,17 +1674,17 @@ export default function TripDetailClient({
                               throw new Error(data?.error ?? "Failed to save schedule settings");
                             }
 
-                            setScheduleStatus("Schedule settings saved.");
+                            setScheduleStatus(t("scheduleSettingsSaved"));
                             router.refresh();
                           } catch (err: any) {
-                            setScheduleStatus(err.message ?? "Failed to save schedule settings");
+                            setScheduleStatus(err.message ?? t("failedToSaveSchedule"));
                           } finally {
                             setScheduleSaving(false);
                           }
                         }}
                         className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
                       >
-                        {scheduleSaving ? "Saving..." : "Save schedule settings"}
+                        {scheduleSaving ? t("savingSchedule") : t("saveScheduleSettings")}
                       </button>
                     </div>
                   </div>
@@ -1700,7 +1698,7 @@ export default function TripDetailClient({
                 {dailyPlan.length > 0 && (
                   <section className="space-y-2 rounded border border-slate-800 bg-slate-950/70 p-2" aria-label="Planned riding schedule by day">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-slate-100 text-xs md:text-sm">Daily schedule</h3>
+                      <h3 className="font-semibold text-slate-100 text-xs md:text-sm">{t("dailySchedule")}</h3>
                     </div>
                     <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
                       {dailyPlan.map((day) => {
@@ -1720,7 +1718,7 @@ export default function TripDetailClient({
                                 : "border border-slate-700 bg-slate-950/60"
                             }`}
                           >
-                            <span className="text-slate-300">Day {day.day}</span>
+                            <span className="text-slate-300">{t("day")} {day.day}</span>
                             <span className="text-slate-400">
                               {formatTime(depart)} → {formatTime(arrive)} ({ride.toFixed(1)} h)
                             </span>
@@ -1745,7 +1743,7 @@ export default function TripDetailClient({
                 aria-expanded={segmentPanelOpen}
                 aria-controls="segment-notes-panel"
               >
-                <span className="font-semibold text-slate-100">Segment risk & notes</span>
+                <span className="font-semibold text-slate-100">{t("segmentRiskNotes")}</span>
                 <span className="text-slate-400">{segmentPanelOpen ? "−" : "+"}</span>
               </button>
               {segmentPanelOpen && (
@@ -1756,7 +1754,7 @@ export default function TripDetailClient({
                   className="mt-2 space-y-2"
                 >
                   <p className="text-[11px] text-slate-400">
-                    Annotate tricky legs between waypoints: exposure, remoteness, weather risks, or surface changes.
+                    {t("segmentDescription")}
                   </p>
                   <div className="mt-2 max-h-56 space-y-2 overflow-y-auto pr-1">
                     {waypoints.slice(0, -1).map((wp, index) => {
@@ -1802,16 +1800,16 @@ export default function TripDetailClient({
                                 });
                               }}
                             >
-                              <option value="">Risk: none</option>
-                              <option value="low">Low</option>
-                              <option value="medium">Medium</option>
-                              <option value="high">High</option>
-                              <option value="extreme">Extreme</option>
+                              <option value="">{t("riskNone")}</option>
+                              <option value="low">{t("riskLow")}</option>
+                              <option value="medium">{t("riskMedium")}</option>
+                              <option value="high">{t("riskHigh")}</option>
+                              <option value="extreme">{t("riskExtreme")}</option>
                             </select>
                             <input
                               type="text"
                               className="min-w-[160px] flex-1 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                              placeholder="Notes (sand, cliffs, no services, etc.)"
+                              placeholder={t("notesPlaceholder")}
                               value={existing.note}
                               onChange={(e) => {
                                 const value = e.target.value;
@@ -1856,16 +1854,16 @@ export default function TripDetailClient({
                             throw new Error(data?.error ?? "Failed to save segment notes");
                           }
 
-                          setSegmentNotesStatus("Segment notes saved.");
+                          setSegmentNotesStatus(t("segmentNotesSaved"));
                         } catch (err: any) {
-                          setSegmentNotesStatus(err.message ?? "Failed to save segment notes");
+                          setSegmentNotesStatus(err.message ?? t("failedToSaveSegmentNotes"));
                         } finally {
                           setSegmentNotesSaving(false);
                         }
                       }}
                       className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
                     >
-                      {segmentNotesSaving ? "Saving..." : "Save segment notes"}
+                      {segmentNotesSaving ? t("savingSegmentNotes") : t("saveSegmentNotes")}
                     </button>
                     <div aria-live="polite" role="status">
                       {segmentNotesStatus && (
@@ -1888,7 +1886,7 @@ export default function TripDetailClient({
               aria-expanded={checklistPanelOpen}
               aria-controls="checklist-panel"
             >
-              <span className="font-semibold text-slate-100">Pre-ride checklist</span>
+              <span className="font-semibold text-slate-100">{t("preRideChecklist")}</span>
               <span className="text-slate-400">{checklistPanelOpen ? "−" : "+"}</span>
             </button>
             {checklistPanelOpen && (
@@ -1906,7 +1904,7 @@ export default function TripDetailClient({
                       onChange={(e) => {
                         const value = e.target.value as ChecklistTemplateId | "";
                         if (!value) return;
-                        const tpl = CHECKLIST_TEMPLATES.find((t) => t.id === value);
+                        const tpl = CHECKLIST_TEMPLATES.find((tplItem) => tplItem.id === value);
                         if (!tpl) return;
                         setChecklist(
                           tpl.items.map((item) => ({
@@ -1914,10 +1912,10 @@ export default function TripDetailClient({
                             isDone: false,
                           })),
                         );
-                        setChecklistStatus("Template applied (not yet saved).");
+                        setChecklistStatus(t("templateApplied"));
                       }}
                     >
-                      <option value="">Apply template...</option>
+                      <option value="">{t("applyTemplate")}</option>
                       {CHECKLIST_TEMPLATES.map((tpl) => (
                         <option key={tpl.id} value={tpl.id}>
                           {tpl.label}
@@ -1933,11 +1931,11 @@ export default function TripDetailClient({
                             isDone: false,
                           })),
                         );
-                        setChecklistStatus("Reset to ADV defaults (not yet saved).");
+                        setChecklistStatus(t("resetToAdvDefaults"));
                       }}
                       className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
                     >
-                      Reset ADV defaults
+                      {t("resetAdvDefaults")}
                     </button>
                     <button
                       type="button"
@@ -1949,12 +1947,12 @@ export default function TripDetailClient({
                       }
                       className="rounded border border-adv-border px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-900"
                     >
-                      Add item
+                      {t("addItem")}
                     </button>
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Capture the things you want to confirm before rolling out on this specific route.
+                  {t("checklistDescription")}
                 </p>
 
                 {/* Demo: sponsored ADV gear block for potential partners */}
@@ -2010,7 +2008,7 @@ export default function TripDetailClient({
                       <input
                         type="text"
                         className="flex-1 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-                        placeholder="Checklist item"
+                        placeholder={t("checklistItemPlaceholder")}
                         value={item.label}
                         onChange={(e) =>
                           setChecklist((prev) =>
@@ -2027,12 +2025,12 @@ export default function TripDetailClient({
                         }
                         className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800"
                       >
-                        Remove
+                        {t("remove")}
                       </button>
                     </div>
                   ))}
                   {checklist.length === 0 && (
-                    <p className="text-[11px] text-slate-500">No checklist items yet. Add a few above.</p>
+                    <p className="text-[11px] text-slate-500">{t("noChecklistItems")}</p>
                   )}
                 </div>
                 <div className="mt-2 flex items-center justify-between">
@@ -2056,16 +2054,16 @@ export default function TripDetailClient({
                           throw new Error(data?.error ?? "Failed to save checklist");
                         }
 
-                        setChecklistStatus("Checklist saved.");
+                        setChecklistStatus(t("checklistSaved"));
                       } catch (err: any) {
-                        setChecklistStatus(err.message ?? "Failed to save checklist");
+                        setChecklistStatus(err.message ?? t("failedToSaveChecklist"));
                       } finally {
                         setChecklistSaving(false);
                       }
                     }}
                     className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
                   >
-                    {checklistSaving ? "Saving..." : "Save checklist"}
+                    {checklistSaving ? t("savingChecklist") : t("saveChecklist")}
                   </button>
                   <div aria-live="polite" role="status">
                     {checklistStatus && (

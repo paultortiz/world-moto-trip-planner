@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface Props {
   userId: string;
@@ -10,6 +11,7 @@ interface Props {
 const ROLE_OPTIONS = ["USER", "SPONSOR", "ADMIN"] as const;
 
 export default function UserRoleForm({ userId, initialRole }: Props) {
+  const t = useTranslations("admin");
   const [role, setRole] = useState(initialRole);
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -27,12 +29,12 @@ export default function UserRoleForm({ userId, initialRole }: Props) {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "Failed to update role");
+        throw new Error(data?.error ?? t("roleUpdateFailed"));
       }
 
-      setStatus("Role updated.");
+      setStatus(t("roleUpdated"));
     } catch (err: any) {
-      setStatus(err?.message ?? "Failed to update role");
+      setStatus(err?.message ?? t("roleUpdateFailed"));
     } finally {
       setSaving(false);
     }

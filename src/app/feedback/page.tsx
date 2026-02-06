@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 type FeedbackType = "bug" | "feature";
 
@@ -12,6 +13,7 @@ interface SubmissionResult {
 }
 
 export default function FeedbackPage() {
+  const t = useTranslations("feedback");
   const [feedbackType, setFeedbackType] = useState<FeedbackType>("bug");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -65,14 +67,13 @@ export default function FeedbackPage() {
       <div className="mx-auto max-w-2xl">
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.3em] text-adv-accentSoft">
-            Help us improve
+            {t("tagline")}
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            Report a Bug or Request a Feature
+            {t("title")}
           </h1>
           <p className="mt-4 text-sm text-slate-300">
-            Found something broken or have an idea to make the trip planner better?
-            Let us know! Your feedback helps us build a better experience for all riders.
+            {t("description")}
           </p>
         </div>
 
@@ -93,7 +94,7 @@ export default function FeedbackPage() {
                   rel="noopener noreferrer"
                   className="text-adv-accent underline hover:text-adv-accentMuted"
                 >
-                  View the created issue on GitHub →
+                  {t("viewOnGitHub")}
                 </a>
               </p>
             )}
@@ -106,7 +107,7 @@ export default function FeedbackPage() {
         >
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-200">
-              What type of feedback?
+              {t("typeLabel")}
             </label>
             <div className="flex gap-4">
               <button
@@ -119,7 +120,7 @@ export default function FeedbackPage() {
                 }`}
               >
                 <span className="mb-1 block text-lg">🐛</span>
-                Bug Report
+                {t("bugReport")}
               </button>
               <button
                 type="button"
@@ -131,14 +132,14 @@ export default function FeedbackPage() {
                 }`}
               >
                 <span className="mb-1 block text-lg">✨</span>
-                Feature Request
+                {t("featureRequest")}
               </button>
             </div>
           </div>
 
           <div>
             <label htmlFor="title" className="mb-2 block text-sm font-medium text-slate-200">
-              Title
+              {t("titleLabel")}
             </label>
             <input
               type="text"
@@ -149,8 +150,8 @@ export default function FeedbackPage() {
               maxLength={100}
               placeholder={
                 feedbackType === "bug"
-                  ? "Brief description of the issue"
-                  : "What feature would you like?"
+                  ? t("titlePlaceholderBug")
+                  : t("titlePlaceholderFeature")
               }
               className="w-full rounded border border-adv-border bg-slate-800/50 px-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-adv-accent focus:outline-none focus:ring-1 focus:ring-adv-accent"
             />
@@ -158,7 +159,7 @@ export default function FeedbackPage() {
 
           <div>
             <label htmlFor="description" className="mb-2 block text-sm font-medium text-slate-200">
-              Description
+              {t("descriptionLabel")}
             </label>
             <textarea
               id="description"
@@ -169,13 +170,13 @@ export default function FeedbackPage() {
               maxLength={2000}
               placeholder={
                 feedbackType === "bug"
-                  ? "What happened? What did you expect to happen? Steps to reproduce..."
-                  : "Describe the feature and why it would be useful..."
+                  ? t("descriptionPlaceholderBug")
+                  : t("descriptionPlaceholderFeature")
               }
               className="w-full rounded border border-adv-border bg-slate-800/50 px-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-adv-accent focus:outline-none focus:ring-1 focus:ring-adv-accent"
             />
             <p className="mt-1 text-xs text-slate-500">
-              {description.length}/2000 characters
+              {description.length}/2000 {t("characters")}
             </p>
           </div>
 
@@ -184,29 +185,29 @@ export default function FeedbackPage() {
               href="/"
               className="text-sm text-slate-400 hover:text-slate-200"
             >
-              ← Back to home
+              {t("backToHome")}
             </Link>
             <button
               type="submit"
               disabled={isSubmitting || !title.trim() || !description.trim()}
               className="rounded bg-adv-accent px-6 py-2 text-sm font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Submitting..." : "Submit Feedback"}
+              {isSubmitting ? t("submitting") : t("submitFeedback")}
             </button>
           </div>
         </form>
 
         <p className="mt-6 text-center text-xs text-slate-500">
-          Your feedback will be submitted as an issue on our{" "}
+          {t("footerNote")}{" "}
           <a
             href="https://github.com/paultortiz/world-moto-trip-planner/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="text-adv-accent hover:underline"
           >
-            GitHub repository
+            {t("gitHubRepository")}
           </a>
-          . You must be signed in to submit feedback.
+          . {t("mustBeSignedIn")}
         </p>
       </div>
     </main>

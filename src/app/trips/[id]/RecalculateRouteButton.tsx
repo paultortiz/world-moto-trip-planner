@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface Props {
   tripId: string;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function RecalculateRouteButton({ tripId, onRouteRecalculated }: Props) {
+  const t = useTranslations("tripDetail");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export default function RecalculateRouteButton({ tripId, onRouteRecalculated }: 
           throw new Error(data?.error ?? "Request failed");
         }
 
-        setStatus("Route recalculated.");
+        setStatus(t("routeRecalculated"));
         onRouteRecalculated?.();
         router.refresh();
       } catch (err: any) {
@@ -36,14 +38,9 @@ export default function RecalculateRouteButton({ tripId, onRouteRecalculated }: 
         let friendly = rawMessage;
 
         if (rawMessage.includes("Directions API returned status ZERO_RESULTS")) {
-          friendly =
-            "Google's routing service couldn't find a drivable route between some of these waypoints. " +
-            "Try adjusting waypoints or splitting this trip into smaller segments. Your trip data is still intact.";
+          friendly = t("routingError");
         } else if (rawMessage.startsWith("Failed to fetch directions (HTTP")) {
-          friendly =
-            "We couldn't reach Google's routing service (" +
-            rawMessage.replace("Failed to fetch directions ", "") +
-            "). Please try again in a bit. Your trip data is still intact.";
+          friendly = t("networkError");
         }
 
         setStatus(`Error: ${friendly}`);
@@ -59,7 +56,7 @@ export default function RecalculateRouteButton({ tripId, onRouteRecalculated }: 
         disabled={pending}
         className="rounded bg-adv-accent px-3 py-1 text-xs font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
       >
-        {pending ? "Recalculating..." : "Recalculate route"}
+        {pending ? t("recalculating") : t("recalculateRoute")}
       </button>
       {status && <p className="text-slate-300">{status}</p>}
     </div>

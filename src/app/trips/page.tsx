@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { getTranslations } from "next-intl/server";
 
 export default async function TripsPage() {
   const session = await auth();
@@ -10,6 +11,7 @@ export default async function TripsPage() {
   }
 
   const userId = (session.user as any).id as string;
+  const t = await getTranslations("trips");
 
   const trips = await prisma.trip.findMany({
     where: { userId },
@@ -20,16 +22,16 @@ export default async function TripsPage() {
   return (
     <main className="min-h-screen p-6 space-y-4">
       <header>
-        <h1 className="text-2xl font-bold">Your routes</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Saved legs, crossings, and loops you&apos;ve mapped out for the next ride.
+          {t("subtitle")}
         </p>
       </header>
 
       <section>
         {trips.length === 0 ? (
           <p className="text-sm text-slate-500">
-            No routes yet. Start by plotting a shakedown loop near home.
+            {t("noTrips")}
           </p>
         ) : (
           <ul className="space-y-3">
@@ -44,7 +46,7 @@ export default async function TripsPage() {
                     <p className="text-xs text-slate-400">{trip.description}</p>
                   )}
                   <p className="mt-1 text-[10px] text-slate-500">
-                    ID: <span className="font-mono">{trip.id}</span>
+                    {t("id")}: <span className="font-mono">{trip.id}</span>
                   </p>
                 </Link>
               </li>

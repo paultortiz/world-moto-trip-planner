@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import UserRoleForm from "./UserRoleForm";
@@ -15,6 +16,8 @@ export default async function AdminUsersPage() {
     redirect("/");
   }
 
+  const t = await getTranslations("admin");
+
   const users = await prisma.user.findMany({
     orderBy: { email: "asc" },
     select: {
@@ -29,9 +32,9 @@ export default async function AdminUsersPage() {
     <main className="min-h-screen px-6 py-8">
       <section className="mx-auto max-w-5xl space-y-4">
         <header>
-          <h1 className="text-2xl font-bold">User management</h1>
+          <h1 className="text-2xl font-bold">{t("usersTitle")}</h1>
           <p className="mt-2 text-sm text-slate-300">
-            View all accounts and assign application roles.
+            {t("usersSubtitle")}
           </p>
         </header>
 
@@ -39,16 +42,16 @@ export default async function AdminUsersPage() {
           <table className="min-w-full border-separate border-spacing-y-1">
             <thead className="text-[11px] uppercase tracking-wide text-slate-400">
               <tr>
-                <th className="px-2 py-1 text-left">Email</th>
-                <th className="px-2 py-1 text-left">Role</th>
-                <th className="px-2 py-1 text-left">Created</th>
+                <th className="px-2 py-1 text-left">{t("emailColumn")}</th>
+                <th className="px-2 py-1 text-left">{t("roleColumn")}</th>
+                <th className="px-2 py-1 text-left">{t("createdColumn")}</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
                 <tr key={user.id} className="rounded border border-slate-800 bg-slate-950/60">
                   <td className="px-2 py-1 align-middle text-[11px] text-slate-200">
-                    {user.email ?? <span className="italic text-slate-500">(no email)</span>}
+                    {user.email ?? <span className="italic text-slate-500">{t("noEmail")}</span>}
                   </td>
                   <td className="px-2 py-1 align-middle">
                     <UserRoleForm userId={user.id} initialRole={user.role} />

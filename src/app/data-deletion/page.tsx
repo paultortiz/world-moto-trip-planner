@@ -1,77 +1,59 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 export const metadata = {
   title: "Data Deletion Instructions | World Moto Trip Planner",
 };
 
-export default function DataDeletionPage() {
+export default async function DataDeletionPage() {
+  const t = await getTranslations("dataDeletion");
+
   return (
     <main className="min-h-screen px-6 py-10">
       <section className="mx-auto max-w-3xl space-y-6 text-sm text-slate-200">
         <header className="space-y-2">
-          <h1 className="text-2xl font-bold text-slate-50">Data Deletion Instructions</h1>
-          <p className="text-xs text-slate-400">Last updated: January 26, 2026</p>
+          <h1 className="text-2xl font-bold text-slate-50">{t("title")}</h1>
+          <p className="text-xs text-slate-400">{t("lastUpdated")}</p>
         </header>
 
-        <p>
-          This page explains how to request deletion of your account and associated data from World
-          Moto Trip Planner.
-        </p>
+        <p>{t("intro")}</p>
 
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-slate-50">What can be deleted</h2>
-          <p>
-            When we delete your account, we will remove:
-          </p>
+          <h2 className="text-lg font-semibold text-slate-50">{t("whatDeletedTitle")}</h2>
+          <p>{t("whatDeletedP1")}</p>
           <ul className="list-disc space-y-1 pl-5 text-slate-300">
-            <li>Your user account record used to sign in to the app.</li>
-            <li>All trips you have created, including waypoints and route details.</li>
-            <li>Associated planning data (fuel range settings, schedule preferences, checklist items, and segment notes).</li>
+            <li>{t("whatDeletedList1")}</li>
+            <li>{t("whatDeletedList2")}</li>
+            <li>{t("whatDeletedList3")}</li>
           </ul>
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-slate-50">How to request deletion</h2>
-          <p>
-            To request deletion of your data:
-          </p>
+          <h2 className="text-lg font-semibold text-slate-50">{t("howToTitle")}</h2>
+          <p>{t("howToP1")}</p>
           <ol className="list-decimal space-y-1 pl-5 text-slate-300">
-            <li>
-              Sign in to the app and confirm the email address shown in the header matches the
-              account you want to delete.
-            </li>
-            <li>
-              Contact the maintainer of this project and clearly state that you would like your
-              account and trips deleted. Include the email address you use to sign in to World Moto
-              Trip Planner.
-            </li>
+            <li>{t("howToList1")}</li>
+            <li>{t("howToList2")}</li>
           </ol>
-          <p>
-            Once your request is received and verified, your account and associated data will be
-            removed from the live database within a reasonable time.
-          </p>
+          <p>{t("howToP2")}</p>
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-slate-50">Third-party sign-in providers</h2>
-          <p>
-            If you used Google or Facebook to sign in, deleting your account in World Moto Trip
-            Planner does not delete your Google or Facebook accounts. To manage those accounts,
-            please use the tools provided by Google and Facebook directly.
-          </p>
+          <h2 className="text-lg font-semibold text-slate-50">{t("thirdPartyTitle")}</h2>
+          <p>{t("thirdPartyP1")}</p>
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-slate-50">More information</h2>
+          <h2 className="text-lg font-semibold text-slate-50">{t("moreInfoTitle")}</h2>
           <p>
-            For details on what data we collect and how it is used, please see our{" "}
+            {t("moreInfoP1")}{" "}
             <Link href="/privacy" className="text-adv-accent hover:underline">
-              Privacy Policy
+              {t("privacyPolicyLink")}
             </Link>
             .
           </p>
           <p className="text-xs text-slate-500">
-            Return to the <Link href="/" className="text-adv-accent hover:underline">home page</Link>.
+            {t("returnHome")} <Link href="/" className="text-adv-accent hover:underline">{t("homePage")}</Link>.
           </p>
         </section>
       </section>

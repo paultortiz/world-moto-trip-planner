@@ -2,18 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface Props {
   tripId: string;
 }
 
 export default function DeleteTripButton({ tripId }: Props) {
+  const t = useTranslations("tripDetail");
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
-    if (!confirm("Are you sure you want to delete this trip? This cannot be undone.")) {
+    if (!confirm(t("deleteConfirm"))) {
       return;
     }
 
@@ -26,14 +28,14 @@ export default function DeleteTripButton({ tripId }: Props) {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "Failed to delete trip");
+      const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? t("failedToDelete"));
       }
 
       router.push("/trips");
       router.refresh();
     } catch (err: any) {
-      setError(err.message ?? "Failed to delete trip");
+      setError(err.message ?? t("failedToDelete"));
       setDeleting(false);
     }
   }
@@ -46,7 +48,7 @@ export default function DeleteTripButton({ tripId }: Props) {
         disabled={deleting}
         className="rounded border border-red-500/70 px-3 py-1 text-xs font-semibold text-red-300 hover:bg-red-500/10 disabled:opacity-50"
       >
-        {deleting ? "Deleting..." : "Delete trip"}
+        {deleting ? t("deleting") : t("deleteTrip")}
       </button>
       {error && <p className="text-red-300">{error}</p>}
     </div>

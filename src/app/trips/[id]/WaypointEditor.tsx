@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface WaypointDto {
   id?: string;
@@ -51,6 +52,7 @@ export default function WaypointEditor({
   maxDayHint,
   startDateLabelBase,
 }: Props) {
+  const t = useTranslations("tripDetail");
   const router = useRouter();
   const [saving, startTransition] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
@@ -149,12 +151,12 @@ export default function WaypointEditor({
 
         if (!res.ok) {
           const data = await res.json().catch(() => null);
-          throw new Error(data?.error ?? "Failed to save waypoints");
+          throw new Error(data?.error ?? t("failedToSaveDates"));
         }
 
         // Recalculate route after waypoint changes, then refresh elevation
         // profile when route recalculation succeeds.
-        let recalcMessage = "Waypoints saved; route and elevation recalculated.";
+        let recalcMessage = t("waypointsSaved");
         let routeOk = false;
         try {
           const recalcRes = await fetch("/api/routes/calculate", {
@@ -169,24 +171,17 @@ export default function WaypointEditor({
             let friendly = rawError;
 
             if (rawError.includes("Directions API returned status ZERO_RESULTS")) {
-              friendly =
-                "Google's routing service couldn't find a drivable route between some of these waypoints. " +
-                "Try adjusting waypoints or splitting this trip into smaller segments. Your trip data is still intact.";
+              friendly = t("routingError");
             } else if (rawError.startsWith("Failed to fetch directions (HTTP")) {
-              friendly =
-                "We couldn't reach Google's routing service (" +
-                rawError.replace("Failed to fetch directions ", "") +
-                "). Please try again in a bit. Your trip data is still intact.";
+              friendly = t("networkError");
             }
 
-            recalcMessage = `Waypoints saved, but route could not be recalculated: ${friendly}`;
+            recalcMessage = `${t("waypointsSavedRouteError")}: ${friendly}`;
           } else {
             routeOk = true;
           }
         } catch {
-          recalcMessage =
-            "Waypoints saved, but we couldn't reach Google's routing service to recalculate the route. " +
-            "You can try again later from the Recalculate route button.";
+          recalcMessage = `${t("waypointsSavedRouteError")}: ${t("networkError")}`;
         }
 
         // If route recalculation succeeded, refresh elevation profile as well.
@@ -223,14 +218,14 @@ export default function WaypointEditor({
   return (
     <div className="mt-6 space-y-3 text-xs">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-slate-100 text-xs md:text-sm">Edit waypoints</h2>
+        <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("editWaypoints")}</h2>
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
           className="rounded bg-adv-accent px-3 py-1 text-xs font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save changes & recalc"}
+          {saving ? t("savingWaypoints") : t("saveChangesRecalc")}
         </button>
       </div>
 
@@ -239,8 +234,7 @@ export default function WaypointEditor({
       <div className="divide-y divide-slate-800 rounded border border-adv-border bg-slate-900/70 shadow-adv-glow">
         {waypoints.length === 0 ? (
           <div className="p-3 text-[11px] text-slate-400">
-            No waypoints for this trip yet. Use the planning map or search box to add points, then save to
-            update the route.
+            {t("noWaypoints")}
           </div>
         ) : (
           waypoints.map((wp, index) => (
@@ -256,7 +250,7 @@ export default function WaypointEditor({
                 <div className="mt-1 flex flex-wrap gap-2">
                   <input
                     className="w-40 rounded border border-slate-600 bg-slate-950 p-1 text-xs"
-                    placeholder="Name (optional)"
+                    placeholder={t("nameOptional")}
                     value={wp.name ?? ""}
                     onChange={(e) => updateWaypoint(index, { name: e.target.value })}
                   />
@@ -312,7 +306,7 @@ export default function WaypointEditor({
                   onClick={() => removeWaypoint(index)}
                   className="rounded bg-red-600 px-2 py-1 text-[10px] text-white hover:bg-red-500"
                 >
-                  Remove
+                  {t("remove")}
                 </button>
               </div>
             </div>
