@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getTranslations } from "next-intl/server";
 import MotorcyclesClient from "./MotorcyclesClient";
 
 export default async function MotorcyclesPage() {
@@ -10,6 +11,7 @@ export default async function MotorcyclesPage() {
   }
 
   const userId = (session.user as any).id as string;
+  const t = await getTranslations("garage");
 
   const motorcycles = await prisma.motorcycle.findMany({
     where: { userId },
@@ -30,10 +32,9 @@ export default async function MotorcyclesPage() {
     <main className="min-h-screen px-6 py-8">
       <section className="mx-auto max-w-5xl space-y-4">
         <header>
-          <h1 className="text-2xl font-bold">My motorcycles</h1>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="mt-2 text-sm text-slate-300">
-            Manage the bikes in your garage. You can associate any of these with a trip from the trip
-            detail page.
+            {t("subtitle")}
           </p>
         </header>
 

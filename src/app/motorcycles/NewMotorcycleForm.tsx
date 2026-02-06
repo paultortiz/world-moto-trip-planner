@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface NewMotorcycleFormProps {
   onCreate: (year: number | null, make: string, model: string) => Promise<void>;
 }
 
 export default function NewMotorcycleForm({ onCreate }: NewMotorcycleFormProps) {
+  const t = useTranslations("garage");
   const [yearInput, setYearInput] = useState("");
   const [makeInput, setMakeInput] = useState("");
   const [modelInput, setModelInput] = useState("");
@@ -27,7 +29,7 @@ export default function NewMotorcycleForm({ onCreate }: NewMotorcycleFormProps) 
       }}
     >
       <div className="flex flex-col gap-1">
-        <span className="text-slate-400">Year</span>
+        <span className="text-slate-400">{t("year")}</span>
         <input
           type="number"
           min={1970}
@@ -38,7 +40,7 @@ export default function NewMotorcycleForm({ onCreate }: NewMotorcycleFormProps) 
         />
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-slate-400">Make</span>
+        <span className="text-slate-400">{t("make")}</span>
         <input
           type="text"
           className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
@@ -48,7 +50,7 @@ export default function NewMotorcycleForm({ onCreate }: NewMotorcycleFormProps) 
         />
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-slate-400">Model</span>
+        <span className="text-slate-400">{t("model")}</span>
         <input
           type="text"
           className="w-40 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
@@ -62,7 +64,7 @@ export default function NewMotorcycleForm({ onCreate }: NewMotorcycleFormProps) 
         disabled={saving}
         className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
       >
-        {saving ? "Adding..." : "Add motorcycle"}
+        {saving ? t("adding") : t("addMotorcycle")}
       </button>
     </form>
   );

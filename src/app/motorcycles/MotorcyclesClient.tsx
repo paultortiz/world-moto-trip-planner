@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import NewMotorcycleForm from "./NewMotorcycleForm";
 
 interface MotorcyclesClientProps {
@@ -8,6 +9,7 @@ interface MotorcyclesClientProps {
 }
 
 export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProps) {
+  const t = useTranslations("garage");
   const [items, setItems] = useState(motorcycles);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -20,8 +22,8 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
         body: JSON.stringify({ year, make, model }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "Failed to create motorcycle");
+      const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? t("failedToCreate"));
       }
       const created = await res.json();
       setItems((prev) => [created, ...prev]);
@@ -43,22 +45,20 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
           const data = await aiRes.json().catch(() => null);
           const aiMoto = data?.motorcycle ?? created;
           setItems((prev) => prev.map((m: any) => (m.id === aiMoto.id ? { ...m, ...aiMoto } : m)));
-          setStatus("Motorcycle added with estimated specs.");
+          setStatus(t("addedWithSpecs"));
         } else {
           const data = await aiRes.json().catch(() => null);
           setStatus(
-            `Motorcycle added, but specs could not be fetched: ${
-              data?.error ?? "AI lookup failed"
+            `${t("addedNoSpecs")}: ${
+              data?.error ?? t("aiLookupFailed")
             }`,
           );
         }
       } catch {
-        setStatus(
-          "Motorcycle added, but specs could not be fetched right now. You can try again from a trip later.",
-        );
+        setStatus(t("addedSpecsLater"));
       }
     } catch (err: any) {
-      setStatus(err?.message ?? "Failed to create motorcycle");
+      setStatus(err?.message ?? t("failedToCreate"));
     }
   }
 
@@ -78,14 +78,14 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
         body: JSON.stringify({ preferredRangeKm, preferredReserveKm, year, make, model }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "Failed to update motorcycle");
+      const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? t("failedToUpdate"));
       }
       const updated = await res.json();
       setItems((prev) => prev.map((m: any) => (m.id === updated.id ? updated : m)));
-      setStatus("Motorcycle updated.");
+      setStatus(t("updated"));
     } catch (err: any) {
-      setStatus(err?.message ?? "Failed to update motorcycle");
+      setStatus(err?.message ?? t("failedToUpdate"));
     }
   }
 
@@ -96,13 +96,13 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
         method: "DELETE",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "Failed to delete motorcycle");
+      const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? t("failedToDelete"));
       }
       setItems((prev) => prev.filter((m: any) => m.id !== id));
-      setStatus("Motorcycle deleted.");
+      setStatus(t("deleted"));
     } catch (err: any) {
-      setStatus(err?.message ?? "Failed to delete motorcycle");
+      setStatus(err?.message ?? t("failedToDelete"));
     }
   }
 
@@ -120,11 +120,11 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
         });
         if (!res.ok) {
           const data = await res.json().catch(() => null);
-          throw new Error(data?.error ?? "Failed to clear default motorcycle");
+          throw new Error(data?.error ?? t("failedToClearDefault"));
         }
 
         setItems((prev) => prev.map((m: any) => ({ ...m, isDefaultForNewTrips: false })));
-        setStatus("Default motorcycle cleared.");
+        setStatus(t("defaultCleared"));
         return;
       }
 
@@ -135,7 +135,7 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "Failed to set default motorcycle");
+        throw new Error(data?.error ?? t("failedToSetDefault"));
       }
       const updated = await res.json();
       setItems((prev) =>
@@ -144,9 +144,9 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
           isDefaultForNewTrips: m.id === updated.id,
         })),
       );
-      setStatus("Default motorcycle for new trips updated.");
+      setStatus(t("defaultUpdated"));
     } catch (err: any) {
-      setStatus(err?.message ?? "Failed to update default motorcycle");
+      setStatus(err?.message ?? t("failedToSetDefault"));
     }
   }
 
@@ -155,8 +155,7 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
       <div className="mt-4 space-y-2 rounded border border-adv-border bg-slate-900/70 p-4 text-xs text-slate-200 shadow-adv-glow">
         <NewMotorcycleForm onCreate={createMotorcycle} />
         <p className="mt-4 text-sm text-slate-400">
-          You don&apos;t have any motorcycles saved yet. From a trip detail page you can enter a bike and
-          fetch specs from AI; it will show up here automatically.
+          {t("noMotorcycles")}
         </p>
         <div aria-live="polite" role="status">
           {status && <p className="mt-1 text-[11px] text-slate-300">{status}</p>}
@@ -172,17 +171,17 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
       <NewMotorcycleForm onCreate={createMotorcycle} />
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded border border-slate-700 bg-slate-950/60 px-2 py-1.5 text-[11px] text-slate-300">
         <div className="flex flex-col">
-          <span className="text-[10px] uppercase tracking-wide text-slate-500">Default bike for new trips</span>
+          <span className="text-[10px] uppercase tracking-wide text-slate-500">{t("defaultBikeLabel")}</span>
           {currentDefault ? (
             <span className="text-[11px] font-semibold text-emerald-300">
               {currentDefault.displayName ||
                 `${currentDefault.year ?? ""} ${currentDefault.make ?? ""} ${currentDefault.model ?? ""}`.trim()}
             </span>
           ) : (
-            <span className="text-[11px] text-slate-500">None selected. New trips won&apos;t pre-fill a motorcycle.</span>
+            <span className="text-[11px] text-slate-500">{t("noDefaultSelected")}</span>
           )}
           <span className="text-[10px] text-slate-500">
-            New trips will start with this bike selected, but you can always change it per trip.
+            {t("defaultBikeHint")}
           </span>
         </div>
         {currentDefault && (
@@ -191,7 +190,7 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
             onClick={() => setDefaultMotorcycle(null)}
             className="self-start rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-800"
           >
-            Clear default
+            {t("clearDefault")}
           </button>
         )}
       </div>
@@ -238,6 +237,7 @@ interface MotorcycleRowProps {
 }
 
 function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, onSetDefault }: MotorcycleRowProps) {
+  const t = useTranslations("garage");
   const [rangeInput, setRangeInput] = useState<string>(
     initialRange === "" ? "" : String(initialRange),
   );
@@ -261,26 +261,26 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           </p>
           {typeof moto._count?.trips === "number" && moto._count.trips > 0 && (
             <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
-              In use by {moto._count.trips} trip{moto._count.trips === 1 ? "" : "s"}
+              {t("inUseByTrips", { count: moto._count.trips })}
             </span>
           )}
         </div>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300">
           {typeof moto.engineDisplacementCc === "number" && (
-            <span>Engine: {moto.engineDisplacementCc} cc</span>
+            <span>{t("engine")}: {moto.engineDisplacementCc} cc</span>
           )}
-          {typeof moto.wetWeightKg === "number" && <span>Wet weight: {moto.wetWeightKg} kg</span>}
+          {typeof moto.wetWeightKg === "number" && <span>{t("wetWeight")}: {moto.wetWeightKg} kg</span>}
           {typeof moto.fuelCapacityLiters === "number" && (
-            <span>Fuel: {moto.fuelCapacityLiters.toFixed(1)} L</span>
+            <span>{t("fuel")}: {moto.fuelCapacityLiters.toFixed(1)} L</span>
           )}
           {typeof moto.estimatedRangeKm === "number" && (
-            <span>Est. range: {moto.estimatedRangeKm} km</span>
+            <span>{t("estRange")}: {moto.estimatedRangeKm} km</span>
           )}
         </div>
       </div>
       <div className="mt-1 flex flex-wrap items-end gap-3 text-[11px] text-slate-300 sm:mt-0">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-slate-400">Year</span>
+          <span className="text-slate-400">{t("year")}</span>
           <input
             type="number"
             min={1970}
@@ -291,7 +291,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           />
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-slate-400">Make</span>
+          <span className="text-slate-400">{t("make")}</span>
           <input
             type="text"
             className="w-24 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
@@ -300,7 +300,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           />
         </div>
         <div className="flex flex-col gap-1">
-          ￼<span className="text-slate-400">Model</span>
+          <span className="text-slate-400">{t("model")}</span>
           <input
             type="text"
             className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
@@ -309,7 +309,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           />
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-slate-400">Preferred range (km)</span>
+          <span className="text-slate-400">{t("preferredRange")}</span>
           <input
             type="number"
             min={0}
@@ -319,7 +319,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           />
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-slate-400">Preferred reserve (km)</span>
+          <span className="text-slate-400">{t("preferredReserve")}</span>
           <input
             type="number"
             min={0}
@@ -341,7 +341,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           }}
           className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? t("saving") : t("save")}
         </button>
         <button
           type="button"
@@ -351,23 +351,17 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           }}
           className="rounded border border-emerald-500 px-3 py-1 text-[11px] text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-60"
         >
-          {moto.isDefaultForNewTrips ? "Default for new trips" : "Set as default"}
+          {moto.isDefaultForNewTrips ? t("defaultForNewTrips") : t("setAsDefault")}
         </button>
         <button
           type="button"
           disabled={deleting || (typeof moto._count?.trips === "number" && moto._count.trips > 0)}
           onClick={async () => {
             if (typeof moto._count?.trips === "number" && moto._count.trips > 0) {
-              alert(
-                "This motorcycle is in use by one or more trips. Detach it from those trips before deleting.",
-              );
+              alert(t("inUseCannotDelete"));
               return;
             }
-            if (
-              !window.confirm(
-                "Delete this motorcycle from your garage? It will be permanently removed.",
-              )
-            ) {
+            if (!window.confirm(t("deleteConfirm"))) {
               return;
             }
             setDeleting(true);
@@ -376,7 +370,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           }}
           className="rounded border border-red-600 px-3 py-1 text-[11px] text-red-300 hover:bg-red-600/20 disabled:opacity-50"
         >
-          {deleting ? "Deleting..." : "Delete"}
+          {deleting ? t("deleting") : t("delete")}
         </button>
       </div>
     </li>
