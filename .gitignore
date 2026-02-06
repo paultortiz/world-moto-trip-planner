@@ -4,3 +4,7 @@ node_modules
 .env
 
 /generated/prisma
+
+# Secrets folder (keep README, ignore everything else)
+/secrets/*
+!/secrets/README.md
