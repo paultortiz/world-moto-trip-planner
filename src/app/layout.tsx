@@ -90,6 +90,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link href="/data-deletion" className="hover:text-adv-accent">
                   Data deletion instructions
                 </Link>
+                <Link href="/feedback" className="hover:text-adv-accent">
+                  Report bug / Request feature
+                </Link>
               </div>
             </div>
           </footer>
