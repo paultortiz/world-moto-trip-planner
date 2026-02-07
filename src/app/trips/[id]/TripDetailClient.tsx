@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import ReactMarkdown from "react-markdown";
 import TripPlannerMap, {
   type WaypointPosition,
 } from "@/features/map/TripPlannerMap";
@@ -283,8 +284,16 @@ export default function TripDetailClient({
   const [shareSaving, setShareSaving] = useState(false);
 
   const [aiPlanLoading, setAiPlanLoading] = useState(false);
-  const [aiPlanText, setAiPlanText] = useState<string | null>(null);
+  const [aiPlanText, setAiPlanText] = useState<string | null>(
+    (trip.aiDailyPlan as string | null | undefined) ?? null,
+  );
+  const [aiPlanGeneratedAt, setAiPlanGeneratedAt] = useState<string | null>(
+    trip.aiDailyPlanGeneratedAt
+      ? new Date(trip.aiDailyPlanGeneratedAt as string).toLocaleString()
+      : null,
+  );
   const [aiPlanError, setAiPlanError] = useState<string | null>(null);
+  const [aiPlanClearing, setAiPlanClearing] = useState(false);
 
   const initialSegmentNotes: SegmentNoteDto[] =
     Array.isArray(trip.segmentNotes)
@@ -1282,55 +1291,92 @@ export default function TripDetailClient({
           <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="AI-generated daily riding plan">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("aiDailyPlan")}</h2>
-              <button
-                type="button"
-                disabled={aiPlanLoading || waypoints.length < 2}
-                onClick={async () => {
-                  setAiPlanError(null);
-                  setAiPlanText(null);
-                  setAiPlanLoading(true);
-                  try {
-                    const res = await fetch(`/api/ai/daily-plan`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ tripId: trip.id }),
-                    });
+              <div className="flex items-center gap-2">
+                {aiPlanText && (
+                  <button
+                    type="button"
+                    disabled={aiPlanClearing}
+                    onClick={async () => {
+                      setAiPlanClearing(true);
+                      setAiPlanError(null);
+                      try {
+                        const res = await fetch(`/api/ai/daily-plan?tripId=${trip.id}`, {
+                          method: "DELETE",
+                        });
+                        if (!res.ok) {
+                          const data = await res.json().catch(() => null);
+                          throw new Error(data?.error ?? t("failedToClearPlan"));
+                        }
+                        setAiPlanText(null);
+                        setAiPlanGeneratedAt(null);
+                      } catch (err: any) {
+                        setAiPlanError(err?.message ?? t("failedToClearPlan"));
+                      } finally {
+                        setAiPlanClearing(false);
+                      }
+                    }}
+                    className="rounded border border-slate-600 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {aiPlanClearing ? t("clearing") : t("clearPlan")}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={aiPlanLoading || waypoints.length < 2}
+                  onClick={async () => {
+                    setAiPlanError(null);
+                    setAiPlanLoading(true);
+                    try {
+                      const res = await fetch(`/api/ai/daily-plan`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ tripId: trip.id }),
+                      });
 
-                    if (!res.ok) {
-                      const data = await res.json().catch(() => null);
-                      throw new Error(data?.error ?? "Failed to generate plan");
+                      if (!res.ok) {
+                        const data = await res.json().catch(() => null);
+                        throw new Error(data?.error ?? t("failedToGeneratePlan"));
+                      }
+
+                      const data = await res.json();
+                      setAiPlanText(typeof data.text === "string" ? data.text : "");
+                      if (data.generatedAt) {
+                        setAiPlanGeneratedAt(new Date(data.generatedAt).toLocaleString());
+                      }
+                    } catch (err: any) {
+                      setAiPlanError(err?.message ?? t("failedToGeneratePlan"));
+                    } finally {
+                      setAiPlanLoading(false);
                     }
-
-                    const data = await res.json();
-                    setAiPlanText(typeof data.text === "string" ? data.text : "");
-                  } catch (err: any) {
-                    setAiPlanError(err?.message ?? "Failed to generate AI plan");
-                  } finally {
-                    setAiPlanLoading(false);
-                  }
-                }}
-                className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
-              >
-                {aiPlanLoading
-                  ? t("thinking")
-                  : waypoints.length < 2
-                  ? t("addMoreWaypoints")
-                  : t("suggestDailyPlan")}
-              </button>
+                  }}
+                  className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+                >
+                  {aiPlanLoading
+                    ? t("thinking")
+                    : waypoints.length < 2
+                    ? t("addMoreWaypoints")
+                    : aiPlanText
+                    ? t("regeneratePlan")
+                    : t("suggestDailyPlan")}
+                </button>
+              </div>
             </div>
             <p className="text-[11px] text-slate-400">
               {t("aiPlanDescription")}
             </p>
+            {aiPlanGeneratedAt && (
+              <p className="text-[10px] text-slate-500">
+                {t("generatedOn")} {aiPlanGeneratedAt}
+              </p>
+            )}
             <div aria-live="polite" role="status">
               {aiPlanError && (
                 <p className="text-[11px] text-red-400">{aiPlanError}</p>
               )}
             </div>
             {aiPlanText && (
-              <div className="max-h-64 overflow-y-auto rounded border border-slate-700 bg-slate-950/70 p-2 text-[11px] text-slate-200">
-                <pre className="whitespace-pre-wrap font-sans text-[11px]">
-{aiPlanText}
-                </pre>
+              <div className="max-h-96 overflow-y-auto rounded border border-slate-700 bg-slate-950/70 p-3 text-slate-200 prose prose-invert prose-sm prose-headings:text-slate-100 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-slate-100 prose-em:text-amber-200 max-w-none">
+                <ReactMarkdown>{aiPlanText}</ReactMarkdown>
               </div>
             )}
           </section>
