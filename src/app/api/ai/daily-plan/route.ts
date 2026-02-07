@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     const userId = (session.user as any).id as string;
     const body = await req.json();
-    const { tripId } = body as { tripId?: string };
+    const { tripId, locale } = body as { tripId?: string; locale?: string };
 
     if (!tripId || typeof tripId !== "string") {
       return NextResponse.json({ error: "tripId is required" }, { status: 400 });
@@ -73,11 +73,21 @@ export async function POST(req: NextRequest) {
       scheduleContext += `Latest arrival: ${trip.latestArrivalHour}:00\n`;
     }
 
+    // Map locale codes to language names for the prompt
+    const languageMap: Record<string, string> = {
+      en: "English",
+      es: "Spanish",
+      de: "German",
+      fr: "French",
+      pt: "Portuguese",
+    };
+    const targetLanguage = languageMap[locale ?? "en"] ?? "English";
+
     const userContent = [
       {
         type: "input_text" as const,
         text:
-          `Create a detailed daily riding plan for this motorcycle trip. Format your response in **Markdown** with the following structure:
+          `Create a detailed daily riding plan for this motorcycle trip. **Write your entire response in ${targetLanguage}.** Format your response in **Markdown** with the following structure:
 
 ## Formatting Requirements:
 - Use **## Day N: Start Location → End Location** for each day header
