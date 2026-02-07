@@ -758,7 +758,7 @@ export default function TripPlannerMap({
           style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
         >
           <div
-            className="pointer-events-auto rounded border border-amber-500/60 bg-amber-500/20 px-3 py-1.5 text-[11px] text-amber-100 shadow-adv-glow"
+            className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
             role="status"
             aria-live="polite"
           >
