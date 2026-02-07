@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import TripPlannerMap, {
   type WaypointPosition,
@@ -253,6 +253,7 @@ export default function TripDetailClient({
   motorcycles = [],
 }: TripDetailClientProps) {
   const t = useTranslations("tripDetail");
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -1330,7 +1331,7 @@ export default function TripDetailClient({
                       const res = await fetch(`/api/ai/daily-plan`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ tripId: trip.id }),
+                        body: JSON.stringify({ tripId: trip.id, locale }),
                       });
 
                       if (!res.ok) {
