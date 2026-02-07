@@ -309,7 +309,13 @@
     "notableClimbs": "Subidas notables",
     "gainOver": "{gain} m de ganancia en {start}–{end} km",
     "routingError": "El servicio de rutas de Google no pudo encontrar una ruta transitable entre algunos de estos puntos. Intenta ajustar los puntos o dividir este viaje en segmentos más pequeños. Los datos de tu viaje siguen intactos.",
-    "networkError": "No pudimos conectar con el servicio de rutas de Google. Por favor, inténtalo de nuevo en un momento. Los datos de tu viaje siguen intactos."
+    "networkError": "No pudimos conectar con el servicio de rutas de Google. Por favor, inténtalo de nuevo en un momento. Los datos de tu viaje siguen intactos.",
+    "unsavedWarningBanner": "Tienes cambios de puntos sin guardar. Guarda y recalcula antes de irte o perderás los cambios.",
+    "saveAndRecalculate": "Guardar y recalcular",
+    "leavePageTitle": "Cambios sin guardar",
+    "leavePageMessage": "Tienes cambios de puntos sin guardar. Si te vas ahora, estos cambios se perderán. ¿Quieres quedarte y guardar tus cambios?",
+    "stayOnPage": "Quedarme en la página",
+    "leavePage": "Salir sin guardar"
   },
   "sponsor": {
     "title": "Consola de patrocinador",

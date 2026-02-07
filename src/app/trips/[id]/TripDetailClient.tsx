@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import TripPlannerMap, {
@@ -590,6 +590,12 @@ export default function TripDetailClient({
   const [segmentPanelOpen, setSegmentPanelOpen] = useState(false);
   const [checklistPanelOpen, setChecklistPanelOpen] = useState(false);
 
+  // Unsaved changes warning modal state
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const isDirtyRef = useRef(isDirty);
+  isDirtyRef.current = isDirty;
+
   const mapWaypoints: WaypointPosition[] = waypoints.map((wp) => ({
     lat: wp.lat,
     lng: wp.lng,
@@ -609,8 +615,181 @@ export default function TripDetailClient({
     }
   }, []);
 
+  // Browser beforeunload warning when there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+        // Most modern browsers ignore custom messages, but we still need to set returnValue
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // Intercept internal link clicks when dirty
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (!isDirtyRef.current) return;
+
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (!anchor) return;
+
+      const href = anchor.getAttribute("href");
+      if (!href) return;
+
+      // Only intercept internal navigation (same origin, not external links)
+      const isInternal =
+        href.startsWith("/") ||
+        href.startsWith(window.location.origin);
+      const isNewTab =
+        anchor.target === "_blank" ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.shiftKey;
+
+      if (isInternal && !isNewTab) {
+        e.preventDefault();
+        setPendingNavigation(href);
+        setShowLeaveModal(true);
+      }
+    };
+
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
+  }, []);
+
+  // Handle confirmed navigation
+  const handleConfirmLeave = useCallback(() => {
+    if (pendingNavigation) {
+      // Temporarily clear dirty state to allow navigation
+      setIsDirty(false);
+      setShowLeaveModal(false);
+      router.push(pendingNavigation);
+      setPendingNavigation(null);
+    }
+  }, [pendingNavigation, router]);
+
+  const handleCancelLeave = useCallback(() => {
+    setShowLeaveModal(false);
+    setPendingNavigation(null);
+  }, []);
+
+  // Save waypoints handler for the banner button
+  const handleSaveWaypoints = useCallback(async () => {
+    // This triggers the same save flow as WaypointEditor
+    // We'll call the API directly here for the inline save button
+    try {
+      const withEffectiveDay: WaypointDto[] = [];
+      let currentDay = 1;
+      for (let i = 0; i < waypoints.length; i++) {
+        const raw = waypoints[i].dayIndex;
+        if (typeof raw === "number" && raw >= 1) {
+          currentDay = raw;
+        }
+        withEffectiveDay.push({ ...waypoints[i], dayIndex: currentDay });
+      }
+
+      const res = await fetch(`/api/trips/${trip.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          waypoints: withEffectiveDay.map((wp) => ({
+            id: wp.id,
+            lat: wp.lat,
+            lng: wp.lng,
+            name: wp.name ?? undefined,
+            type: wp.type ?? undefined,
+            notes: wp.notes ?? undefined,
+            dayIndex: wp.dayIndex ?? undefined,
+            googlePlaceId: wp.googlePlaceId ?? undefined,
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to save waypoints");
+      }
+
+      // Recalculate route
+      await fetch("/api/routes/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tripId: trip.id }),
+      });
+
+      // Recalculate elevation
+      await fetch("/api/routes/elevation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tripId: trip.id }),
+      });
+
+      setIsDirty(false);
+      setElevationRefreshKey((k) => k + 1);
+      router.refresh();
+    } catch (err) {
+      console.error("Failed to save waypoints:", err);
+    }
+  }, [waypoints, trip.id, router]);
+
   return (
     <>
+      {/* Leave page confirmation modal */}
+      {showLeaveModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="leave-modal-title"
+        >
+          <div className="mx-4 max-w-md rounded-lg border border-amber-500/50 bg-slate-900 p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 flex-shrink-0 text-amber-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <div>
+                <h2 id="leave-modal-title" className="text-lg font-semibold text-amber-200">
+                  {t("leavePageTitle")}
+                </h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  {t("leavePageMessage")}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleConfirmLeave}
+                className="rounded border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              >
+                {t("leavePage")}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelLeave}
+                className="rounded bg-amber-500 px-4 py-2 text-sm font-semibold text-black hover:bg-amber-400"
+              >
+                {t("stayOnPage")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="max-w-5xl">
         <h1 className="text-2xl font-bold">{trip.name}</h1>
         {trip.description && (
@@ -875,9 +1054,32 @@ export default function TripDetailClient({
           </div>
 
           {isDirty && (
-            <p className="text-[11px] text-amber-400">
-              {t("unsavedChanges")}
-            </p>
+            <div className="flex items-center justify-between gap-3 rounded border-2 border-amber-500 bg-amber-500/20 p-3 text-amber-100 animate-pulse">
+              <div className="flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 flex-shrink-0 text-amber-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <p className="text-[12px] font-medium">
+                  {t("unsavedWarningBanner")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveWaypoints}
+                className="whitespace-nowrap rounded bg-amber-500 px-4 py-1.5 text-[12px] font-bold text-black shadow-lg hover:bg-amber-400 transition-colors"
+              >
+                {t("saveAndRecalculate")}
+              </button>
+            </div>
           )}
 
           <ElevationProfile
