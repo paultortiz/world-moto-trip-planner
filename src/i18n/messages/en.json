@@ -309,7 +309,13 @@
     "notableClimbs": "Notable climbs",
     "gainOver": "{gain} m gain over {start}–{end} km",
     "routingError": "Google's routing service couldn't find a drivable route between some of these waypoints. Try adjusting waypoints or splitting this trip into smaller segments. Your trip data is still intact.",
-    "networkError": "We couldn't reach Google's routing service. Please try again in a bit. Your trip data is still intact."
+    "networkError": "We couldn't reach Google's routing service. Please try again in a bit. Your trip data is still intact.",
+    "unsavedWarningBanner": "You have unsaved waypoint changes. Save and recalculate before leaving or your changes will be lost.",
+    "saveAndRecalculate": "Save & recalculate",
+    "leavePageTitle": "Unsaved changes",
+    "leavePageMessage": "You have unsaved waypoint changes. If you leave now, these changes will be lost. Do you want to stay and save your changes?",
+    "stayOnPage": "Stay on page",
+    "leavePage": "Leave without saving"
   },
   "sponsor": {
     "title": "Sponsor console",

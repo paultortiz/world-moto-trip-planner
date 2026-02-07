@@ -309,7 +309,13 @@
     "notableClimbs": "Bemerkenswerte Anstiege",
     "gainOver": "{gain} m Höhengewinn über {start}–{end} km",
     "routingError": "Googles Routing-Dienst konnte keine befahrbare Route zwischen einigen dieser Wegpunkte finden. Versuche, Wegpunkte anzupassen oder diese Reise in kleinere Abschnitte aufzuteilen. Deine Reisedaten sind weiterhin intakt.",
-    "networkError": "Wir konnten Googles Routing-Dienst nicht erreichen. Bitte versuche es später noch einmal. Deine Reisedaten sind weiterhin intakt."
+    "networkError": "Wir konnten Googles Routing-Dienst nicht erreichen. Bitte versuche es später noch einmal. Deine Reisedaten sind weiterhin intakt.",
+    "unsavedWarningBanner": "Du hast ungespeicherte Wegpunktänderungen. Speichere und berechne neu, bevor du gehst, sonst gehen deine Änderungen verloren.",
+    "saveAndRecalculate": "Speichern & neu berechnen",
+    "leavePageTitle": "Ungespeicherte Änderungen",
+    "leavePageMessage": "Du hast ungespeicherte Wegpunktänderungen. Wenn du jetzt gehst, gehen diese Änderungen verloren. Möchtest du bleiben und deine Änderungen speichern?",
+    "stayOnPage": "Auf Seite bleiben",
+    "leavePage": "Ohne Speichern verlassen"
   },
   "sponsor": {
     "title": "Sponsor-Konsole",

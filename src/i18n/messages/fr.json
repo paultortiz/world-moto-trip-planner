@@ -309,7 +309,13 @@
     "notableClimbs": "Montées notables",
     "gainOver": "{gain} m de dénivelé sur {start}–{end} km",
     "routingError": "Le service d'itinéraire de Google n'a pas pu trouver de route praticable entre certains de ces points de passage. Essayez d'ajuster les points de passage ou de diviser ce voyage en segments plus petits. Vos données de voyage sont toujours intactes.",
-    "networkError": "Nous n'avons pas pu atteindre le service d'itinéraire de Google. Veuillez réessayer dans un moment. Vos données de voyage sont toujours intactes."
+    "networkError": "Nous n'avons pas pu atteindre le service d'itinéraire de Google. Veuillez réessayer dans un moment. Vos données de voyage sont toujours intactes.",
+    "unsavedWarningBanner": "Vous avez des modifications de points de passage non enregistrées. Enregistrez et recalculez avant de partir ou vos modifications seront perdues.",
+    "saveAndRecalculate": "Enregistrer et recalculer",
+    "leavePageTitle": "Modifications non enregistrées",
+    "leavePageMessage": "Vous avez des modifications de points de passage non enregistrées. Si vous partez maintenant, ces modifications seront perdues. Voulez-vous rester et enregistrer vos modifications ?",
+    "stayOnPage": "Rester sur la page",
+    "leavePage": "Partir sans enregistrer"
   },
   "sponsor": {
     "title": "Console sponsor",
