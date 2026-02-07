@@ -102,6 +102,15 @@ export default function TripPlannerMap({
   const waypointToastTimeoutRef = useRef<number | null>(null);
 
   const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
+  const [zoomHint, setZoomHint] = useState<string | null>(null);
+  const zoomHintTimeoutRef = useRef<number | null>(null);
+
+  // Track previous values of show* props to detect when they change from false to true
+  const prevShowFuel = useRef(showFuelPlaces);
+  const prevShowLodging = useRef(showLodgingPlaces);
+  const prevShowCampground = useRef(showCampgroundPlaces);
+  const prevShowDining = useRef(showDiningPlaces);
+  const prevShowPoi = useRef(showPoiPlaces);
 
   useEffect(() => {
     return () => {
@@ -111,8 +120,192 @@ export default function TripPlannerMap({
       if (waypointToastTimeoutRef.current !== null) {
         window.clearTimeout(waypointToastTimeoutRef.current);
       }
+      if (zoomHintTimeoutRef.current !== null) {
+        window.clearTimeout(zoomHintTimeoutRef.current);
+      }
     };
   }, []);
+
+  // Trigger places fetch immediately when a checkbox is enabled
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Detect if any show* prop just changed from false to true
+    const fuelJustEnabled = showFuelPlaces && !prevShowFuel.current;
+    const lodgingJustEnabled = showLodgingPlaces && !prevShowLodging.current;
+    const campgroundJustEnabled = showCampgroundPlaces && !prevShowCampground.current;
+    const diningJustEnabled = showDiningPlaces && !prevShowDining.current;
+    const poiJustEnabled = showPoiPlaces && !prevShowPoi.current;
+
+    // Update refs for next render
+    prevShowFuel.current = showFuelPlaces;
+    prevShowLodging.current = showLodgingPlaces;
+    prevShowCampground.current = showCampgroundPlaces;
+    prevShowDining.current = showDiningPlaces;
+    prevShowPoi.current = showPoiPlaces;
+
+    const anyJustEnabled =
+      fuelJustEnabled ||
+      lodgingJustEnabled ||
+      campgroundJustEnabled ||
+      diningJustEnabled ||
+      poiJustEnabled;
+
+    if (!anyJustEnabled) return;
+
+    const zoom = map.getZoom() ?? 0;
+
+    if (zoom < 7) {
+      // Show hint to zoom in
+      setZoomHint("Zoom in to see nearby places");
+      if (zoomHintTimeoutRef.current !== null) {
+        window.clearTimeout(zoomHintTimeoutRef.current);
+      }
+      zoomHintTimeoutRef.current = window.setTimeout(() => {
+        setZoomHint(null);
+        zoomHintTimeoutRef.current = null;
+      }, 3000);
+    } else {
+      // Trigger fetch immediately by manually calling the idle logic
+      const bounds = map.getBounds();
+      if (!bounds) return;
+
+      const center = map.getCenter();
+      if (center) {
+        setPlacesCenter({ lat: center.lat(), lng: center.lng() });
+      }
+
+      if (!(google.maps as any).places) return;
+      const service = new google.maps.places.PlacesService(map);
+
+      // Only fetch for the categories that were just enabled (to avoid redundant calls)
+      if (fuelJustEnabled) {
+        service.nearbySearch(
+          { bounds, type: "gas_station" },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk = !minPlaceRating || (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk = !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              setFuelPlaces(
+                filtered.slice(0, MAX_PLACES_RESULTS).map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "fuel",
+                })),
+              );
+            }
+          },
+        );
+      }
+
+      if (lodgingJustEnabled) {
+        service.nearbySearch(
+          { bounds, type: "lodging" },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk = !minPlaceRating || (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk = !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              setLodgingPlaces(
+                filtered.slice(0, MAX_PLACES_RESULTS).map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "lodging",
+                })),
+              );
+            }
+          },
+        );
+      }
+
+      if (campgroundJustEnabled) {
+        service.nearbySearch(
+          { bounds, type: "campground" },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk = !minPlaceRating || (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk = !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              setCampgroundPlaces(
+                filtered.slice(0, MAX_PLACES_RESULTS).map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "campground",
+                })),
+              );
+            }
+          },
+        );
+      }
+
+      if (diningJustEnabled) {
+        service.nearbySearch(
+          { bounds, type: "restaurant" },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk = !minPlaceRating || (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk = !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              setDiningPlaces(
+                filtered.slice(0, MAX_PLACES_RESULTS).map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "dining",
+                })),
+              );
+            }
+          },
+        );
+      }
+
+      if (poiJustEnabled) {
+        service.nearbySearch(
+          { bounds, type: "tourist_attraction" },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk = !minPlaceRating || (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk = !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              setPoiPlaces(
+                filtered.slice(0, MAX_PLACES_RESULTS).map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "poi",
+                })),
+              );
+            }
+          },
+        );
+      }
+    }
+  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, minPlaceRating, onlyOpenNow]);
 
   const handleMapClick = useCallback(
     (event: google.maps.MapMouseEvent) => {
@@ -555,6 +748,21 @@ export default function TripPlannerMap({
             aria-live="polite"
           >
             Waypoint added: <span className="font-semibold">{recentWaypointName}</span>
+          </div>
+        </div>
+      )}
+
+      {zoomHint && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
+        >
+          <div
+            className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
+            role="status"
+            aria-live="polite"
+          >
+            {zoomHint}
           </div>
         </div>
       )}
