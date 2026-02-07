@@ -99,6 +99,10 @@ model Trip {
   // (0 = segment from waypoint[0] → waypoint[1], etc.)
   segmentNotes          Json?
 
+  // AI-generated daily plan (markdown text)
+  aiDailyPlan           String?   @db.Text
+  aiDailyPlanGeneratedAt DateTime?
+
   // Optional associated motorcycle for this trip
   motorcycleId          String?
   motorcycle            Motorcycle?    @relation(fields: [motorcycleId], references: [id])
