@@ -187,7 +187,7 @@ Trip name: ${trip.name}
         jsonStr = jsonMatch[1].trim();
       }
       structured = JSON.parse(jsonStr);
-    } catch (parseErr) {
+    } catch {
       console.error("Failed to parse AI JSON response:", rawText);
       // Fall back to storing just the raw text if parsing fails
       const updatedTrip = await prisma.trip.update({
