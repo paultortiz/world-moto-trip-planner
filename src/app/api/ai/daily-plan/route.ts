@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { openai } from "@/lib/openai";
 import { auth } from "@/auth";
@@ -87,16 +88,40 @@ export async function POST(req: NextRequest) {
       {
         type: "input_text" as const,
         text:
-          `Create a detailed daily riding plan for this motorcycle trip. **Write your entire response in ${targetLanguage}.** Format your response in **Markdown** with the following structure:
+          `Create a detailed daily riding plan for this motorcycle trip. **Write all text content in ${targetLanguage}.**
 
-## Formatting Requirements:
-- Use **## Day N: Start Location → End Location** for each day header
-- Include **bold** for distances and times (e.g., **~250 km**, **~4 hours**)
-- Use bullet points for waypoints and suggested stops
-- Use *italics* for POI recommendations and scenic highlights
-- Add a brief summary paragraph for each day
-- Include fuel stop recommendations based on the route
-- Note any challenging sections or road conditions to be aware of
+Return a JSON object with this exact structure (no markdown, just JSON):
+{
+  "days": [
+    {
+      "day": 1,
+      "title": "Start Location → End Location",
+      "summary": "Brief description of the day's ride",
+      "distanceKm": 250,
+      "durationHours": 4.5,
+      "waypointIndices": [0, 1, 2],
+      "suggestedStops": [
+        {
+          "name": "Gas Station Name",
+          "type": "FUEL",
+          "lat": 45.123,
+          "lng": -122.456,
+          "reason": "Good fuel stop after mountain section"
+        }
+      ],
+      "highlights": ["Scenic mountain pass", "Historic town center"],
+      "warnings": ["Rough gravel section for 20km"]
+    }
+  ]
+}
+
+Rules:
+- waypointIndices: array of 0-based indices from the waypoints list that belong to this day
+- suggestedStops: optional fuel, lodging, or POI suggestions with approximate lat/lng coordinates
+- type must be one of: FUEL, LODGING, CAMPGROUND, DINING, POI
+- Focus on realistic daily distances (200-400 km for ADV riding)
+- Include fuel stop suggestions based on the motorcycle's range
+- All text (title, summary, highlights, warnings, reason) must be in ${targetLanguage}
 
 ---
 
@@ -110,10 +135,10 @@ Trip name: ${trip.name}
           (totalKm != null ? `Total distance: ~${totalKm.toFixed(0)} km\n` : "") +
           (totalHours != null ? `Estimated riding time: ~${totalHours.toFixed(1)} hours\n` : "") +
           (trip.startDate ? `Start date: ${new Date(trip.startDate).toLocaleDateString()}\n` : "") +
-          `\nWaypoints (in route order):\n` +
+          `\nWaypoints (in route order, 0-indexed):\n` +
           waypoints
             .map((wp) =>
-              `${wp.index + 1}. **${wp.name || "Unnamed"}** (${wp.type}${wp.dayIndex ? `, Day ${wp.dayIndex}` : ""})`,
+              `${wp.index}. ${wp.name || "Unnamed"} (${wp.type}, lat: ${wp.lat.toFixed(4)}, lng: ${wp.lng.toFixed(4)})`,
             )
             .join("\n"),
       },
@@ -125,25 +150,114 @@ Trip name: ${trip.name}
         {
           role: "system",
           content:
-            "You are an expert adventure motorcycle route planner. You create detailed, practical daily riding plans that consider fuel range, scenic routes, rest stops, and points of interest. Your plans are formatted in clean Markdown for easy reading. Focus on realistic daily distances (typically 200-400 km for ADV riding) and include specific recommendations for fuel stops, food, and overnight stays.",
+            "You are an expert adventure motorcycle route planner. Return ONLY valid JSON with no markdown formatting, no code fences, and no extra text. Create practical daily riding plans that consider fuel range, scenic routes, rest stops, and points of interest. Focus on realistic daily distances (typically 200-400 km for ADV riding).",
         },
         { role: "user", content: userContent },
       ],
     });
 
-    const text = (response.output_text ?? "").trim();
+    const rawText = (response.output_text ?? "").trim();
+
+    // Parse the JSON response
+    let structured: {
+      days: Array<{
+        day: number;
+        title: string;
+        summary: string;
+        distanceKm: number;
+        durationHours: number;
+        waypointIndices: number[];
+        suggestedStops?: Array<{
+          name: string;
+          type: string;
+          lat: number;
+          lng: number;
+          reason?: string;
+        }>;
+        highlights?: string[];
+        warnings?: string[];
+      }>;
+    };
+
+    try {
+      // Try to extract JSON from the response (handle potential markdown code fences)
+      let jsonStr = rawText;
+      const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1].trim();
+      }
+      structured = JSON.parse(jsonStr);
+    } catch {
+      console.error("Failed to parse AI JSON response:", rawText);
+      // Fall back to storing just the raw text if parsing fails
+      const updatedTrip = await prisma.trip.update({
+        where: { id: tripId },
+        data: {
+          aiDailyPlan: rawText,
+          aiDailyPlanStructured: Prisma.DbNull,
+          aiDailyPlanGeneratedAt: new Date(),
+        },
+      });
+      return NextResponse.json({
+        text: rawText,
+        structured: null,
+        generatedAt: updatedTrip.aiDailyPlanGeneratedAt?.toISOString() ?? null,
+      });
+    }
+
+    // Generate markdown from the structured data for display
+    const markdownLines: string[] = [];
+    for (const day of structured.days) {
+      markdownLines.push(`## Day ${day.day}: ${day.title}`);
+      markdownLines.push("");
+      markdownLines.push(`**~${day.distanceKm} km** · **~${day.durationHours.toFixed(1)} hours**`);
+      markdownLines.push("");
+      markdownLines.push(day.summary);
+      markdownLines.push("");
+
+      if (day.highlights && day.highlights.length > 0) {
+        markdownLines.push("**Highlights:**");
+        for (const h of day.highlights) {
+          markdownLines.push(`- *${h}*`);
+        }
+        markdownLines.push("");
+      }
+
+      if (day.warnings && day.warnings.length > 0) {
+        markdownLines.push("**⚠️ Notes:**");
+        for (const w of day.warnings) {
+          markdownLines.push(`- ${w}`);
+        }
+        markdownLines.push("");
+      }
+
+      if (day.suggestedStops && day.suggestedStops.length > 0) {
+        markdownLines.push("**Suggested stops:**");
+        for (const stop of day.suggestedStops) {
+          markdownLines.push(`- **${stop.name}** (${stop.type})${stop.reason ? ` – ${stop.reason}` : ""}`);
+        }
+        markdownLines.push("");
+      }
+
+      markdownLines.push("---");
+      markdownLines.push("");
+    }
+
+    const text = markdownLines.join("\n").trim();
 
     // Persist the generated plan to the database
     const updatedTrip = await prisma.trip.update({
       where: { id: tripId },
       data: {
         aiDailyPlan: text,
+        aiDailyPlanStructured: structured as any,
         aiDailyPlanGeneratedAt: new Date(),
       },
     });
 
     return NextResponse.json({
       text,
+      structured,
       generatedAt: updatedTrip.aiDailyPlanGeneratedAt?.toISOString() ?? null,
     });
   } catch (err: any) {
@@ -196,6 +310,7 @@ export async function DELETE(req: NextRequest) {
       where: { id: tripId },
       data: {
         aiDailyPlan: null,
+        aiDailyPlanStructured: Prisma.DbNull,
         aiDailyPlanGeneratedAt: null,
       },
     });

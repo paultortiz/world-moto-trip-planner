@@ -99,8 +99,9 @@ model Trip {
   // (0 = segment from waypoint[0] → waypoint[1], etc.)
   segmentNotes          Json?
 
-  // AI-generated daily plan (markdown text)
+  // AI-generated daily plan (markdown text and structured JSON)
   aiDailyPlan           String?   @db.Text
+  aiDailyPlanStructured Json?
   aiDailyPlanGeneratedAt DateTime?
 
   // Optional associated motorcycle for this trip
