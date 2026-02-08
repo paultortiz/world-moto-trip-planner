@@ -213,6 +213,7 @@
     "planningTools": "Planning tools",
     "aiDailyPlan": "AI daily plan suggestion",
     "thinking": "Thinking...",
+    "buildingPlan": "Building plan",
     "addMoreWaypoints": "Add more waypoints",
     "suggestDailyPlan": "Suggest daily plan",
     "aiPlanDescription": "Get a suggested multi-day riding plan that calls out scenic legs and nearby points of interest along your waypoints.",

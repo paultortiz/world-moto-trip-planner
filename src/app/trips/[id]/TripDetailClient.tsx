@@ -300,6 +300,8 @@ export default function TripDetailClient({
     (trip.aiDailyPlanStructured as { days: AiDayData[] } | null | undefined) ?? null,
   );
   const [showMarkdownView, setShowMarkdownView] = useState(false);
+  const [aiPlanStreaming, setAiPlanStreaming] = useState(false);
+  const [aiStreamingText, setAiStreamingText] = useState<string>("");
 
   const initialSegmentNotes: SegmentNoteDto[] =
     Array.isArray(trip.segmentNotes)
@@ -1333,11 +1335,13 @@ export default function TripDetailClient({
                   onClick={async () => {
                     setAiPlanError(null);
                     setAiPlanLoading(true);
+                    setAiPlanStreaming(true);
+                    setAiStreamingText("");
                     try {
                       const res = await fetch(`/api/ai/daily-plan`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ tripId: trip.id, locale }),
+                        body: JSON.stringify({ tripId: trip.id, locale, stream: true }),
                       });
 
                       if (!res.ok) {
@@ -1345,15 +1349,48 @@ export default function TripDetailClient({
                         throw new Error(data?.error ?? t("failedToGeneratePlan"));
                       }
 
-                      const data = await res.json();
-                      setAiPlanText(typeof data.text === "string" ? data.text : "");
-                      setAiPlanStructured(data.structured ?? null);
-                      setShowMarkdownView(false);
-                      if (data.generatedAt) {
-                        setAiPlanGeneratedAt(new Date(data.generatedAt).toLocaleString());
+                      // Handle SSE streaming response
+                      const reader = res.body?.getReader();
+                      if (!reader) throw new Error("No response body");
+
+                      const decoder = new TextDecoder();
+                      let buffer = "";
+
+                      while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split("\n\n");
+                        buffer = lines.pop() || "";
+
+                        for (const line of lines) {
+                          if (!line.startsWith("data: ")) continue;
+                          const jsonStr = line.slice(6);
+                          try {
+                            const data = JSON.parse(jsonStr);
+                            if (data.chunk) {
+                              setAiStreamingText((prev) => prev + data.chunk);
+                            } else if (data.done) {
+                              // Stream complete - update with final data
+                              setAiPlanText(typeof data.text === "string" ? data.text : "");
+                              setAiPlanStructured(data.structured ?? null);
+                              setShowMarkdownView(false);
+                              if (data.generatedAt) {
+                                setAiPlanGeneratedAt(new Date(data.generatedAt).toLocaleString());
+                              }
+                              setAiPlanStreaming(false);
+                            } else if (data.error) {
+                              throw new Error(data.error);
+                            }
+                          } catch {
+                            // Ignore parse errors for partial chunks
+                          }
+                        }
                       }
                     } catch (err: any) {
                       setAiPlanError(err?.message ?? t("failedToGeneratePlan"));
+                      setAiPlanStreaming(false);
                     } finally {
                       setAiPlanLoading(false);
                     }
@@ -1384,7 +1421,7 @@ export default function TripDetailClient({
                     </svg>
                   )}
                   {aiPlanLoading
-                    ? t("thinking")
+                    ? t("buildingPlan")
                     : waypoints.length < 2
                     ? t("addMoreWaypoints")
                     : aiPlanText
@@ -1407,30 +1444,50 @@ export default function TripDetailClient({
               )}
             </div>
             {aiPlanLoading && (
-              <div className="space-y-3 rounded border border-slate-700 bg-slate-950/70 p-3" aria-label="Loading AI plan">
-                {/* Skeleton header */}
-                <div className="h-5 w-48 animate-pulse rounded bg-slate-700" />
-                {/* Skeleton paragraph lines */}
-                <div className="space-y-2">
-                  <div className="h-3 w-full animate-pulse rounded bg-slate-700/70" />
-                  <div className="h-3 w-11/12 animate-pulse rounded bg-slate-700/70" />
-                  <div className="h-3 w-4/5 animate-pulse rounded bg-slate-700/70" />
-                </div>
-                {/* Skeleton day header */}
-                <div className="h-4 w-40 animate-pulse rounded bg-slate-700 mt-4" />
-                {/* Skeleton bullet points */}
-                <div className="space-y-2 pl-4">
-                  <div className="h-3 w-3/4 animate-pulse rounded bg-slate-700/70" />
-                  <div className="h-3 w-2/3 animate-pulse rounded bg-slate-700/70" />
-                  <div className="h-3 w-5/6 animate-pulse rounded bg-slate-700/70" />
-                </div>
-                {/* Skeleton day header 2 */}
-                <div className="h-4 w-44 animate-pulse rounded bg-slate-700 mt-4" />
-                {/* More skeleton lines */}
-                <div className="space-y-2 pl-4">
-                  <div className="h-3 w-2/3 animate-pulse rounded bg-slate-700/70" />
-                  <div className="h-3 w-3/4 animate-pulse rounded bg-slate-700/70" />
-                </div>
+              <div className="rounded border border-slate-700 bg-slate-950/70 p-3" aria-label="Building AI plan">
+                {aiPlanStreaming && aiStreamingText ? (
+                  /* Show streaming raw JSON as it builds */
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-[11px] text-adv-accent">
+                      <svg
+                        className="h-3 w-3 animate-spin"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      <span>{t("buildingPlan")}...</span>
+                    </div>
+                    <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[10px] text-slate-400">
+                      {aiStreamingText}
+                      <span className="animate-pulse">▌</span>
+                    </pre>
+                  </div>
+                ) : (
+                  /* Show skeleton while waiting for first chunk */
+                  <div className="space-y-3">
+                    <div className="h-5 w-48 animate-pulse rounded bg-slate-700" />
+                    <div className="space-y-2">
+                      <div className="h-3 w-full animate-pulse rounded bg-slate-700/70" />
+                      <div className="h-3 w-11/12 animate-pulse rounded bg-slate-700/70" />
+                      <div className="h-3 w-4/5 animate-pulse rounded bg-slate-700/70" />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {/* Day cards view (when structured data available) */}
