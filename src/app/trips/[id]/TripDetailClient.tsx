@@ -11,6 +11,7 @@ import RecalculateRouteButton from "./RecalculateRouteButton";
 import DeleteTripButton from "./DeleteTripButton";
 import WaypointEditor from "./WaypointEditor";
 import ElevationProfile from "./ElevationProfile";
+import AiDayCard, { type AiDayData, type SuggestedStop } from "./AiDayCard";
 
 interface WaypointDto {
   id?: string;
@@ -295,6 +296,10 @@ export default function TripDetailClient({
   );
   const [aiPlanError, setAiPlanError] = useState<string | null>(null);
   const [aiPlanClearing, setAiPlanClearing] = useState(false);
+  const [aiPlanStructured, setAiPlanStructured] = useState<{ days: AiDayData[] } | null>(
+    (trip.aiDailyPlanStructured as { days: AiDayData[] } | null | undefined) ?? null,
+  );
+  const [showMarkdownView, setShowMarkdownView] = useState(false);
 
   const initialSegmentNotes: SegmentNoteDto[] =
     Array.isArray(trip.segmentNotes)
@@ -1309,6 +1314,7 @@ export default function TripDetailClient({
                           throw new Error(data?.error ?? t("failedToClearPlan"));
                         }
                         setAiPlanText(null);
+                        setAiPlanStructured(null);
                         setAiPlanGeneratedAt(null);
                       } catch (err: any) {
                         setAiPlanError(err?.message ?? t("failedToClearPlan"));
@@ -1341,6 +1347,8 @@ export default function TripDetailClient({
 
                       const data = await res.json();
                       setAiPlanText(typeof data.text === "string" ? data.text : "");
+                      setAiPlanStructured(data.structured ?? null);
+                      setShowMarkdownView(false);
                       if (data.generatedAt) {
                         setAiPlanGeneratedAt(new Date(data.generatedAt).toLocaleString());
                       }
@@ -1425,9 +1433,124 @@ export default function TripDetailClient({
                 </div>
               </div>
             )}
-            {aiPlanText && !aiPlanLoading && (
-              <div className="max-h-96 overflow-y-auto rounded border border-slate-700 bg-slate-950/70 p-3 text-slate-200 prose prose-invert prose-sm prose-headings:text-slate-100 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-slate-100 prose-em:text-amber-200 max-w-none">
-                <ReactMarkdown>{aiPlanText}</ReactMarkdown>
+            {/* Day cards view (when structured data available) */}
+            {aiPlanStructured && !aiPlanLoading && !showMarkdownView && (
+              <div className="space-y-3">
+                {/* Action buttons */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Apply day assignments to waypoints
+                      const updatedWaypoints = [...waypoints];
+                      for (const day of aiPlanStructured.days) {
+                        for (const idx of day.waypointIndices) {
+                          if (updatedWaypoints[idx]) {
+                            updatedWaypoints[idx] = {
+                              ...updatedWaypoints[idx],
+                              dayIndex: day.day,
+                            };
+                          }
+                        }
+                      }
+                      setWaypoints(updatedWaypoints);
+                      setIsDirty(true);
+                    }}
+                    className="text-[10px] px-2 py-1 rounded bg-adv-accent/20 text-adv-accent hover:bg-adv-accent/30 font-medium"
+                  >
+                    {t("applyDayAssignments")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowMarkdownView(true)}
+                    className="text-[10px] px-2 py-1 rounded border border-slate-600 text-slate-300 hover:bg-slate-800"
+                  >
+                    {t("showMarkdown")}
+                  </button>
+                </div>
+                {/* Day cards */}
+                <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                  {aiPlanStructured.days.map((day) => (
+                    <AiDayCard
+                      key={day.day}
+                      day={day}
+                      waypoints={waypoints.map((wp, idx) => ({
+                        index: idx,
+                        name: wp.name ?? null,
+                        type: wp.type ?? "CHECKPOINT",
+                      }))}
+                      onAddWaypoint={(stop: SuggestedStop) => {
+                        // Check if already added (same name and day)
+                        const alreadyExists = waypoints.some(
+                          (wp) =>
+                            wp.name === stop.name &&
+                            wp.dayIndex === day.day
+                        );
+                        if (alreadyExists) return;
+
+                        // Insert after the last waypoint of this day (using actual dayIndex values)
+                        const newWaypoint: WaypointDto = {
+                          lat: stop.lat,
+                          lng: stop.lng,
+                          name: stop.name,
+                          type: stop.type as any,
+                          dayIndex: day.day,
+                        };
+                        // Find the last waypoint index that belongs to this day or earlier
+                        let insertIdx = waypoints.length;
+                        for (let i = waypoints.length - 1; i >= 0; i--) {
+                          const wpDay = waypoints[i].dayIndex ?? 1;
+                          if (wpDay <= day.day) {
+                            insertIdx = i + 1;
+                            break;
+                          }
+                        }
+                        const updatedWaypoints = [
+                          ...waypoints.slice(0, insertIdx),
+                          newWaypoint,
+                          ...waypoints.slice(insertIdx),
+                        ];
+                        setWaypoints(updatedWaypoints);
+                        setIsDirty(true);
+                        // Show brief status
+                        setAiPlanError(null);
+                        setAiPlanGeneratedAt(`${t("waypointAdded")}: ${stop.name}`);
+                        setTimeout(() => {
+                          setAiPlanGeneratedAt(
+                            trip.aiDailyPlanGeneratedAt
+                              ? `${t("generatedOn")} ${new Date(trip.aiDailyPlanGeneratedAt as string).toLocaleString()}`
+                              : null
+                          );
+                        }, 2000);
+                      }}
+                      isStopAdded={(stop: SuggestedStop) =>
+                        waypoints.some(
+                          (wp) =>
+                            wp.name === stop.name &&
+                            wp.dayIndex === day.day
+                        )
+                      }
+                      t={t}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Markdown view (fallback or when toggled) */}
+            {aiPlanText && !aiPlanLoading && (showMarkdownView || !aiPlanStructured) && (
+              <div className="space-y-2">
+                {aiPlanStructured && (
+                  <button
+                    type="button"
+                    onClick={() => setShowMarkdownView(false)}
+                    className="text-[10px] px-2 py-1 rounded border border-slate-600 text-slate-300 hover:bg-slate-800"
+                  >
+                    {t("showDayCards")}
+                  </button>
+                )}
+                <div className="max-h-96 overflow-y-auto rounded border border-slate-700 bg-slate-950/70 p-3 text-slate-200 prose prose-invert prose-sm prose-headings:text-slate-100 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-slate-100 prose-em:text-amber-200 max-w-none">
+                  <ReactMarkdown>{aiPlanText}</ReactMarkdown>
+                </div>
               </div>
             )}
           </section>
