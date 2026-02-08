@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { LocaleSwitcher } from "@/shared/LocaleSwitcher";
+import { MobileNav, MobileNavGuest } from "@/shared/MobileNav";
 
 export const metadata: Metadata = {
   title: "World Moto Trip Planner",
@@ -23,7 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen bg-adv-night text-slate-100">
         <NextIntlClientProvider messages={messages}>
           <div className="flex min-h-screen flex-col">
-            <header className="border-b border-adv-border bg-slate-900/80 backdrop-blur">
+            <header className="relative border-b border-adv-border bg-slate-900/80 backdrop-blur">
               <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
                 <Link
                   href="/"
@@ -32,53 +33,34 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-adv-accent to-adv-accentMuted text-xs font-bold text-black shadow-adv-glow">
                     ADV
                   </span>
-                  <span className="text-slate-50">World Moto Trip Planner</span>
+                  <span className="hidden text-slate-50 sm:inline">World Moto Trip Planner</span>
+                  <span className="text-slate-50 sm:hidden">WMTP</span>
                 </Link>
-                <div className="flex items-center gap-4 text-xs">
-                  {session ? (
-                    <>
-                      <Link href="/trips" className="text-slate-200 hover:text-adv-accent">
-                        {t("nav.trips")}
-                      </Link>
-                      <Link href="/trips/new" className="text-slate-200 hover:text-adv-accent">
-                        {t("nav.newTrip")}
-                      </Link>
-                      <Link href="/motorcycles" className="text-slate-200 hover:text-adv-accent">
-                        {t("nav.garage")}
-                      </Link>
-                      {(role === "SPONSOR" || role === "ADMIN") && (
-                        <Link href="/sponsor" className="text-slate-200 hover:text-adv-accent">
-                          {t("nav.sponsor")}
-                        </Link>
-                      )}
-                      {role === "ADMIN" && (
-                        <Link href="/administrator" className="text-slate-200 hover:text-adv-accent">
-                          {t("nav.admin")}
-                        </Link>
-                      )}
-                      <LocaleSwitcher />
-                      <span className="hidden text-slate-400 sm:inline">
-                        {session.user?.email}
-                      </span>
-                      <Link
-                        href="/api/auth/signout?callbackUrl=/"
-                        className="rounded border border-adv-accent/50 px-3 py-1 font-semibold text-adv-accent hover:bg-adv-accent/10"
-                      >
-                        {t("common.signOut")}
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      <LocaleSwitcher />
-                      <Link
-                        href="/api/auth/signin?callbackUrl=/trips"
-                        className="rounded bg-adv-accent px-3 py-1 text-xs font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted"
-                      >
-                        {t("common.signIn")}
-                      </Link>
-                    </>
-                  )}
-                </div>
+                {session ? (
+                  <MobileNav
+                    links={[
+                      { href: "/trips", label: t("nav.trips") },
+                      { href: "/trips/new", label: t("nav.newTrip") },
+                      { href: "/motorcycles", label: t("nav.garage") },
+                      ...((role === "SPONSOR" || role === "ADMIN")
+                        ? [{ href: "/sponsor", label: t("nav.sponsor") }]
+                        : []),
+                      ...(role === "ADMIN"
+                        ? [{ href: "/administrator", label: t("nav.admin") }]
+                        : []),
+                    ]}
+                    email={session.user?.email}
+                    signOutLabel={t("common.signOut")}
+                    signOutHref="/api/auth/signout?callbackUrl=/"
+                    localeSwitcher={<LocaleSwitcher />}
+                  />
+                ) : (
+                  <MobileNavGuest
+                    signInLabel={t("common.signIn")}
+                    signInHref="/api/auth/signin?callbackUrl=/trips"
+                    localeSwitcher={<LocaleSwitcher />}
+                  />
+                )}
               </nav>
             </header>
             <main className="flex-1">{children}</main>
