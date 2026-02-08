@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMap, Marker, Polyline, useJsApiLoader, MarkerClusterer, StandaloneSearchBox } from "@react-google-maps/api";
 
-const containerStyle = {
+const containerStyle: React.CSSProperties = {
   width: "100%",
   height: "400px",
+  touchAction: "none", // Prevent page scroll/pan when interacting with map on mobile
 };
 
 const defaultCenter = { lat: 39.7392, lng: -104.9903 }; // Example default center (Denver)
