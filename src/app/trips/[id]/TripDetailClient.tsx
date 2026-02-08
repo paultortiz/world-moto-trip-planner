@@ -302,6 +302,7 @@ export default function TripDetailClient({
   const [showMarkdownView, setShowMarkdownView] = useState(false);
   const [aiPlanStreaming, setAiPlanStreaming] = useState(false);
   const [aiStreamingText, setAiStreamingText] = useState<string>("");
+  const streamingPreRef = useRef<HTMLPreElement>(null);
 
   const initialSegmentNotes: SegmentNoteDto[] =
     Array.isArray(trip.segmentNotes)
@@ -631,6 +632,13 @@ export default function TripDetailClient({
       // ignore localStorage errors
     }
   }, []);
+
+  // Auto-scroll streaming text to bottom (tail behavior)
+  useEffect(() => {
+    if (streamingPreRef.current) {
+      streamingPreRef.current.scrollTop = streamingPreRef.current.scrollHeight;
+    }
+  }, [aiStreamingText]);
 
   // Browser beforeunload warning when there are unsaved changes
   useEffect(() => {
@@ -1472,7 +1480,10 @@ export default function TripDetailClient({
                       </svg>
                       <span>{t("buildingPlan")}...</span>
                     </div>
-                    <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[10px] text-slate-400">
+                    <pre
+                      ref={streamingPreRef}
+                      className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[10px] text-slate-400"
+                    >
                       {aiStreamingText}
                       <span className="animate-pulse">▌</span>
                     </pre>
