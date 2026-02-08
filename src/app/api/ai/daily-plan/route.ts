@@ -13,7 +13,11 @@ export async function POST(req: NextRequest) {
 
     const userId = (session.user as any).id as string;
     const body = await req.json();
-    const { tripId, locale } = body as { tripId?: string; locale?: string };
+    const { tripId, locale, stream: useStreaming } = body as {
+      tripId?: string;
+      locale?: string;
+      stream?: boolean;
+    };
 
     if (!tripId || typeof tripId !== "string") {
       return NextResponse.json({ error: "tripId is required" }, { status: 400 });
@@ -144,14 +148,129 @@ Trip name: ${trip.name}
       },
     ];
 
+    const systemPrompt =
+      "You are an expert adventure motorcycle route planner. Return ONLY valid JSON with no markdown formatting, no code fences, and no extra text. Create practical daily riding plans that consider fuel range, scenic routes, rest stops, and points of interest. Focus on realistic daily distances (typically 200-400 km for ADV riding).";
+
+    // Streaming mode
+    if (useStreaming) {
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent[0].text },
+        ],
+        stream: true,
+      });
+
+      const encoder = new TextEncoder();
+      let fullText = "";
+
+      const readableStream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of stream) {
+              const content = chunk.choices[0]?.delta?.content || "";
+              if (content) {
+                fullText += content;
+                // Send chunk as SSE data
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ chunk: content })}\n\n`)
+                );
+              }
+            }
+
+            // Stream complete - parse and save
+            let structured = null;
+            let text = fullText.trim();
+            try {
+              let jsonStr = text;
+              const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+              if (jsonMatch) {
+                jsonStr = jsonMatch[1].trim();
+              }
+              structured = JSON.parse(jsonStr);
+
+              // Generate markdown from structured data
+              const markdownLines: string[] = [];
+              for (const day of structured.days) {
+                markdownLines.push(`## Day ${day.day}: ${day.title}`);
+                markdownLines.push("");
+                markdownLines.push(`**~${day.distanceKm} km** \u00b7 **~${day.durationHours.toFixed(1)} hours**`);
+                markdownLines.push("");
+                markdownLines.push(day.summary);
+                markdownLines.push("");
+                if (day.highlights?.length > 0) {
+                  markdownLines.push("**Highlights:**");
+                  for (const h of day.highlights) markdownLines.push(`- *${h}*`);
+                  markdownLines.push("");
+                }
+                if (day.warnings?.length > 0) {
+                  markdownLines.push("**\u26a0\ufe0f Notes:**");
+                  for (const w of day.warnings) markdownLines.push(`- ${w}`);
+                  markdownLines.push("");
+                }
+                if (day.suggestedStops?.length > 0) {
+                  markdownLines.push("**Suggested stops:**");
+                  for (const stop of day.suggestedStops) {
+                    markdownLines.push(`- **${stop.name}** (${stop.type})${stop.reason ? ` \u2013 ${stop.reason}` : ""}`);
+                  }
+                  markdownLines.push("");
+                }
+                markdownLines.push("---");
+                markdownLines.push("");
+              }
+              text = markdownLines.join("\n").trim();
+            } catch {
+              // JSON parse failed, use raw text
+              structured = null;
+            }
+
+            // Save to database
+            const updatedTrip = await prisma.trip.update({
+              where: { id: tripId },
+              data: {
+                aiDailyPlan: text,
+                aiDailyPlanStructured: structured ? (structured as Prisma.InputJsonValue) : Prisma.DbNull,
+                aiDailyPlanGeneratedAt: new Date(),
+              },
+            });
+
+            // Send final message with complete data
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  done: true,
+                  text,
+                  structured,
+                  generatedAt: updatedTrip.aiDailyPlanGeneratedAt?.toISOString() ?? null,
+                })}\n\n`
+              )
+            );
+            controller.close();
+          } catch (err) {
+            console.error("Streaming error:", err);
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ error: "Streaming failed" })}\n\n`)
+            );
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(readableStream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // Non-streaming mode (original behavior)
     const response = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
-        {
-          role: "system",
-          content:
-            "You are an expert adventure motorcycle route planner. Return ONLY valid JSON with no markdown formatting, no code fences, and no extra text. Create practical daily riding plans that consider fuel range, scenic routes, rest stops, and points of interest. Focus on realistic daily distances (typically 200-400 km for ADV riding).",
-        },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userContent },
       ],
     });
