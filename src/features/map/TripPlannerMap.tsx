@@ -41,6 +41,35 @@ type PanelPlaceItem = {
 
 const MAX_PLACES_RESULTS = 25;
 
+// SVG icons for nearby places markers
+// Fuel icon (gas pump) - green
+const fuelIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#16a34a" stroke="#fff" stroke-width="1"><path d="M3 22V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7h1a2 2 0 0 1 2 2v4a1 1 0 0 0 2 0v-7l-2-2V7a1 1 0 0 1 2 0v2l2 2v8a3 3 0 0 1-6 0v-4h-1v7H3z"/><rect x="6" y="8" width="6" height="4" rx="1" fill="#fff"/></svg>`;
+const fuelIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#22c55e" stroke="#fff" stroke-width="2"><path d="M3 22V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7h1a2 2 0 0 1 2 2v4a1 1 0 0 0 2 0v-7l-2-2V7a1 1 0 0 1 2 0v2l2 2v8a3 3 0 0 1-6 0v-4h-1v7H3z"/><rect x="6" y="8" width="6" height="4" rx="1" fill="#fff"/></svg>`;
+
+// Lodging icon (hotel building) - blue
+const lodgingIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#2563eb" stroke="#fff" stroke-width="1"><path d="M6 2h12v20H6z"/><rect x="9" y="6" width="2" height="2" fill="#fff"/><rect x="13" y="6" width="2" height="2" fill="#fff"/><rect x="9" y="11" width="2" height="2" fill="#fff"/><rect x="13" y="11" width="2" height="2" fill="#fff"/><path d="M10 22v-5h4v5" fill="#fff"/></svg>`;
+const lodgingIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3b82f6" stroke="#fff" stroke-width="2"><path d="M6 2h12v20H6z"/><rect x="9" y="6" width="2" height="2" fill="#fff"/><rect x="13" y="6" width="2" height="2" fill="#fff"/><rect x="9" y="11" width="2" height="2" fill="#fff"/><rect x="13" y="11" width="2" height="2" fill="#fff"/><path d="M10 22v-5h4v5" fill="#fff"/></svg>`;
+
+// Campground icon (tent) - teal
+const campgroundIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0d9488" stroke="#fff" stroke-width="1"><path d="M12 3L2 20h20L12 3z"/><path d="M12 14l-3 6h6l-3-6z" fill="#fff"/></svg>`;
+const campgroundIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#14b8a6" stroke="#fff" stroke-width="2"><path d="M12 3L2 20h20L12 3z"/><path d="M12 14l-3 6h6l-3-6z" fill="#fff"/></svg>`;
+
+// Dining icon (diner building) - rose/pink  
+const diningIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#e11d48" stroke="#fff" stroke-width="1"><path d="M8 3h8l2 5H6l2-5z"/><path d="M5 8h14v2H5z"/><path d="M6 10h12v10H6z"/><rect x="9" y="13" width="6" height="4" fill="#fff"/></svg>`;
+const diningIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f43f5e" stroke="#fff" stroke-width="2"><path d="M8 3h8l2 5H6l2-5z"/><path d="M5 8h14v2H5z"/><path d="M6 10h12v10H6z"/><rect x="9" y="13" width="6" height="4" fill="#fff"/></svg>`;
+
+// POI icon (star/landmark) - amber
+const poiIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#d97706" stroke="#fff" stroke-width="1"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>`;
+const poiIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#fff" stroke-width="2"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>`;
+
+// Helper to create icon URL from SVG using base64 encoding
+const svgToIconUrl = (svg: string) => {
+  if (typeof window !== 'undefined') {
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  }
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+};
+
 interface TripPlannerMapProps {
   waypoints: WaypointPosition[];
   onAddWaypoint?: (wp: WaypointPosition) => void;
@@ -882,58 +911,43 @@ export default function TripPlannerMap({
       {waypoints.map((position, index) => {
         const wpType = position.type ?? null;
 
-        let icon: google.maps.Symbol | undefined;
+        let icon: google.maps.Icon | google.maps.Symbol | undefined;
         let zIndex: number | undefined;
 
-        // Rider-defined waypoints use solid markers.
+        // Rider-defined waypoints use SVG icons for better visual recognition
         if (wpType === "FUEL") {
           icon = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 6,
-            fillColor: "#22c55e", // green for fuel
-            fillOpacity: 0.95,
-            strokeColor: "#15803d",
-            strokeWeight: 1,
+            url: svgToIconUrl(fuelIconSvg),
+            scaledSize: new google.maps.Size(28, 28),
+            anchor: new google.maps.Point(14, 14),
           };
           zIndex = 10;
         } else if (wpType === "LODGING") {
           icon = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 6,
-            fillColor: "#60a5fa", // blue for lodging
-            fillOpacity: 0.95,
-            strokeColor: "#1d4ed8",
-            strokeWeight: 1,
+            url: svgToIconUrl(lodgingIconSvg),
+            scaledSize: new google.maps.Size(28, 28),
+            anchor: new google.maps.Point(14, 14),
           };
           zIndex = 9;
         } else if (wpType === "CAMPGROUND") {
           icon = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 6,
-            fillColor: "#14b8a6", // teal for campgrounds
-            fillOpacity: 0.95,
-            strokeColor: "#0f766e",
-            strokeWeight: 1,
+            url: svgToIconUrl(campgroundIconSvg),
+            scaledSize: new google.maps.Size(28, 28),
+            anchor: new google.maps.Point(14, 14),
           };
           zIndex = 9;
         } else if (wpType === "DINING") {
           icon = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 6,
-            fillColor: "#fb7185", // rose/red for dining
-            fillOpacity: 0.95,
-            strokeColor: "#be123c",
-            strokeWeight: 1,
+            url: svgToIconUrl(diningIconSvg),
+            scaledSize: new google.maps.Size(28, 28),
+            anchor: new google.maps.Point(14, 14),
           };
           zIndex = 9;
         } else if (wpType === "POI") {
           icon = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 6,
-            fillColor: "#eab308", // amber/yellow for POI
-            fillOpacity: 0.95,
-            strokeColor: "#a16207",
-            strokeWeight: 1,
+            url: svgToIconUrl(poiIconSvg),
+            scaledSize: new google.maps.Size(28, 28),
+            anchor: new google.maps.Point(14, 14),
           };
           zIndex = 8;
         }
@@ -963,19 +977,11 @@ export default function TripPlannerMap({
                 highlightedPlace.lat === p.lat &&
                 highlightedPlace.lng === p.lng;
 
-              const baseIcon: google.maps.Symbol = {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 4,
-                fillColor: "#22c55e",
-                fillOpacity: 0.4,
-                strokeColor: "#22c55e",
-                strokeOpacity: 0.8,
-                strokeWeight: 1,
+              const icon = {
+                url: svgToIconUrl(isHighlighted ? fuelIconSvgHighlight : fuelIconSvg),
+                scaledSize: new google.maps.Size(isHighlighted ? 32 : 24, isHighlighted ? 32 : 24),
+                anchor: new google.maps.Point(isHighlighted ? 16 : 12, isHighlighted ? 16 : 12),
               };
-
-              const icon = isHighlighted
-                ? { ...baseIcon, scale: 6, fillOpacity: 0.9, strokeWeight: 2 }
-                : baseIcon;
 
               return (
                 <Marker
@@ -1004,19 +1010,11 @@ export default function TripPlannerMap({
                 highlightedPlace.lat === p.lat &&
                 highlightedPlace.lng === p.lng;
 
-              const baseIcon: google.maps.Symbol = {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 4,
-                fillColor: "#60a5fa",
-                fillOpacity: 0.4,
-                strokeColor: "#60a5fa",
-                strokeOpacity: 0.8,
-                strokeWeight: 1,
+              const icon = {
+                url: svgToIconUrl(isHighlighted ? lodgingIconSvgHighlight : lodgingIconSvg),
+                scaledSize: new google.maps.Size(isHighlighted ? 32 : 24, isHighlighted ? 32 : 24),
+                anchor: new google.maps.Point(isHighlighted ? 16 : 12, isHighlighted ? 16 : 12),
               };
-
-              const icon = isHighlighted
-                ? { ...baseIcon, scale: 6, fillOpacity: 0.9, strokeWeight: 2 }
-                : baseIcon;
 
               return (
                 <Marker
@@ -1045,19 +1043,11 @@ export default function TripPlannerMap({
                 highlightedPlace.lat === p.lat &&
                 highlightedPlace.lng === p.lng;
 
-              const baseIcon: google.maps.Symbol = {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 4,
-                fillColor: "#14b8a6",
-                fillOpacity: 0.4,
-                strokeColor: "#14b8a6",
-                strokeOpacity: 0.8,
-                strokeWeight: 1,
+              const icon = {
+                url: svgToIconUrl(isHighlighted ? campgroundIconSvgHighlight : campgroundIconSvg),
+                scaledSize: new google.maps.Size(isHighlighted ? 32 : 24, isHighlighted ? 32 : 24),
+                anchor: new google.maps.Point(isHighlighted ? 16 : 12, isHighlighted ? 16 : 12),
               };
-
-              const icon = isHighlighted
-                ? { ...baseIcon, scale: 6, fillOpacity: 0.9, strokeWeight: 2 }
-                : baseIcon;
 
               return (
                 <Marker
@@ -1086,19 +1076,11 @@ export default function TripPlannerMap({
                 highlightedPlace.lat === p.lat &&
                 highlightedPlace.lng === p.lng;
 
-              const baseIcon: google.maps.Symbol = {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 4,
-                fillColor: "#fb7185",
-                fillOpacity: 0.4,
-                strokeColor: "#fb7185",
-                strokeOpacity: 0.8,
-                strokeWeight: 1,
+              const icon = {
+                url: svgToIconUrl(isHighlighted ? diningIconSvgHighlight : diningIconSvg),
+                scaledSize: new google.maps.Size(isHighlighted ? 32 : 24, isHighlighted ? 32 : 24),
+                anchor: new google.maps.Point(isHighlighted ? 16 : 12, isHighlighted ? 16 : 12),
               };
-
-              const icon = isHighlighted
-                ? { ...baseIcon, scale: 6, fillOpacity: 0.9, strokeWeight: 2 }
-                : baseIcon;
 
               return (
                 <Marker
@@ -1127,19 +1109,11 @@ export default function TripPlannerMap({
                 highlightedPlace.lat === p.lat &&
                 highlightedPlace.lng === p.lng;
 
-              const baseIcon: google.maps.Symbol = {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 4,
-                fillColor: "#eab308",
-                fillOpacity: 0.4,
-                strokeColor: "#eab308",
-                strokeOpacity: 0.8,
-                strokeWeight: 1,
+              const icon = {
+                url: svgToIconUrl(isHighlighted ? poiIconSvgHighlight : poiIconSvg),
+                scaledSize: new google.maps.Size(isHighlighted ? 32 : 24, isHighlighted ? 32 : 24),
+                anchor: new google.maps.Point(isHighlighted ? 16 : 12, isHighlighted ? 16 : 12),
               };
-
-              const icon = isHighlighted
-                ? { ...baseIcon, scale: 6, fillOpacity: 0.9, strokeWeight: 2 }
-                : baseIcon;
 
               return (
                 <Marker

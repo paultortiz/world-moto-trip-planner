@@ -939,23 +939,23 @@ export default function TripDetailClient({
             )}
             <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
               <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#16a34a" stroke="#fff" strokeWidth="1"><path d="M3 22V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7h1a2 2 0 0 1 2 2v4a1 1 0 0 0 2 0v-7l-2-2V7a1 1 0 0 1 2 0v2l2 2v8a3 3 0 0 1-6 0v-4h-1v7H3z"/><rect x="6" y="8" width="6" height="4" rx="1" fill="#fff"/></svg>
                 <span>{t("fuel")}</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[#60a5fa]" />
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#2563eb" stroke="#fff" strokeWidth="1"><path d="M6 2h12v20H6z"/><rect x="9" y="6" width="2" height="2" fill="#fff"/><rect x="13" y="6" width="2" height="2" fill="#fff"/><rect x="9" y="11" width="2" height="2" fill="#fff"/><rect x="13" y="11" width="2" height="2" fill="#fff"/><path d="M10 22v-5h4v5" fill="#fff"/></svg>
                 <span>{t("lodging")}</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[#14b8a6]" />
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#0d9488" stroke="#fff" strokeWidth="1"><path d="M12 3L2 20h20L12 3z"/><path d="M12 14l-3 6h6l-3-6z" fill="#fff"/></svg>
                 <span>{t("campground")}</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[#fb7185]" />
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#e11d48" stroke="#fff" strokeWidth="1"><path d="M8 3h8l2 5H6l2-5z"/><path d="M5 8h14v2H5z"/><path d="M6 10h12v10H6z"/><rect x="9" y="13" width="6" height="4" fill="#fff"/></svg>
                 <span>{t("dining")}</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#d97706" stroke="#fff" strokeWidth="1"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
                 <span>{t("poi")}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
