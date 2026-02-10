@@ -8,10 +8,77 @@ interface MotorcyclesClientProps {
   motorcycles: any[];
 }
 
+/** Convert camelCase spec keys to readable labels with units */
+function formatSpecLabel(key: string): string {
+  // Map of keys to custom labels
+  const labelMap: Record<string, string> = {
+    engineDisplacementCc: "Engine Displacement (cc)",
+    engineType: "Engine Type",
+    engineCooling: "Cooling",
+    horsepower: "Horsepower (HP)",
+    torqueNm: "Torque (Nm)",
+    transmissionType: "Transmission",
+    finalDrive: "Final Drive",
+    wetWeightKg: "Wet Weight (kg)",
+    dryWeightKg: "Dry Weight (kg)",
+    fuelCapacityLiters: "Fuel Capacity (L)",
+    estimatedRangeKm: "Estimated Range (km)",
+    fuelConsumptionLper100km: "Fuel Consumption (L/100km)",
+    seatHeightMm: "Seat Height (mm)",
+    seatHeightLowMm: "Low Seat Height (mm)",
+    groundClearanceMm: "Ground Clearance (mm)",
+    wheelbaseMm: "Wheelbase (mm)",
+    frontSuspension: "Front Suspension",
+    rearSuspension: "Rear Suspension",
+    frontSuspensionTravelMm: "Front Suspension Travel (mm)",
+    rearSuspensionTravelMm: "Rear Suspension Travel (mm)",
+    frontBrake: "Front Brake",
+    rearBrake: "Rear Brake",
+    absType: "ABS Type",
+    tractionControl: "Traction Control",
+    ridingModes: "Riding Modes",
+    cruiseControl: "Cruise Control",
+    quickshifter: "Quickshifter",
+    frontTireSize: "Front Tire Size",
+    rearTireSize: "Rear Tire Size",
+    frontWheelSizeInches: "Front Wheel (in)",
+    rearWheelSizeInches: "Rear Wheel (in)",
+    wheelType: "Wheel Type",
+    windscreen: "Windscreen",
+    handguards: "Handguards",
+    centerStand: "Center Stand",
+    heatedGrips: "Heated Grips",
+    heatedSeats: "Heated Seats",
+    luggageSystem: "Luggage System",
+    usbCharging: "USB Charging",
+    dashDisplay: "Dash Display",
+    bluetooth: "Bluetooth",
+    navigationReady: "Navigation Ready",
+    offroadBias: "Offroad Bias",
+    highwayComfort: "Highway Comfort",
+    passengerComfort: "Passenger Comfort",
+    category: "Category",
+    msrpUsd: "MSRP (USD)",
+    yearIntroduced: "Year Introduced",
+    yearDiscontinued: "Year Discontinued",
+    notes: "Notes",
+  };
+
+  if (labelMap[key]) return labelMap[key];
+
+  // Fallback: convert camelCase to Title Case
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}
+
 export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProps) {
   const t = useTranslations("garage");
   const [items, setItems] = useState(motorcycles);
   const [status, setStatus] = useState<string | null>(null);
+  const [fetchingSpecsFor, setFetchingSpecsFor] = useState<string | null>(null);
+  const [specsJustLoaded, setSpecsJustLoaded] = useState<string | null>(null);
 
   async function createMotorcycle(year: number | null, make: string, model: string) {
     setStatus(null);
@@ -27,6 +94,7 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
       }
       const created = await res.json();
       setItems((prev) => [created, ...prev]);
+      setFetchingSpecsFor(created.id);
 
       // Best-effort: immediately fetch AI specs for this bike so Garage entries are enriched.
       try {
@@ -46,6 +114,9 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
           const aiMoto = data?.motorcycle ?? created;
           setItems((prev) => prev.map((m: any) => (m.id === aiMoto.id ? { ...m, ...aiMoto } : m)));
           setStatus(t("addedWithSpecs"));
+          // Briefly highlight the specs button
+          setSpecsJustLoaded(aiMoto.id);
+          setTimeout(() => setSpecsJustLoaded(null), 3000);
         } else {
           const data = await aiRes.json().catch(() => null);
           setStatus(
@@ -56,6 +127,8 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
         }
       } catch {
         setStatus(t("addedSpecsLater"));
+      } finally {
+        setFetchingSpecsFor(null);
       }
     } catch (err: any) {
       setStatus(err?.message ?? t("failedToCreate"));
@@ -209,6 +282,8 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
               onSave={updateMotorcycle}
               onDelete={deleteMotorcycle}
               onSetDefault={setDefaultMotorcycle}
+              isFetchingSpecs={fetchingSpecsFor === moto.id}
+              specsJustLoaded={specsJustLoaded === moto.id}
             />
           );
         })}
@@ -234,9 +309,11 @@ interface MotorcycleRowProps {
   ) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onSetDefault: (id: string) => Promise<void>;
+  isFetchingSpecs?: boolean;
+  specsJustLoaded?: boolean;
 }
 
-function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, onSetDefault }: MotorcycleRowProps) {
+function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, onSetDefault, isFetchingSpecs, specsJustLoaded }: MotorcycleRowProps) {
   const t = useTranslations("garage");
   const [rangeInput, setRangeInput] = useState<string>(
     initialRange === "" ? "" : String(initialRange),
@@ -251,6 +328,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
   const [modelInput, setModelInput] = useState<string>(moto.model ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showSpecs, setShowSpecs] = useState(false);
 
   return (
     <li className="flex flex-col gap-2 rounded border border-slate-800 bg-slate-950/70 p-2 sm:flex-row sm:items-center sm:justify-between">
@@ -262,6 +340,15 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
           {typeof moto._count?.trips === "number" && moto._count.trips > 0 && (
             <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
               {t("inUseByTrips", { count: moto._count.trips })}
+            </span>
+          )}
+          {isFetchingSpecs && (
+            <span className="flex items-center gap-1.5 rounded-full bg-amber-900/50 px-2 py-0.5 text-[10px] text-amber-300">
+              <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Fetching specs from AI...
             </span>
           )}
         </div>
@@ -372,7 +459,43 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
         >
           {deleting ? t("deleting") : t("delete")}
         </button>
+        {moto.specs && (
+          <button
+            type="button"
+            onClick={() => setShowSpecs(!showSpecs)}
+            className={`rounded border px-3 py-1 text-[11px] transition-all duration-300 ${
+              specsJustLoaded
+                ? "animate-pulse border-emerald-400 bg-emerald-500/20 text-emerald-300 ring-2 ring-emerald-400/50"
+                : "border-slate-600 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            {showSpecs ? "Hide Specs" : "Show All Specs"}
+          </button>
+        )}
       </div>
+      {showSpecs && moto.specs && (
+        <div className="mt-3 rounded border border-slate-700 bg-slate-900/50 p-3">
+          <h4 className="mb-2 text-[12px] font-semibold text-slate-200">Full Specifications (from AI)</h4>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[11px] sm:grid-cols-3 lg:grid-cols-4">
+            {Object.entries(moto.specs).map(([key, value]) => {
+              if (value === null || value === undefined) return null;
+              const displayValue = Array.isArray(value)
+                ? value.join(", ")
+                : typeof value === "boolean"
+                  ? value ? "Yes" : "No"
+                  : String(value);
+              // Convert camelCase to readable label with units
+              const label = formatSpecLabel(key);
+              return (
+                <div key={key} className="flex flex-col">
+                  <span className="text-[10px] text-slate-500">{label}</span>
+                  <span className="text-slate-300">{displayValue}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </li>
   );
 }

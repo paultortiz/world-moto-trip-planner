@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 
 interface NewMotorcycleFormProps {
@@ -13,6 +13,11 @@ export default function NewMotorcycleForm({ onCreate }: NewMotorcycleFormProps) 
   const [makeInput, setMakeInput] = useState("");
   const [modelInput, setModelInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <form
@@ -61,7 +66,7 @@ export default function NewMotorcycleForm({ onCreate }: NewMotorcycleFormProps) 
       </div>
       <button
         type="submit"
-        disabled={saving}
+        disabled={saving || !mounted}
         className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
       >
         {saving ? t("adding") : t("addMotorcycle")}

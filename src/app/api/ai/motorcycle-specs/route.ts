@@ -96,22 +96,60 @@ export async function POST(req: NextRequest) {
           text:
             `You are an expert on motorcycle specifications. ` +
             `Given a motorcycle described as: ${displayName}. ` +
-            `Estimate realistic specifications suitable for adventure / touring planning.
-` +
-            `Return a single JSON object only, with these keys (numbers only, no units):
-` +
-            `{
-  "engineDisplacementCc": number | null,
-  "wetWeightKg": number | null,
-  "fuelCapacityLiters": number | null,
-  "estimatedRangeKm": number | null,
-  "seatHeightMm": number | null,
-  "offroadBias": number between 0 and 1,
-  "highwayComfort": number between 0 and 1,
-  "notes": short string
-}
-` +
-            `If you are unsure, make conservative estimates and clearly say so in notes. Do not include any text before or after the JSON object.`,
+            `Provide comprehensive specifications. Return a single JSON object with these keys (use null if unknown):\n` +
+            `{\n` +
+            `  "engineDisplacementCc": number,\n` +
+            `  "engineType": string (e.g. "parallel twin", "V-twin", "inline-4", "single"),\n` +
+            `  "engineCooling": string (e.g. "liquid", "air", "oil"),\n` +
+            `  "horsepower": number (peak HP),\n` +
+            `  "torqueNm": number (peak torque),\n` +
+            `  "transmissionType": string (e.g. "6-speed manual", "DCT"),\n` +
+            `  "finalDrive": string (e.g. "chain", "belt", "shaft"),\n` +
+            `  "wetWeightKg": number,\n` +
+            `  "dryWeightKg": number,\n` +
+            `  "fuelCapacityLiters": number,\n` +
+            `  "estimatedRangeKm": number,\n` +
+            `  "fuelConsumptionLper100km": number,\n` +
+            `  "seatHeightMm": number,\n` +
+            `  "seatHeightLowMm": number (if adjustable/low option),\n` +
+            `  "groundClearanceMm": number,\n` +
+            `  "wheelbaseMm": number,\n` +
+            `  "frontSuspension": string,\n` +
+            `  "rearSuspension": string,\n` +
+            `  "frontSuspensionTravelMm": number,\n` +
+            `  "rearSuspensionTravelMm": number,\n` +
+            `  "frontBrake": string,\n` +
+            `  "rearBrake": string,\n` +
+            `  "absType": string (e.g. "standard", "cornering ABS", "off-road mode", "none"),\n` +
+            `  "tractionControl": boolean,\n` +
+            `  "ridingModes": string[] (e.g. ["Road", "Rain", "Off-road"]),\n` +
+            `  "cruiseControl": boolean,\n` +
+            `  "quickshifter": boolean,\n` +
+            `  "frontTireSize": string,\n` +
+            `  "rearTireSize": string,\n` +
+            `  "frontWheelSizeInches": number,\n` +
+            `  "rearWheelSizeInches": number,\n` +
+            `  "wheelType": string (e.g. "spoked", "cast alloy", "tubeless spoked"),\n` +
+            `  "windscreen": string (e.g. "tall adjustable", "sport", "none"),\n` +
+            `  "handguards": boolean,\n` +
+            `  "centerStand": boolean,\n` +
+            `  "heatedGrips": boolean,\n` +
+            `  "heatedSeats": boolean,\n` +
+            `  "luggageSystem": string (e.g. "hard panniers included", "optional", "none"),\n` +
+            `  "usbCharging": boolean,\n` +
+            `  "dashDisplay": string (e.g. "TFT", "LCD", "analog"),\n` +
+            `  "bluetooth": boolean,\n` +
+            `  "navigationReady": boolean,\n` +
+            `  "offroadBias": number 0-1 (0=street, 1=full offroad),\n` +
+            `  "highwayComfort": number 0-1,\n` +
+            `  "passengerComfort": number 0-1,\n` +
+            `  "category": string (e.g. "adventure", "sport-touring", "dual-sport"),\n` +
+            `  "msrpUsd": number (MSRP when new),\n` +
+            `  "yearIntroduced": number,\n` +
+            `  "yearDiscontinued": number,\n` +
+            `  "notes": string (caveats or estimation notes)\n` +
+            `}\n` +
+            `Be accurate where possible. Output only valid JSON, no other text.`,
         },
       ];
 
@@ -147,7 +185,9 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Coerce core numeric fields, but preserve all other fields from AI response
       specs = {
+        ...parsed,
         engineDisplacementCc: coerceNumber(parsed.engineDisplacementCc),
         wetWeightKg: coerceNumber(parsed.wetWeightKg),
         fuelCapacityLiters: coerceNumber(parsed.fuelCapacityLiters),
@@ -159,6 +199,7 @@ export async function POST(req: NextRequest) {
       };
 
       // Create or update motorcycle record with specs.
+      const specsData = specs!;
       if (!motorcycle) {
         motorcycle = await prismaAny.motorcycle.create({
           data: {
@@ -167,14 +208,14 @@ export async function POST(req: NextRequest) {
             make: makeStr,
             model: modelStr,
             displayName,
-            engineDisplacementCc: specs.engineDisplacementCc ?? null,
-            wetWeightKg: specs.wetWeightKg ?? null,
-            fuelCapacityLiters: specs.fuelCapacityLiters ?? null,
-            estimatedRangeKm: specs.estimatedRangeKm ?? null,
-            seatHeightMm: specs.seatHeightMm ?? null,
-            offroadBias: specs.offroadBias ?? null,
-            highwayComfort: specs.highwayComfort ?? null,
-            specs: specs as any,
+            engineDisplacementCc: specsData.engineDisplacementCc ?? null,
+            wetWeightKg: specsData.wetWeightKg ?? null,
+            fuelCapacityLiters: specsData.fuelCapacityLiters ?? null,
+            estimatedRangeKm: specsData.estimatedRangeKm ?? null,
+            seatHeightMm: specsData.seatHeightMm ?? null,
+            offroadBias: specsData.offroadBias ?? null,
+            highwayComfort: specsData.highwayComfort ?? null,
+            specs: specsData as any,
           },
         });
       } else {
@@ -185,14 +226,14 @@ export async function POST(req: NextRequest) {
             make: makeStr,
             model: modelStr,
             displayName,
-            engineDisplacementCc: specs.engineDisplacementCc ?? null,
-            wetWeightKg: specs.wetWeightKg ?? null,
-            fuelCapacityLiters: specs.fuelCapacityLiters ?? null,
-            estimatedRangeKm: specs.estimatedRangeKm ?? null,
-            seatHeightMm: specs.seatHeightMm ?? null,
-            offroadBias: specs.offroadBias ?? null,
-            highwayComfort: specs.highwayComfort ?? null,
-            specs: specs as any,
+            engineDisplacementCc: specsData.engineDisplacementCc ?? null,
+            wetWeightKg: specsData.wetWeightKg ?? null,
+            fuelCapacityLiters: specsData.fuelCapacityLiters ?? null,
+            estimatedRangeKm: specsData.estimatedRangeKm ?? null,
+            seatHeightMm: specsData.seatHeightMm ?? null,
+            offroadBias: specsData.offroadBias ?? null,
+            highwayComfort: specsData.highwayComfort ?? null,
+            specs: specsData as any,
           },
         });
       }
@@ -228,7 +269,7 @@ export async function POST(req: NextRequest) {
           seatHeightMm: updatedTrip.motorcycle!.seatHeightMm,
           offroadBias: updatedTrip.motorcycle!.offroadBias,
           highwayComfort: updatedTrip.motorcycle!.highwayComfort,
-          notes: (updatedTrip.motorcycle!.specs as SpecPayload | null)?.notes ?? null,
+          specs: updatedTrip.motorcycle!.specs,
         },
       });
     }
@@ -248,7 +289,7 @@ export async function POST(req: NextRequest) {
         seatHeightMm: motorcycle!.seatHeightMm,
         offroadBias: motorcycle!.offroadBias,
         highwayComfort: motorcycle!.highwayComfort,
-        notes: (motorcycle!.specs as SpecPayload | null)?.notes ?? null,
+        specs: motorcycle!.specs,
       },
     });
   } catch (err: any) {
