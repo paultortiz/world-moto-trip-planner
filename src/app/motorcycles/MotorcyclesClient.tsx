@@ -8,63 +8,14 @@ interface MotorcyclesClientProps {
   motorcycles: any[];
 }
 
-/** Convert camelCase spec keys to readable labels with units */
-function formatSpecLabel(key: string): string {
-  // Map of keys to custom labels
-  const labelMap: Record<string, string> = {
-    engineDisplacementCc: "Engine Displacement (cc)",
-    engineType: "Engine Type",
-    engineCooling: "Cooling",
-    horsepower: "Horsepower (HP)",
-    torqueNm: "Torque (Nm)",
-    transmissionType: "Transmission",
-    finalDrive: "Final Drive",
-    wetWeightKg: "Wet Weight (kg)",
-    dryWeightKg: "Dry Weight (kg)",
-    fuelCapacityLiters: "Fuel Capacity (L)",
-    estimatedRangeKm: "Estimated Range (km)",
-    fuelConsumptionLper100km: "Fuel Consumption (L/100km)",
-    seatHeightMm: "Seat Height (mm)",
-    seatHeightLowMm: "Low Seat Height (mm)",
-    groundClearanceMm: "Ground Clearance (mm)",
-    wheelbaseMm: "Wheelbase (mm)",
-    frontSuspension: "Front Suspension",
-    rearSuspension: "Rear Suspension",
-    frontSuspensionTravelMm: "Front Suspension Travel (mm)",
-    rearSuspensionTravelMm: "Rear Suspension Travel (mm)",
-    frontBrake: "Front Brake",
-    rearBrake: "Rear Brake",
-    absType: "ABS Type",
-    tractionControl: "Traction Control",
-    ridingModes: "Riding Modes",
-    cruiseControl: "Cruise Control",
-    quickshifter: "Quickshifter",
-    frontTireSize: "Front Tire Size",
-    rearTireSize: "Rear Tire Size",
-    frontWheelSizeInches: "Front Wheel (in)",
-    rearWheelSizeInches: "Rear Wheel (in)",
-    wheelType: "Wheel Type",
-    windscreen: "Windscreen",
-    handguards: "Handguards",
-    centerStand: "Center Stand",
-    heatedGrips: "Heated Grips",
-    heatedSeats: "Heated Seats",
-    luggageSystem: "Luggage System",
-    usbCharging: "USB Charging",
-    dashDisplay: "Dash Display",
-    bluetooth: "Bluetooth",
-    navigationReady: "Navigation Ready",
-    offroadBias: "Offroad Bias",
-    highwayComfort: "Highway Comfort",
-    passengerComfort: "Passenger Comfort",
-    category: "Category",
-    msrpUsd: "MSRP (USD)",
-    yearIntroduced: "Year Introduced",
-    yearDiscontinued: "Year Discontinued",
-    notes: "Notes",
-  };
-
-  if (labelMap[key]) return labelMap[key];
+/** Convert camelCase spec keys to readable labels - uses translation function */
+function formatSpecLabel(key: string, t: (key: string) => string): string {
+  // Try to get translated label from specLabels namespace
+  const translated = t(`specLabels.${key}`);
+  // If translation exists and isn't the key itself, use it
+  if (translated && translated !== `specLabels.${key}` && !translated.startsWith("specLabels.")) {
+    return translated;
+  }
 
   // Fallback: convert camelCase to Title Case
   return key
@@ -348,7 +299,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Fetching specs from AI...
+              {t("fetchingSpecsFromAI")}
             </span>
           )}
         </div>
@@ -469,23 +420,23 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
                 : "border-slate-600 text-slate-300 hover:bg-slate-700"
             }`}
           >
-            {showSpecs ? "Hide Specs" : "Show All Specs"}
+            {showSpecs ? t("hideSpecs") : t("showAllSpecs")}
           </button>
         )}
       </div>
       {showSpecs && moto.specs && (
         <div className="mt-3 rounded border border-slate-700 bg-slate-900/50 p-3">
-          <h4 className="mb-2 text-[12px] font-semibold text-slate-200">Full Specifications (from AI)</h4>
+          <h4 className="mb-2 text-[12px] font-semibold text-slate-200">{t("fullSpecsTitle")}</h4>
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[11px] sm:grid-cols-3 lg:grid-cols-4">
             {Object.entries(moto.specs).map(([key, value]) => {
               if (value === null || value === undefined) return null;
               const displayValue = Array.isArray(value)
                 ? value.join(", ")
                 : typeof value === "boolean"
-                  ? value ? "Yes" : "No"
+                  ? value ? t("booleanYes") : t("booleanNo")
                   : String(value);
               // Convert camelCase to readable label with units
-              const label = formatSpecLabel(key);
+              const label = formatSpecLabel(key, t);
               return (
                 <div key={key} className="flex flex-col">
                   <span className="text-[10px] text-slate-500">{label}</span>
