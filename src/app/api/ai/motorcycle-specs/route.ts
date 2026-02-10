@@ -199,6 +199,7 @@ export async function POST(req: NextRequest) {
       };
 
       // Create or update motorcycle record with specs.
+      const specsData = specs!;
       if (!motorcycle) {
         motorcycle = await prismaAny.motorcycle.create({
           data: {
@@ -207,14 +208,14 @@ export async function POST(req: NextRequest) {
             make: makeStr,
             model: modelStr,
             displayName,
-            engineDisplacementCc: specs.engineDisplacementCc ?? null,
-            wetWeightKg: specs.wetWeightKg ?? null,
-            fuelCapacityLiters: specs.fuelCapacityLiters ?? null,
-            estimatedRangeKm: specs.estimatedRangeKm ?? null,
-            seatHeightMm: specs.seatHeightMm ?? null,
-            offroadBias: specs.offroadBias ?? null,
-            highwayComfort: specs.highwayComfort ?? null,
-            specs: specs as any,
+            engineDisplacementCc: specsData.engineDisplacementCc ?? null,
+            wetWeightKg: specsData.wetWeightKg ?? null,
+            fuelCapacityLiters: specsData.fuelCapacityLiters ?? null,
+            estimatedRangeKm: specsData.estimatedRangeKm ?? null,
+            seatHeightMm: specsData.seatHeightMm ?? null,
+            offroadBias: specsData.offroadBias ?? null,
+            highwayComfort: specsData.highwayComfort ?? null,
+            specs: specsData as any,
           },
         });
       } else {
@@ -225,14 +226,14 @@ export async function POST(req: NextRequest) {
             make: makeStr,
             model: modelStr,
             displayName,
-            engineDisplacementCc: specs.engineDisplacementCc ?? null,
-            wetWeightKg: specs.wetWeightKg ?? null,
-            fuelCapacityLiters: specs.fuelCapacityLiters ?? null,
-            estimatedRangeKm: specs.estimatedRangeKm ?? null,
-            seatHeightMm: specs.seatHeightMm ?? null,
-            offroadBias: specs.offroadBias ?? null,
-            highwayComfort: specs.highwayComfort ?? null,
-            specs: specs as any,
+            engineDisplacementCc: specsData.engineDisplacementCc ?? null,
+            wetWeightKg: specsData.wetWeightKg ?? null,
+            fuelCapacityLiters: specsData.fuelCapacityLiters ?? null,
+            estimatedRangeKm: specsData.estimatedRangeKm ?? null,
+            seatHeightMm: specsData.seatHeightMm ?? null,
+            offroadBias: specsData.offroadBias ?? null,
+            highwayComfort: specsData.highwayComfort ?? null,
+            specs: specsData as any,
           },
         });
       }
