@@ -215,8 +215,9 @@ export async function GET(
     };
 
     // Render PDF to buffer
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfBuffer = await renderToBuffer(
-      React.createElement(TripPdfDocument, pdfProps),
+      React.createElement(TripPdfDocument, pdfProps) as any,
     );
 
     // Create sanitized filename
