@@ -183,8 +183,7 @@ export default function ElevationProfile({ tripId, refreshKey }: Props) {
           <ul className="mt-1 space-y-0.5">
             {climbs.map((c, idx) => (
               <li key={`${c.startKm}-${c.endKm}-${idx}`}>
-                {c.gainMeters.toFixed(0)} m gain over {c.startKm.toFixed(1)}–
-                {c.endKm.toFixed(1)} km
+                {t("gainOver", { gain: c.gainMeters.toFixed(0), start: c.startKm.toFixed(1), end: c.endKm.toFixed(1) })}
               </li>
             ))}
           </ul>
