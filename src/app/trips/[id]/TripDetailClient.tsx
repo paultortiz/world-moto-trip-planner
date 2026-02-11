@@ -1136,6 +1136,12 @@ export default function TripDetailClient({
               >
                 {t("exportGpx")}
               </a>
+              <a
+                href={`/api/trips/${trip.id}/export/pdf?locale=${locale}`}
+                className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
+              >
+                {t("exportPdf")}
+              </a>
               <DeleteTripButton tripId={trip.id} />
             </div>
           </div>

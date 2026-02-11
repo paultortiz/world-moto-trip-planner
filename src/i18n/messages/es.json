@@ -244,6 +244,7 @@
     "recalculateRoute": "Recalcular ruta",
     "routeRecalculated": "Ruta recalculada.",
     "exportGpx": "Exportar GPX",
+    "exportPdf": "Exportar PDF",
     "deleting": "Eliminando...",
     "deleteTrip": "Eliminar viaje",
     "deleteConfirm": "¿Estás seguro de que quieres eliminar este viaje? Esta acción no se puede deshacer.",
