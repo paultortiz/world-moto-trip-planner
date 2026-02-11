@@ -301,6 +301,26 @@ interface ChecklistItem {
   isDone: boolean;
 }
 
+export interface PdfLabels {
+  tripItinerary: string;
+  overview: string;
+  totalDistance: string;
+  estimatedDuration: string;
+  totalWaypoints: string;
+  motorcycle: string;
+  day: string;
+  dailyItinerary: string;
+  emergencyContacts: string;
+  emergencyName: string;
+  emergencyPhone: string;
+  emergencyRelation: string;
+  checklist: string;
+  generatedOn: string;
+  distanceUnit: string;
+  durationUnit: string;
+  noName: string;
+}
+
 interface TripPdfDocumentProps {
   tripName: string;
   tripDescription?: string | null;
@@ -313,25 +333,7 @@ interface TripPdfDocumentProps {
   checklistItems?: ChecklistItem[];
   staticMapUrl?: string | null;
   generatedAt: string;
-  labels: {
-    tripItinerary: string;
-    overview: string;
-    totalDistance: string;
-    estimatedDuration: string;
-    totalWaypoints: string;
-    motorcycle: string;
-    day: string;
-    dailyItinerary: string;
-    emergencyContacts: string;
-    emergencyName: string;
-    emergencyPhone: string;
-    emergencyRelation: string;
-    checklist: string;
-    generatedOn: string;
-    distanceUnit: string;
-    durationUnit: string;
-    noName: string;
-  };
+  labels: PdfLabels;
 }
 
 export function TripPdfDocument({

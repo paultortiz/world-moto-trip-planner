@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { TripPdfDocument } from "@/components/pdf/TripPdfDocument";
+import { TripPdfDocument, PdfLabels } from "@/components/pdf/TripPdfDocument";
 import React from "react";
 
 // Labels for PDF content (will be localized based on query param)
-const LABELS: Record<string, Record<string, string>> = {
+const LABELS: Record<string, PdfLabels> = {
   en: {
     tripItinerary: "Trip Itinerary",
     overview: "Overview",
