@@ -228,7 +228,7 @@ export async function GET(
       .slice(0, 50);
     const filename = `${sanitizedName}-itinerary.pdf`;
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
