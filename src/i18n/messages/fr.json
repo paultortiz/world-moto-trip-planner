@@ -251,6 +251,7 @@
     "failedToDelete": "Échec de la suppression du voyage",
     "dailyPlan": "Plan journalier",
     "day": "Jour",
+    "dayOptionLabel": "{day} – {date}",
     "sharing": "Partage",
     "sharingEnabled": "Toute personne avec le lien peut voir",
     "sharingDisabled": "Partage désactivé",
@@ -267,6 +268,15 @@
     "noWaypoints": "Pas encore de points de passage pour ce voyage. Utilisez la carte de planification ou le champ de recherche pour ajouter des points, puis enregistrez pour mettre à jour l'itinéraire.",
     "nameOptional": "Nom (optionnel)",
     "remove": "Supprimer",
+    "waypointTypes": {
+      "checkpoint": "Point de contrôle",
+      "fuel": "Carburant",
+      "lodging": "Hébergement",
+      "campground": "Camping",
+      "dining": "Restauration",
+      "poi": "POI",
+      "other": "Autre"
+    },
     "waypointsSaved": "Points de passage enregistrés ; itinéraire et profil d'altitude recalculés.",
     "waypointsSavedRouteError": "Points de passage enregistrés, mais l'itinéraire n'a pas pu être recalculé",
     "planningTools": "Outils de planification",

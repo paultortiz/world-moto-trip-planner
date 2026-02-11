@@ -251,6 +251,7 @@
     "failedToDelete": "Falha ao excluir a viagem",
     "dailyPlan": "Plano diário",
     "day": "Dia",
+    "dayOptionLabel": "{day} – {date}",
     "sharing": "Compartilhamento",
     "sharingEnabled": "Qualquer pessoa com o link pode ver",
     "sharingDisabled": "Compartilhamento desativado",
@@ -267,6 +268,15 @@
     "noWaypoints": "Ainda não há pontos para esta viagem. Use o mapa de planejamento ou a caixa de busca para adicionar pontos, depois salve para atualizar a rota.",
     "nameOptional": "Nome (opcional)",
     "remove": "Remover",
+    "waypointTypes": {
+      "checkpoint": "Ponto de controle",
+      "fuel": "Combustível",
+      "lodging": "Hospedagem",
+      "campground": "Camping",
+      "dining": "Restaurante",
+      "poi": "POI",
+      "other": "Outro"
+    },
     "waypointsSaved": "Pontos salvos; rota e elevação recalculadas.",
     "waypointsSavedRouteError": "Pontos salvos, mas a rota não pôde ser recalculada",
     "planningTools": "Ferramentas de planejamento",

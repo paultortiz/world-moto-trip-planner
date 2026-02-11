@@ -251,6 +251,7 @@
     "failedToDelete": "Fehler beim Löschen der Reise",
     "dailyPlan": "Tagesplan",
     "day": "Tag",
+    "dayOptionLabel": "{day} – {date}",
     "sharing": "Teilen",
     "sharingEnabled": "Jeder mit dem Link kann ansehen",
     "sharingDisabled": "Teilen deaktiviert",
@@ -267,6 +268,15 @@
     "noWaypoints": "Noch keine Wegpunkte für diese Reise. Nutze die Planungskarte oder das Suchfeld um Punkte hinzuzufügen, dann speichern um die Route zu aktualisieren.",
     "nameOptional": "Name (optional)",
     "remove": "Entfernen",
+    "waypointTypes": {
+      "checkpoint": "Kontrollpunkt",
+      "fuel": "Tankstelle",
+      "lodging": "Unterkunft",
+      "campground": "Campingplatz",
+      "dining": "Restaurant",
+      "poi": "POI",
+      "other": "Sonstiges"
+    },
     "waypointsSaved": "Wegpunkte gespeichert; Route und Höhenprofil neu berechnet.",
     "waypointsSavedRouteError": "Wegpunkte gespeichert, aber Route konnte nicht neu berechnet werden",
     "planningTools": "Planungswerkzeuge",

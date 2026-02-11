@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 interface WaypointDto {
   id?: string;
@@ -53,6 +53,7 @@ export default function WaypointEditor({
   startDateLabelBase,
 }: Props) {
   const t = useTranslations("tripDetail");
+  const locale = useLocale();
   const router = useRouter();
   const [saving, startTransition] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
@@ -86,12 +87,12 @@ export default function WaypointEditor({
     if (!startDateForLabels) return String(day);
     const d = new Date(startDateForLabels.getTime());
     d.setDate(d.getDate() + (day - 1));
-    const dateLabel = d.toLocaleDateString(undefined, {
+    const dateLabel = d.toLocaleDateString(locale, {
       weekday: "short",
       month: "short",
       day: "numeric",
     });
-    return `${day} – ${dateLabel}`;
+    return t("dayOptionLabel", { day, date: dateLabel });
   }
 
   function updateWaypoint(index: number, patch: Partial<WaypointDto>) {
@@ -259,14 +260,14 @@ export default function WaypointEditor({
                     value={wp.type ?? "CHECKPOINT"}
                     onChange={(e) => updateWaypoint(index, { type: e.target.value })}
                   >
-                    {WAYPOINT_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                    {WAYPOINT_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {t(`waypointTypes.${type.toLowerCase()}`)}
                       </option>
                     ))}
                   </select>
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] uppercase text-slate-500">Day</span>
+                    <span className="text-[10px] uppercase text-slate-500">{t("day")}</span>
                     <select
                       className="w-28 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
                       value={wp.dayIndex ?? 1}

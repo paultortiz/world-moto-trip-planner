@@ -251,6 +251,7 @@
     "failedToDelete": "Failed to delete trip",
     "dailyPlan": "Daily plan",
     "day": "Day",
+    "dayOptionLabel": "{day} – {date}",
     "sharing": "Sharing",
     "sharingEnabled": "Anyone with the link can view",
     "sharingDisabled": "Sharing disabled",
@@ -267,6 +268,15 @@
     "noWaypoints": "No waypoints for this trip yet. Use the planning map or search box to add points, then save to update the route.",
     "nameOptional": "Name (optional)",
     "remove": "Remove",
+    "waypointTypes": {
+      "checkpoint": "Checkpoint",
+      "fuel": "Fuel",
+      "lodging": "Lodging",
+      "campground": "Campground",
+      "dining": "Dining",
+      "poi": "POI",
+      "other": "Other"
+    },
     "waypointsSaved": "Waypoints saved; route and elevation recalculated.",
     "waypointsSavedRouteError": "Waypoints saved, but route could not be recalculated",
     "planningTools": "Planning tools",
