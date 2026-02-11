@@ -134,10 +134,11 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!session?.user || !(session.user as any).id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = (session.user as any).id as string;
     const { id: tripId } = await params;
     const locale = req.nextUrl.searchParams.get("locale") || "en";
     const labels = LABELS[locale] || LABELS.en;
@@ -156,7 +157,7 @@ export async function GET(
     }
 
     // Verify ownership
-    if (trip.userId !== session.user.id) {
+    if (trip.userId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
