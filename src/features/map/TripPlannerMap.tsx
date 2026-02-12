@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { GoogleMap, Marker, Polyline, useJsApiLoader, MarkerClusterer, StandaloneSearchBox } from "@react-google-maps/api";
 
 const containerStyle: React.CSSProperties = {
@@ -106,6 +107,7 @@ export default function TripPlannerMap({
   minPlaceRating,
   onlyOpenNow,
 }: TripPlannerMapProps) {
+  const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
@@ -970,7 +972,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           >
             <input
               type="text"
-              placeholder="Search address or place..."
+              placeholder={t("searchPlaceholder")}
               className="w-64 rounded border border-adv-border bg-slate-950/90 px-2 py-1 text-[11px] text-slate-100 shadow-adv-glow placeholder:text-slate-500"
             />
           </StandaloneSearchBox>
@@ -990,16 +992,16 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
               ? "border-amber-400 bg-amber-500/20 text-amber-200"
               : "border-adv-border bg-slate-950/80 text-slate-200 hover:bg-slate-900"
           }`}
-          title="Measure distance between two points"
+          title={t("measureTooltip")}
         >
-          📏 Measure
+          📏 {t("measure")}
         </button>
         <button
           type="button"
           onClick={fitToRoute}
           className="rounded border border-adv-border bg-slate-950/80 px-2 py-1 text-[10px] text-slate-200 shadow-adv-glow hover:bg-slate-900"
         >
-          Fit route
+          {t("fitRoute")}
         </button>
       </div>
 
@@ -1013,7 +1015,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
             role="status"
           >
-            Click the start point to measure from
+            {t("clickStartPoint")}
           </div>
         </div>
       )}
@@ -1027,7 +1029,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
             role="status"
           >
-            Click the destination point
+            {t("clickDestination")}
           </div>
         </div>
       )}
@@ -1043,15 +1045,15 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             role="status"
           >
             {measureRoadLoading ? (
-              <div className="text-slate-400">Calculating routes...</div>
+              <div className="text-slate-400">{t("calculatingRoutes")}</div>
             ) : measureRoutes.length > 0 ? (
               <div className="space-y-1.5">
                 {measureRoutes.map((route, idx) => (
                   <div key={idx} className="flex items-center gap-3">
                     {idx === 0 ? (
-                      <span className="text-[9px] font-semibold text-adv-accent">FASTEST</span>
+                      <span className="text-[9px] font-semibold text-adv-accent">{t("fastest")}</span>
                     ) : (
-                      <span className="text-[9px] text-slate-500">ALT {idx}</span>
+                      <span className="text-[9px] text-slate-500">{t("alt")} {idx}</span>
                     )}
                     <span className="font-semibold text-slate-100">
                       {route.distanceKm.toFixed(1)} km
@@ -1062,7 +1064,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                         ? `${Math.floor(route.durationMins / 60)}h ${route.durationMins % 60}m`
                         : `${route.durationMins}m`}
                     </span>
-                    <span className="text-[10px] text-slate-300">via {route.summary}</span>
+                    <span className="text-[10px] text-slate-300">{t("via")} {route.summary}</span>
                   </div>
                 ))}
                 <div className="mt-1 flex justify-end">
@@ -1074,12 +1076,12 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     }}
                     className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300 hover:bg-slate-800"
                   >
-                    Clear
+                    {t("clear")}
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="text-slate-500">No route found</div>
+              <div className="text-slate-500">{t("noRouteFound")}</div>
             )}
           </div>
         </div>
