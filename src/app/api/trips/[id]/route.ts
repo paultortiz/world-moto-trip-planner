@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { logActivityAsync, ActivityActions } from "@/lib/activity";
 
 interface RouteParams {
   params: { id: string };
@@ -213,6 +214,14 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       });
     });
 
+    // Log activity (fire and forget)
+    logActivityAsync({
+      userId,
+      action: ActivityActions.TRIP_UPDATED,
+      metadata: { tripId: id },
+      request: req,
+    });
+
     return NextResponse.json(updatedTrip);
   } catch (error) {
     console.error("Error updating trip", error);
@@ -240,6 +249,13 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
     await prisma.routeSegment.deleteMany({ where: { tripId: id } });
     await prisma.waypoint.deleteMany({ where: { tripId: id } });
     await prisma.trip.delete({ where: { id } });
+
+    // Log activity (fire and forget)
+    logActivityAsync({
+      userId,
+      action: ActivityActions.TRIP_DELETED,
+      metadata: { tripId: id },
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

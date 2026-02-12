@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { randomUUID } from "crypto";
+import { logActivityAsync, ActivityActions } from "@/lib/activity";
 
 interface RouteParams {
   params: { id: string };
@@ -47,6 +48,16 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const origin = req.nextUrl.origin;
     const shareToken = updated.shareToken ?? null;
     const shareUrl = updated.isPublic && shareToken ? `${origin}/share/${shareToken}` : null;
+
+    // Log activity when sharing is enabled
+    if (updated.isPublic) {
+      logActivityAsync({
+        userId,
+        action: ActivityActions.TRIP_SHARED,
+        metadata: { tripId: id },
+        request: req,
+      });
+    }
 
     return NextResponse.json({
       isPublic: updated.isPublic,

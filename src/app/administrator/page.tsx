@@ -37,6 +37,11 @@ export default async function AdministratorPage() {
                 {t("userManagement")}
               </a>
             </li>
+            <li>
+              <a href="/administrator/activity" className="text-adv-accent hover:underline">
+                {t("activityTracking")}
+              </a>
+            </li>
           </ul>
         </div>
       </section>

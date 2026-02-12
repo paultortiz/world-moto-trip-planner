@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { logActivityAsync, ActivityActions } from "@/lib/activity";
 
 export async function GET() {
   try {
@@ -130,6 +131,14 @@ export async function POST(req: NextRequest) {
       include: {
         waypoints: true,
       },
+    });
+
+    // Log activity (fire and forget)
+    logActivityAsync({
+      userId,
+      action: ActivityActions.TRIP_CREATED,
+      metadata: { tripId: trip.id, tripName: name },
+      request: req,
     });
 
     return NextResponse.json(trip, { status: 201 });
