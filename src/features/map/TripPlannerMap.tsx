@@ -439,6 +439,12 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         if (waypoints.length > 0) {
           const lastWp = waypoints[waypoints.length - 1];
           setMeasurePoints([{ lat: lastWp.lat, lng: lastWp.lng }]);
+          // Zoom to last waypoint at ~300km scale (zoom level 7)
+          const map = mapRef.current;
+          if (map) {
+            map.panTo({ lat: lastWp.lat, lng: lastWp.lng });
+            map.setZoom(7);
+          }
         }
       }
       return !prev;
