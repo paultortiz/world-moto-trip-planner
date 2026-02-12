@@ -2,6 +2,7 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { logActivityAsync, ActivityActions } from "@/lib/activity";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -22,6 +23,18 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = (user as any).role;
       }
       return session;
+    },
+    async signIn({ user, account }) {
+      // Log login activity (fire and forget)
+      if (user?.id) {
+        const isNewUser = account?.provider && !user.email;
+        logActivityAsync({
+          userId: user.id as string,
+          action: isNewUser ? ActivityActions.USER_SIGNUP : ActivityActions.USER_LOGIN,
+          metadata: { provider: account?.provider },
+        });
+      }
+      return true;
     },
   },
 };

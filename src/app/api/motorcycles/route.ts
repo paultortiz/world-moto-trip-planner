@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { logActivityAsync, ActivityActions } from "@/lib/activity";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -41,6 +42,14 @@ export async function POST(req: NextRequest) {
         model: modelStr,
         displayName,
       },
+    });
+
+    // Log activity (fire and forget)
+    logActivityAsync({
+      userId,
+      action: ActivityActions.MOTORCYCLE_ADDED,
+      metadata: { motorcycleId: moto.id, displayName: moto.displayName },
+      request: req,
     });
 
     return NextResponse.json(moto, { status: 201 });

@@ -21,6 +21,9 @@ model User {
   sessions       Session[]
   trips          Trip[]
   motorcycles    Motorcycle[]
+  activityLogs   ActivityLog[]
+
+  lastActiveAt   DateTime?  // Last activity timestamp for retention tracking
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -220,4 +223,19 @@ enum UserRole {
   USER
   ADMIN
   SPONSOR
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // e.g., "trip.created", "ai_plan.generated"
+  metadata  Json?    // Additional context (tripId, etc.)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
 }

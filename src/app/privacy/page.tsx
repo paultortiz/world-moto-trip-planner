@@ -44,6 +44,18 @@ export default async function PrivacyPage() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-lg font-semibold text-slate-50">{t("activityTitle")}</h2>
+          <p>{t("activityP1")}</p>
+          <ul className="list-disc space-y-1 pl-5 text-slate-300">
+            <li>{t("activityList1")}</li>
+            <li>{t("activityList2")}</li>
+            <li>{t("activityList3")}</li>
+            <li>{t("activityList4")}</li>
+          </ul>
+          <p>{t("activityP2")}</p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="text-lg font-semibold text-slate-50">{t("thirdPartyTitle")}</h2>
           <p>{t("thirdPartyP1")}</p>
           <ul className="list-disc space-y-1 pl-5 text-slate-300">

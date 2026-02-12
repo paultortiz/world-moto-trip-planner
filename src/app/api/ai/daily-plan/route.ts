@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { openai } from "@/lib/openai";
 import { auth } from "@/auth";
+import { logActivityAsync, ActivityActions } from "@/lib/activity";
 
 export async function POST(req: NextRequest) {
   try {
@@ -372,6 +373,14 @@ Trip name: ${trip.name}
         aiDailyPlanStructured: structured as any,
         aiDailyPlanGeneratedAt: new Date(),
       },
+    });
+
+    // Log activity (fire and forget)
+    logActivityAsync({
+      userId,
+      action: ActivityActions.AI_PLAN_GENERATED,
+      metadata: { tripId, dayCount: structured.days?.length ?? 0 },
+      request: req,
     });
 
     return NextResponse.json({
