@@ -112,7 +112,7 @@ export default function TripPlannerMap({
   const { isLoaded, loadError } = useJsApiLoader({
     id: "google-maps-trip-planner",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
-    libraries: ["places"],
+    libraries: ["places", "geometry"],
   });
 
   const [fuelPlaces, setFuelPlaces] = useState<PlaceMarker[]>([]);
@@ -131,9 +131,20 @@ export default function TripPlannerMap({
   const [recentWaypointName, setRecentWaypointName] = useState<string | null>(null);
   const waypointToastTimeoutRef = useRef<number | null>(null);
 
-  const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
+const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const [zoomHint, setZoomHint] = useState<string | null>(null);
   const zoomHintTimeoutRef = useRef<number | null>(null);
+
+  // Distance measurement state
+  const [measureMode, setMeasureMode] = useState(false);
+  const [measurePoints, setMeasurePoints] = useState<{ lat: number; lng: number }[]>([]);
+  const [measureRoadLoading, setMeasureRoadLoading] = useState(false);
+  const [measureRoutes, setMeasureRoutes] = useState<{
+    distanceKm: number;
+    durationMins: number;
+    summary: string;
+    path: { lat: number; lng: number }[];
+  }[]>([]);
 
   // Track previous values of show* props to detect when they change from false to true
   const prevShowFuel = useRef(showFuelPlaces);
@@ -339,15 +350,98 @@ export default function TripPlannerMap({
 
   const handleMapClick = useCallback(
     (event: google.maps.MapMouseEvent) => {
-      if (!onAddWaypoint) return;
-      if (!enableClickToAdd) return;
       if (!event.latLng) return;
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
+
+      // If in measure mode, handle measurement clicks
+      if (measureMode) {
+        handleMeasurePoint({ lat, lng });
+        return;
+      }
+
+      // Normal click-to-add waypoint behavior
+      if (!onAddWaypoint) return;
+      if (!enableClickToAdd) return;
       onAddWaypoint({ lat, lng });
     },
-    [onAddWaypoint, enableClickToAdd],
+    [onAddWaypoint, enableClickToAdd, measureMode],
   );
+
+  // Handle adding a measurement point (from map click or waypoint click)
+  const handleMeasurePoint = useCallback(
+    (point: { lat: number; lng: number }) => {
+      // If measurement is complete (routes displayed), ignore new clicks - user must Clear first
+      if (measureRoutes.length > 0) return;
+
+      setMeasurePoints((prev) => {
+        if (prev.length === 0) {
+          // First point
+          return [point];
+        } else if (prev.length === 1) {
+          // Second point - fetch road distances with alternatives
+          const p1 = prev[0];
+          const p2 = point;
+
+          setMeasureRoadLoading(true);
+          const directionsService = new google.maps.DirectionsService();
+          directionsService.route(
+            {
+              origin: p1,
+              destination: p2,
+              travelMode: google.maps.TravelMode.DRIVING,
+              provideRouteAlternatives: true,
+            },
+            (result, status) => {
+              setMeasureRoadLoading(false);
+              if (status === google.maps.DirectionsStatus.OK && result) {
+                const routes = result.routes.map((route) => {
+                  const leg = route.legs[0];
+                  // Decode the polyline path
+                  const path = google.maps.geometry?.encoding?.decodePath(
+                    route.overview_polyline
+                  ) ?? [];
+                  return {
+                    distanceKm: (leg?.distance?.value ?? 0) / 1000,
+                    durationMins: Math.round((leg?.duration?.value ?? 0) / 60),
+                    summary: route.summary || "Route",
+                    path: path.map((p) => ({ lat: p.lat(), lng: p.lng() })),
+                  };
+                });
+                // Sort by distance
+                routes.sort((a, b) => a.distanceKm - b.distanceKm);
+                setMeasureRoutes(routes);
+              }
+            }
+          );
+
+          return [p1, p2];
+        } else {
+          // Should not reach here since we check measureRoutes.length above
+          return prev;
+        }
+      });
+    },
+    [measureRoutes.length]
+  );
+
+  // Toggle measure mode - auto-start from last waypoint when entering
+  const handleMeasureToggle = useCallback(() => {
+    setMeasureMode((prev) => {
+      if (prev) {
+        // Exiting measure mode - clear everything
+        setMeasurePoints([]);
+        setMeasureRoutes([]);
+      } else {
+        // Entering measure mode - auto-set start to last waypoint if available
+        if (waypoints.length > 0) {
+          const lastWp = waypoints[waypoints.length - 1];
+          setMeasurePoints([{ lat: lastWp.lat, lng: lastWp.lng }]);
+        }
+      }
+      return !prev;
+    });
+  }, [waypoints]);
 
   const fitToRoute = useCallback(() => {
     const map = mapRef.current;
@@ -883,11 +977,23 @@ export default function TripPlannerMap({
         </div>
       )}
 
-      {/* Fit route control */}
+      {/* Fit route and measure controls */}
       <div
-        className="pointer-events-auto"
+        className="pointer-events-auto flex gap-1"
         style={{ position: "absolute", right: 8, top: 8, zIndex: 30 }}
       >
+        <button
+          type="button"
+          onClick={handleMeasureToggle}
+          className={`rounded border px-2 py-1 text-[10px] shadow-adv-glow ${
+            measureMode
+              ? "border-amber-400 bg-amber-500/20 text-amber-200"
+              : "border-adv-border bg-slate-950/80 text-slate-200 hover:bg-slate-900"
+          }`}
+          title="Measure distance between two points"
+        >
+          📏 Measure
+        </button>
         <button
           type="button"
           onClick={fitToRoute}
@@ -896,6 +1002,153 @@ export default function TripPlannerMap({
           Fit route
         </button>
       </div>
+
+      {/* Measure mode instruction banner */}
+      {measureMode && measurePoints.length === 0 && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
+        >
+          <div
+            className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
+            role="status"
+          >
+            Click the start point to measure from
+          </div>
+        </div>
+      )}
+
+      {measureMode && measurePoints.length === 1 && !measureRoadLoading && measureRoutes.length === 0 && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
+        >
+          <div
+            className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
+            role="status"
+          >
+            Click the destination point
+          </div>
+        </div>
+      )}
+
+      {/* Measurement result overlay */}
+      {measureMode && measurePoints.length === 2 && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
+        >
+          <div
+            className="pointer-events-auto rounded border border-adv-border bg-slate-950/95 px-4 py-2 text-[11px] text-slate-100 shadow-adv-glow"
+            role="status"
+          >
+            {measureRoadLoading ? (
+              <div className="text-slate-400">Calculating routes...</div>
+            ) : measureRoutes.length > 0 ? (
+              <div className="space-y-1.5">
+                {measureRoutes.map((route, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    {idx === 0 ? (
+                      <span className="text-[9px] font-semibold text-adv-accent">FASTEST</span>
+                    ) : (
+                      <span className="text-[9px] text-slate-500">ALT {idx}</span>
+                    )}
+                    <span className="font-semibold text-slate-100">
+                      {route.distanceKm.toFixed(1)} km
+                    </span>
+                    <span className="text-slate-400">·</span>
+                    <span className="text-slate-300">
+                      {route.durationMins >= 60
+                        ? `${Math.floor(route.durationMins / 60)}h ${route.durationMins % 60}m`
+                        : `${route.durationMins}m`}
+                    </span>
+                    <span className="text-[10px] text-slate-300">via {route.summary}</span>
+                  </div>
+                ))}
+                <div className="mt-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMeasurePoints([]);
+                      setMeasureRoutes([]);
+                    }}
+                    className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300 hover:bg-slate-800"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-slate-500">No route found</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Measurement markers */}
+      <Marker
+        key="measure-start"
+        position={measurePoints[0] ?? { lat: 0, lng: 0 }}
+        visible={measureMode && measurePoints.length >= 1}
+        icon={{
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: "#f59e0b",
+          fillOpacity: 1,
+          strokeColor: "#fff",
+          strokeWeight: 2,
+        }}
+        zIndex={100}
+      />
+      <Marker
+        key="measure-end"
+        position={measurePoints[1] ?? { lat: 0, lng: 0 }}
+        visible={measureMode && measurePoints.length === 2}
+        icon={{
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: "#f59e0b",
+          fillOpacity: 1,
+          strokeColor: "#fff",
+          strokeWeight: 2,
+        }}
+        zIndex={100}
+      />
+
+      {/* Measurement route polylines - always rendered, visibility controlled */}
+      <Polyline
+        key="measure-route-0"
+        path={measureRoutes[0]?.path ?? []}
+        visible={measureMode && measureRoutes.length >= 1}
+        options={{
+          strokeColor: "#f59e0b",
+          strokeOpacity: 0.9,
+          strokeWeight: 5,
+          zIndex: 50,
+        }}
+      />
+      <Polyline
+        key="measure-route-1"
+        path={measureRoutes[1]?.path ?? []}
+        visible={measureMode && measureRoutes.length >= 2}
+        options={{
+          strokeColor: "#94a3b8",
+          strokeOpacity: 0.5,
+          strokeWeight: 3,
+          zIndex: 40,
+        }}
+      />
+      <Polyline
+        key="measure-route-2"
+        path={measureRoutes[2]?.path ?? []}
+        visible={measureMode && measureRoutes.length >= 3}
+        options={{
+          strokeColor: "#94a3b8",
+          strokeOpacity: 0.5,
+          strokeWeight: 3,
+          zIndex: 40,
+        }}
+      />
 
       {routePath && routePath.length > 0 && (
         <Polyline
@@ -959,6 +1212,11 @@ export default function TripPlannerMap({
             icon={icon}
             zIndex={zIndex}
             onClick={() => {
+              // In measure mode, use waypoint as measurement point
+              if (measureMode) {
+                handleMeasurePoint({ lat: position.lat, lng: position.lng });
+                return;
+              }
               if (onMarkerClick) onMarkerClick(index);
             }}
           />
