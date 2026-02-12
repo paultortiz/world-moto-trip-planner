@@ -568,5 +568,19 @@
     "privacyPolicyLink": "Privacy Policy",
     "returnHome": "Return to the",
     "homePage": "home page"
+  },
+  "map": {
+    "searchPlaceholder": "Search address or place...",
+    "measure": "Measure",
+    "measureTooltip": "Measure distance between two points",
+    "fitRoute": "Fit route",
+    "clickStartPoint": "Click the start point to measure from",
+    "clickDestination": "Click the destination point",
+    "calculatingRoutes": "Calculating routes...",
+    "fastest": "FASTEST",
+    "alt": "ALT",
+    "via": "via",
+    "noRouteFound": "No route found",
+    "clear": "Clear"
   }
 }

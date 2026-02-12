@@ -568,5 +568,19 @@
     "privacyPolicyLink": "Politique de confidentialité",
     "returnHome": "Retour à la",
     "homePage": "page d'accueil"
+  },
+  "map": {
+    "searchPlaceholder": "Rechercher une adresse ou un lieu...",
+    "measure": "Mesurer",
+    "measureTooltip": "Mesurer la distance entre deux points",
+    "fitRoute": "Ajuster l'itinéraire",
+    "clickStartPoint": "Cliquez sur le point de départ",
+    "clickDestination": "Cliquez sur le point de destination",
+    "calculatingRoutes": "Calcul des itinéraires...",
+    "fastest": "PLUS RAPIDE",
+    "alt": "ALT",
+    "via": "via",
+    "noRouteFound": "Aucun itinéraire trouvé",
+    "clear": "Effacer"
   }
 }
