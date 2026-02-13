@@ -21,6 +21,15 @@ module.exports = {
       boxShadow: {
         "adv-glow": "0 0 40px rgba(248, 250, 252, 0.06)",
       },
+      keyframes: {
+        "pulse-once": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
+      },
+      animation: {
+        "pulse-once": "pulse-once 0.6s ease-in-out 2",
+      },
     },
   },
   plugins: [],

@@ -627,6 +627,9 @@ export default function TripDetailClient({
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
 
+  // Waypoint focus state for map <-> editor navigation
+  const [focusedWaypointIndex, setFocusedWaypointIndex] = useState<number | null>(null);
+
   const [fuelPanelOpen, setFuelPanelOpen] = useState(false);
   const [schedulePanelOpen, setSchedulePanelOpen] = useState(false);
   const [segmentPanelOpen, setSegmentPanelOpen] = useState(false);
@@ -915,9 +918,9 @@ export default function TripDetailClient({
         </div>
       </header>
 
-      <section className="mt-4 grid gap-4 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.6fr)]">
+      <section className="mt-4 grid gap-4 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.6fr)] md:h-[calc(100vh-10rem)]">
         {/* Left column: map, elevation, daily plan */}
-        <div className="space-y-3">
+        <div className="space-y-3 md:overflow-y-auto md:pr-2">
           {waypoints.length === 0 && (
             <div className="rounded border border-adv-border bg-slate-900/80 p-2 text-[11px] text-slate-200 shadow-adv-glow">
               <p className="font-semibold text-slate-100">{t("startPlanning")}</p>
@@ -1064,7 +1067,7 @@ export default function TripDetailClient({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
+          <div id="trip-map-container" className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
             <TripPlannerMap
               waypoints={mapWaypoints}
               routePath={isDirty ? undefined : routePath}
@@ -1099,9 +1102,17 @@ export default function TripDetailClient({
                 });
                 setIsDirty(true);
               }}
+              focusedWaypointIndex={focusedWaypointIndex}
               onMarkerClick={(index) => {
-                setWaypoints((prev) => prev.filter((_, i) => i !== index));
-                setIsDirty(true);
+                // Select/focus the waypoint instead of deleting
+                setFocusedWaypointIndex(index);
+                // Scroll to the specific waypoint row
+                setTimeout(() => {
+                  const waypointRow = document.getElementById(`waypoint-row-${index}`);
+                  if (waypointRow) {
+                    waypointRow.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }
+                }, 100);
               }}
             />
           </div>
@@ -1237,7 +1248,7 @@ export default function TripDetailClient({
         </div>
 
         {/* Right column: sharing, accordions, waypoint editor */}
-        <div className="space-y-3">
+        <div className="space-y-3 md:overflow-y-auto md:pr-2">
           {/* Sharing panel */}
           <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Trip sharing settings">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1320,6 +1331,7 @@ export default function TripDetailClient({
           </section>
 
           {/* Waypoint editor */}
+          <div id="waypoint-editor-section">
           <WaypointEditor
             tripId={trip.id}
             waypoints={waypoints}
@@ -1333,7 +1345,19 @@ export default function TripDetailClient({
             }}
             maxDayHint={baseDayHint}
             startDateLabelBase={startDateInput || null}
+            focusedWaypointIndex={focusedWaypointIndex}
+            onLocateWaypoint={(index) => {
+              setFocusedWaypointIndex(index);
+              // On mobile (stacked layout), scroll to the map
+              setTimeout(() => {
+                const mapContainer = document.getElementById("trip-map-container");
+                if (mapContainer) {
+                  mapContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }, 50);
+            }}
           />
+          </div>
 
           <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("planningTools")}</h2>
 

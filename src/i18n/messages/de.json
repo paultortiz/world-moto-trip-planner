@@ -290,6 +290,7 @@
     "removeOvernight": "Übernachtungsstopp entfernen",
     "overnightAutoSet": "Übernachtungsstopp automatisch gesetzt (Unterkunft/Campingplatz)",
     "pivotWaypointHint": "Übernachtungsstopps definieren Tagesgrenzen. Der letzte Wegpunkt eines Tages ist auch der Startpunkt des nächsten Tages.",
+    "locateOnMap": "Auf Karte anzeigen",
     "planningTools": "Planungswerkzeuge",
     "aiDailyPlan": "KI-Tagesplanvorschlag",
     "thinking": "Denke nach...",

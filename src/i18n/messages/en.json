@@ -290,6 +290,7 @@
     "removeOvernight": "Remove overnight stop",
     "overnightAutoSet": "Overnight stop auto-set (lodging/campground)",
     "pivotWaypointHint": "Overnight stops define day boundaries. The last waypoint of each day is also the starting point of the next day.",
+    "locateOnMap": "Locate on map",
     "planningTools": "Planning tools",
     "aiDailyPlan": "AI daily plan suggestion",
     "thinking": "Thinking...",

@@ -290,6 +290,7 @@
     "removeOvernight": "Retirer l'étape nocturne",
     "overnightAutoSet": "Étape nocturne auto-définie (hébergement/camping)",
     "pivotWaypointHint": "Les étapes nocturnes définissent les limites des jours. Le dernier point de passage de chaque jour est aussi le point de départ du jour suivant.",
+    "locateOnMap": "Localiser sur la carte",
     "planningTools": "Outils de planification",
     "aiDailyPlan": "Suggestion de plan journalier IA",
     "thinking": "Réflexion...",

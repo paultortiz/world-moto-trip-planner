@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useMemo, useEffect } from "react";
+import { useState, useTransition, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -38,6 +38,14 @@ interface Props {
    * used only for labeling day headers (e.g. "Day 1 – Jun 04").
    */
   startDateLabelBase?: string | null;
+  /**
+   * Index of the currently focused waypoint (for map <-> editor sync).
+   */
+  focusedWaypointIndex?: number | null;
+  /**
+   * Callback when user wants to locate a waypoint on the map.
+   */
+  onLocateWaypoint?: (index: number) => void;
 }
 
 const WAYPOINT_TYPES = [
@@ -59,6 +67,8 @@ export default function WaypointEditor({
   onWaypointsChange,
   onSaveSuccess,
   startDateLabelBase,
+  focusedWaypointIndex,
+  onLocateWaypoint,
 }: Props) {
   const t = useTranslations("tripDetail");
   const locale = useLocale();
@@ -66,6 +76,19 @@ export default function WaypointEditor({
   const [saving, startTransition] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  
+  // Refs for scroll-into-view when a waypoint is focused
+  const waypointRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
+  
+  // Scroll to focused waypoint when it changes
+  useEffect(() => {
+    if (focusedWaypointIndex !== null && focusedWaypointIndex !== undefined) {
+      const el = waypointRefs.current.get(focusedWaypointIndex);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [focusedWaypointIndex]);
 
   // On first render, infer overnight stops from existing dayIndex if needed
   useEffect(() => {
@@ -373,14 +396,22 @@ export default function WaypointEditor({
                   const isFirstWaypoint = index === 0;
                   // Only middle waypoints can be overnight stops (not first or last)
                   const canBeOvernight = !isFirstWaypoint && waypoints.length > 1;
+                  const isFocused = focusedWaypointIndex === index;
 
                   return (
                     <div
                       key={wp.id ?? `${wp.lat}-${wp.lng}-${index}`}
-                      className={`flex flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between ${
-                        isOvernight && canBeOvernight
-                          ? "border-l-2 border-l-amber-500 bg-amber-950/20"
-                          : ""
+                      id={`waypoint-row-${index}`}
+                      ref={(el) => {
+                        if (el) waypointRefs.current.set(index, el);
+                        else waypointRefs.current.delete(index);
+                      }}
+                      className={`flex flex-col gap-2 p-3 md:flex-row md:items-center md:justify-between transition-colors ${
+                        isFocused
+                          ? "border-l-4 border-l-cyan-400 bg-cyan-900/50 ring-2 ring-cyan-400/70 shadow-[inset_0_0_12px_rgba(34,211,238,0.15)] animate-pulse-once"
+                          : isOvernight && canBeOvernight
+                            ? "border-l-2 border-l-amber-500 bg-amber-950/20"
+                            : ""
                       }`}
                     >
                       <div className="flex-1">
@@ -438,6 +469,16 @@ export default function WaypointEditor({
                       </div>
 
                       <div className="mt-2 flex items-center gap-2 md:mt-0">
+                        {onLocateWaypoint && (
+                          <button
+                            type="button"
+                            onClick={() => onLocateWaypoint(index)}
+                            className="rounded border border-cyan-600 px-2 py-1 text-[10px] text-cyan-300 hover:bg-cyan-900/50"
+                            title={t("locateOnMap")}
+                          >
+                            📍
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => moveWaypoint(index, "up")}

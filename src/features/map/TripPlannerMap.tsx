@@ -90,6 +90,10 @@ interface TripPlannerMapProps {
   showPoiPlaces?: boolean;
   minPlaceRating?: number | null;
   onlyOpenNow?: boolean;
+  /**
+   * Index of the focused waypoint - map will pan/zoom to this waypoint when set.
+   */
+  focusedWaypointIndex?: number | null;
 }
 
 export default function TripPlannerMap({
@@ -106,6 +110,7 @@ export default function TripPlannerMap({
   showPoiPlaces,
   minPlaceRating,
   onlyOpenNow,
+  focusedWaypointIndex,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -168,6 +173,22 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       }
     };
   }, []);
+
+  // Pan/zoom to focused waypoint when it changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || focusedWaypointIndex === null || focusedWaypointIndex === undefined) return;
+    
+    const wp = waypoints[focusedWaypointIndex];
+    if (!wp) return;
+    
+    // Pan to the waypoint and zoom in if currently zoomed out
+    map.panTo({ lat: wp.lat, lng: wp.lng });
+    const currentZoom = map.getZoom() ?? 10;
+    if (currentZoom < 12) {
+      map.setZoom(12);
+    }
+  }, [focusedWaypointIndex, waypoints]);
 
   // Trigger places fetch immediately when a checkbox is enabled
   useEffect(() => {
