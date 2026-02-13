@@ -290,6 +290,7 @@
     "removeOvernight": "Remover parada noturna",
     "overnightAutoSet": "Parada noturna auto-definida (hospedagem/camping)",
     "pivotWaypointHint": "Paradas noturnas definem os limites dos dias. O último ponto de cada dia é também o ponto de partida do dia seguinte.",
+    "locateOnMap": "Localizar no mapa",
     "planningTools": "Ferramentas de planejamento",
     "aiDailyPlan": "Sugestão de plano diário com IA",
     "thinking": "Pensando...",
