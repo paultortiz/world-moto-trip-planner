@@ -199,6 +199,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
                 typeof wp.dayIndex === "number" && Number.isInteger(wp.dayIndex)
                   ? wp.dayIndex
                   : null,
+              isOvernightStop: wp.isOvernightStop === true,
             } as any,
           });
         }
