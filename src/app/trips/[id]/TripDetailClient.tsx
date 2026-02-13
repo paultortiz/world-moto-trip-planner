@@ -16,6 +16,10 @@ import {
   deriveDaysFromOvernightStops,
   inferOvernightStopsFromDayIndex,
 } from "@/lib/dayPlanning";
+import {
+  findOptimalInsertIndex,
+  getDayIndexForInsertPosition,
+} from "@/lib/routeInsertion";
 
 interface WaypointDto {
   id?: string;
@@ -1074,21 +1078,24 @@ export default function TripDetailClient({
               onlyOpenNow={onlyOpenNow}
               onAddWaypoint={(wp) => {
                 setWaypoints((prev) => {
-                  const last = prev[prev.length - 1];
-                  const lastDay =
-                    typeof last?.dayIndex === "number" && last.dayIndex >= 1 ? last.dayIndex : 1;
-                  return [
-                    ...prev,
-                    {
-                      lat: wp.lat,
-                      lng: wp.lng,
-                      name: (wp as any).name ?? null,
-                      type: (wp.type as string | undefined) ?? "CHECKPOINT",
-                      notes: null,
-                      dayIndex: prev.length === 0 ? 1 : lastDay,
-                      googlePlaceId: (wp as any).googlePlaceId ?? null,
-                    },
-                  ];
+                  // Find optimal position based on route geometry
+                  const insertIndex = findOptimalInsertIndex(prev, { lat: wp.lat, lng: wp.lng });
+                  const dayIndex = getDayIndexForInsertPosition(prev, insertIndex);
+                  
+                  const newWaypoint: WaypointDto = {
+                    lat: wp.lat,
+                    lng: wp.lng,
+                    name: (wp as any).name ?? null,
+                    type: (wp.type as string | undefined) ?? "CHECKPOINT",
+                    notes: null,
+                    dayIndex: prev.length === 0 ? 1 : dayIndex,
+                    googlePlaceId: (wp as any).googlePlaceId ?? null,
+                  };
+                  
+                  // Insert at the optimal position
+                  const updated = [...prev];
+                  updated.splice(insertIndex, 0, newWaypoint);
+                  return updated;
                 });
                 setIsDirty(true);
               }}

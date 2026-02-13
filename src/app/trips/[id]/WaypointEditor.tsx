@@ -463,6 +463,7 @@ export default function WaypointEditor({
                     </div>
                   );
                 })}
+
               </div>
             </div>
           ))
