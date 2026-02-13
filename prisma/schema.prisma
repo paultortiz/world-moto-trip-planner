@@ -137,6 +137,9 @@ model Waypoint {
   // Optional day index for multi-day planning (1-based)
   dayIndex      Int?
 
+  // Whether this waypoint marks an overnight stop (day boundary)
+  isOvernightStop Boolean @default(false)
+
   startSegments RouteSegment[]  @relation("RouteSegmentStart")
   endSegments   RouteSegment[]  @relation("RouteSegmentEnd")
 

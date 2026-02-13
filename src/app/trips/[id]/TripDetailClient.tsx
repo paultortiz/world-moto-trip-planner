@@ -12,6 +12,10 @@ import DeleteTripButton from "./DeleteTripButton";
 import WaypointEditor from "./WaypointEditor";
 import ElevationProfile from "./ElevationProfile";
 import AiDayCard, { type AiDayData, type SuggestedStop } from "./AiDayCard";
+import {
+  deriveDaysFromOvernightStops,
+  inferOvernightStopsFromDayIndex,
+} from "@/lib/dayPlanning";
 
 interface WaypointDto {
   id?: string;
@@ -21,6 +25,7 @@ interface WaypointDto {
   type?: string | null;
   notes?: string | null;
   dayIndex?: number | null;
+  isOvernightStop?: boolean | null;
   googlePlaceId?: string | null;
 }
 
@@ -137,25 +142,28 @@ function computeDailyPlan(
   const totalDurationHrs =
     (totalDurationSeconds ?? 0) > 0 ? (totalDurationSeconds as number) / 3600 : null;
 
-  // Derive an effective day for each waypoint by walking forward and
-  // carrying the last known dayIndex, defaulting to 1 for the first
-  // waypoint. This makes older trips and partial assignments behave
-  // sensibly and guarantees we can build a contiguous 1..maxDay range.
-  const effectiveDays: number[] = [];
-  let currentDay = 1;
-  for (let i = 0; i < waypoints.length; i++) {
-    const raw = waypoints[i].dayIndex;
-    if (typeof raw === "number" && raw >= 1) {
-      currentDay = raw;
+  // Check if we have overnight stop data; if not, infer from dayIndex for backward compat
+  const hasOvernightData = waypoints.some((wp) => wp.isOvernightStop === true);
+  let waypointsToUse = waypoints;
+  
+  if (!hasOvernightData) {
+    // Infer overnight stops from existing dayIndex values
+    const hasDayIndexData = waypoints.some(
+      (wp) => typeof wp.dayIndex === "number" && wp.dayIndex > 1
+    );
+    if (hasDayIndexData) {
+      waypointsToUse = inferOvernightStopsFromDayIndex(waypoints);
     }
-    effectiveDays[i] = currentDay;
   }
 
+  // Derive effective days from overnight stops
+  const withDays = deriveDaysFromOvernightStops(waypointsToUse);
+
   const perDayDistance = new Map<number, number>();
-  for (let i = 0; i < waypoints.length - 1; i++) {
-    const a = waypoints[i];
-    const b = waypoints[i + 1];
-    const day = effectiveDays[i];
+  for (let i = 0; i < withDays.length - 1; i++) {
+    const a = withDays[i];
+    const b = withDays[i + 1];
+    const day = a.effectiveDayIndex;
     const distanceKm = haversineKm(
       { lat: a.lat, lng: a.lng },
       { lat: b.lat, lng: b.lng },
@@ -163,7 +171,9 @@ function computeDailyPlan(
     perDayDistance.set(day, (perDayDistance.get(day) ?? 0) + distanceKm);
   }
 
-  const maxDay = Math.max(...effectiveDays, 1);
+  const maxDay = withDays.length > 0
+    ? Math.max(...withDays.map((wp) => wp.effectiveDayIndex), 1)
+    : 1;
   const entries: DailyPlanEntry[] = [];
 
   for (let day = 1; day <= maxDay; day++) {
@@ -267,6 +277,16 @@ export default function TripDetailClient({
     () => trip.waypoints ?? [],
   );
   const [isDirty, setIsDirty] = useState(false);
+
+  // Sync waypoints state when trip data refreshes from server.
+  // Only trigger on trip.waypoints changes to avoid race condition where
+  // isDirty becomes false before new server data arrives.
+  useEffect(() => {
+    if (!isDirty && trip.waypoints) {
+      setWaypoints(trip.waypoints);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip.waypoints]);
   const [fuelRangeInput, setFuelRangeInput] = useState<string>(
     trip.fuelRangeKm != null ? String(trip.fuelRangeKm) : "",
   );
@@ -731,6 +751,7 @@ export default function TripDetailClient({
             type: wp.type ?? undefined,
             notes: wp.notes ?? undefined,
             dayIndex: wp.dayIndex ?? undefined,
+            isOvernightStop: wp.isOvernightStop === true,
             googlePlaceId: wp.googlePlaceId ?? undefined,
           })),
         }),
