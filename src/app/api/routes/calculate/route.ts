@@ -61,15 +61,32 @@ async function fetchDirectionsChunk(
   let distanceMeters = 0;
   let durationSeconds = 0;
 
+  // Collect step-level polylines for a smooth, road-following line
+  const stepPolylines: string[] = [];
+
   for (const leg of legs) {
     if (leg.distance?.value) distanceMeters += leg.distance.value;
     if (leg.duration?.value) durationSeconds += leg.duration.value;
+    
+    // Extract polyline from each step for detailed road geometry
+    const steps = leg.steps ?? [];
+    for (const step of steps) {
+      if (step.polyline?.points) {
+        stepPolylines.push(step.polyline.points);
+      }
+    }
   }
+
+  // Combine step polylines for smooth road-following line,
+  // fall back to overview_polyline if no steps available
+  const detailedPolyline = stepPolylines.length > 0
+    ? combinePolylines(stepPolylines)
+    : (route.overview_polyline?.points ?? "");
 
   return {
     distanceMeters,
     durationSeconds,
-    polyline: route.overview_polyline?.points ?? "",
+    polyline: detailedPolyline,
   };
 }
 
