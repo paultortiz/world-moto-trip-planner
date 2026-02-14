@@ -593,6 +593,7 @@
     "alt": "ALT",
     "via": "über",
     "noRouteFound": "Keine Route gefunden",
-    "clear": "Löschen"
+    "clear": "Löschen",
+    "dayLabel": "Tag {day}"
   }
 }

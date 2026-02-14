@@ -593,6 +593,7 @@
     "alt": "ALT",
     "via": "via",
     "noRouteFound": "Aucun itinéraire trouvé",
-    "clear": "Effacer"
+    "clear": "Effacer",
+    "dayLabel": "Jour {day}"
   }
 }
