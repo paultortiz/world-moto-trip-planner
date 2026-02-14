@@ -594,6 +594,8 @@
     "via": "über",
     "noRouteFound": "Keine Route gefunden",
     "clear": "Löschen",
-    "dayLabel": "Tag {day}"
+    "dayLabel": "Tag {day}",
+    "fullscreen": "Vollbild",
+    "exitFullscreen": "Vollbild beenden"
   }
 }

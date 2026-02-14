@@ -96,6 +96,10 @@ interface TripPlannerMapProps {
    * Index of the focused waypoint - map will pan/zoom to this waypoint when set.
    */
   focusedWaypointIndex?: number | null;
+  /**
+   * Optional React node containing nearby places controls to show in fullscreen mode.
+   */
+  nearbyPlacesControls?: React.ReactNode;
 }
 
 export default function TripPlannerMap({
@@ -113,11 +117,13 @@ export default function TripPlannerMap({
   minPlaceRating,
   onlyOpenNow,
   focusedWaypointIndex,
+  nearbyPlacesControls,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const { isLoaded, loadError } = useJsApiLoader({
     id: "google-maps-trip-planner",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
@@ -159,6 +165,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const [currentZoom, setCurrentZoom] = useState<number>(10);
   const [mapBounds, setMapBounds] = useState<google.maps.LatLngBounds | null>(null);
 
+  // Fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   // Track previous values of show* props to detect when they change from false to true
   const prevShowFuel = useRef(showFuelPlaces);
   const prevShowLodging = useRef(showLodgingPlaces);
@@ -177,6 +186,17 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       if (zoomHintTimeoutRef.current !== null) {
         window.clearTimeout(zoomHintTimeoutRef.current);
       }
+    };
+  }, []);
+
+  // Track fullscreen changes (e.g., user presses Escape)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -1019,6 +1039,19 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   // handleMapLoad (fitBounds / default seed) and by user interactions.
   const center = centerOverride ?? defaultCenter;
 
+  const toggleFullscreen = useCallback(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+
+    if (!document.fullscreenElement) {
+      container.requestFullscreen().catch((err) => {
+        console.warn("Fullscreen request failed:", err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+
   if (loadError) {
     return (
       <div className="rounded border border-red-700 bg-red-950 p-3 text-sm">
@@ -1031,9 +1064,15 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     return <div className="text-sm text-slate-400">Loading map...</div>;
   }
 
+  // Dynamic container style for fullscreen
+  const dynamicContainerStyle: React.CSSProperties = isFullscreen
+    ? { width: "100%", height: "100vh", touchAction: "none" }
+    : containerStyle;
+
   return (
+    <div ref={mapContainerRef} className="relative">
     <GoogleMap
-      mapContainerStyle={containerStyle}
+      mapContainerStyle={dynamicContainerStyle}
       center={center}
       onLoad={handleMapLoad}
       onIdle={handleMapIdle}
@@ -1164,7 +1203,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </div>
       )}
 
-      {/* Fit route and measure controls */}
+      {/* Fit route, measure, and fullscreen controls */}
       <div
         className="pointer-events-auto flex gap-1"
         style={{ position: "absolute", right: 8, top: 8, zIndex: 30 }}
@@ -1188,7 +1227,27 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         >
           {t("fitRoute")}
         </button>
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className="rounded border border-adv-border bg-slate-950/80 px-2 py-1 text-[10px] text-slate-200 shadow-adv-glow hover:bg-slate-900"
+          title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
+        >
+          {isFullscreen ? "⛶" : "⛶"}
+        </button>
       </div>
+
+      {/* Nearby places controls panel - shown in fullscreen mode */}
+      {isFullscreen && nearbyPlacesControls && (
+        <div
+          className="pointer-events-auto"
+          style={{ position: "absolute", left: 8, bottom: 8, zIndex: 30, maxWidth: "calc(100% - 300px)" }}
+        >
+          <div className="rounded border border-adv-border bg-slate-950/95 p-2 text-[11px] text-slate-200 shadow-adv-glow">
+            {nearbyPlacesControls}
+          </div>
+        </div>
+      )}
 
       {/* Measure mode instruction banner */}
       {measureMode && measurePoints.length === 0 && (
@@ -1670,5 +1729,6 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </div>
       )}
     </GoogleMap>
+    </div>
   );
 }
