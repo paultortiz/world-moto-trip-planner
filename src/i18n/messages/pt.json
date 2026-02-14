@@ -593,6 +593,7 @@
     "alt": "ALT",
     "via": "via",
     "noRouteFound": "Nenhuma rota encontrada",
-    "clear": "Limpar"
+    "clear": "Limpar",
+    "dayLabel": "Dia {day}"
   }
 }

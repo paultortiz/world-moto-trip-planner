@@ -14,12 +14,14 @@ const defaultCenter = { lat: 39.7392, lng: -104.9903 }; // Example default cente
 
 // Optional "type" is used to visually distinguish waypoints such as FUEL, LODGING, and POI.
 // "name" and "googlePlaceId" are used when a waypoint is created from a Places search.
+// "isOvernightStop" marks day boundaries for multi-day trips.
 export type WaypointPosition = {
   lat: number;
   lng: number;
   type?: string | null;
   name?: string | null;
   googlePlaceId?: string | null;
+  isOvernightStop?: boolean;
 };
 
 type PlaceMarker = {
@@ -152,6 +154,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     summary: string;
     path: { lat: number; lng: number }[];
   }[]>([]);
+
+  // Zoom level tracking for day labels
+  const [currentZoom, setCurrentZoom] = useState<number>(10);
+  const [mapBounds, setMapBounds] = useState<google.maps.LatLngBounds | null>(null);
 
   // Track previous values of show* props to detect when they change from false to true
   const prevShowFuel = useRef(showFuelPlaces);
@@ -564,8 +570,24 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     }
   }, [onAddWaypoint]);
 
+  // Track zoom and bounds changes for day labels visibility
+  const handleZoomChanged = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const zoom = map.getZoom() ?? 10;
+    setCurrentZoom(zoom);
+    const bounds = map.getBounds();
+    if (bounds) setMapBounds(bounds);
+  }, []);
+
   const handleMapIdle = useCallback(() => {
     if (!mapRef.current) return;
+
+    // Also update zoom and bounds on idle as backup
+    const zoom = mapRef.current.getZoom() ?? 10;
+    setCurrentZoom(zoom);
+    const bounds = mapRef.current.getBounds();
+    if (bounds) setMapBounds(bounds);
 
     // Debounce Places calls so we only query after the map has been idle
     // for a short period, instead of on every tiny pan/zoom.
@@ -826,6 +848,141 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     poiPlaces,
   ]);
 
+  // Compute day segments based on overnight stops
+  const daySegments = useMemo(() => {
+    if (waypoints.length < 2) return [];
+
+    const segments: { day: number; waypoints: WaypointPosition[] }[] = [];
+    let currentDay = 1;
+    let currentSegment: WaypointPosition[] = [];
+
+    for (let i = 0; i < waypoints.length; i++) {
+      const wp = waypoints[i];
+      currentSegment.push(wp);
+      
+      const isLastWaypoint = i === waypoints.length - 1;
+      const isOvernightStop = wp.isOvernightStop === true;
+
+      // End of a day segment: either overnight stop or last waypoint
+      if (isOvernightStop || isLastWaypoint) {
+        segments.push({ day: currentDay, waypoints: [...currentSegment] });
+        
+        // Start next day after overnight stop (overnight wp is shared)
+        if (isOvernightStop && !isLastWaypoint) {
+          currentDay++;
+          currentSegment = [wp]; // Next day starts from the overnight stop
+        }
+      }
+    }
+
+    return segments;
+  }, [waypoints]);
+
+  // Route colors for alternating days (high contrast)
+  const DAY_COLORS = {
+    odd: "#0d9488",   // teal-600
+    even: "#d97706",  // amber-600
+  };
+
+  // Split routePath into day segments for colored rendering
+  const dayRoutePaths = useMemo(() => {
+    if (!routePath || routePath.length === 0 || daySegments.length === 0) return [];
+
+    // Helper to find closest index in routePath to a waypoint
+    const findClosestRouteIndex = (wp: { lat: number; lng: number }, startFrom: number = 0): number => {
+      let closestIndex = startFrom;
+      let closestDist = Infinity;
+      for (let i = startFrom; i < routePath.length; i++) {
+        const rp = routePath[i];
+        const dist = Math.pow(rp.lat - wp.lat, 2) + Math.pow(rp.lng - wp.lng, 2);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIndex = i;
+        }
+        // Optimization: if we're getting farther away, we've likely passed the closest point
+        if (dist > closestDist * 4 && i > closestIndex + 10) break;
+      }
+      return closestIndex;
+    };
+
+    const paths: { day: number; path: { lat: number; lng: number }[]; color: string }[] = [];
+    let lastRouteIndex = 0;
+
+    for (const segment of daySegments) {
+      if (segment.waypoints.length < 2) continue;
+
+      const startWp = segment.waypoints[0];
+      const endWp = segment.waypoints[segment.waypoints.length - 1];
+
+      const startIndex = findClosestRouteIndex(startWp, lastRouteIndex);
+      const endIndex = findClosestRouteIndex(endWp, startIndex);
+
+      if (endIndex > startIndex) {
+        const segmentPath = routePath.slice(startIndex, endIndex + 1);
+        const color = segment.day % 2 === 1 ? DAY_COLORS.odd : DAY_COLORS.even;
+        paths.push({ day: segment.day, path: segmentPath, color });
+        lastRouteIndex = endIndex;
+      }
+    }
+
+    return paths;
+  }, [routePath, daySegments]);
+
+  // Compute visible day labels within current viewport
+  const visibleDayLabels = useMemo(() => {
+    if (!mapBounds || daySegments.length === 0 || dayRoutePaths.length === 0) return [];
+
+    const labels: { day: number; lat: number; lng: number; text: string }[] = [];
+
+    for (const segment of daySegments) {
+      // Find the corresponding route path for this day
+      const dayPath = dayRoutePaths.find(p => p.day === segment.day);
+      if (!dayPath || dayPath.path.length < 2) continue;
+
+      // Find route points within the viewport
+      const visibleRoutePoints = dayPath.path.filter(pt => 
+        mapBounds.contains({ lat: pt.lat, lng: pt.lng })
+      );
+
+      if (visibleRoutePoints.length > 0) {
+        // Place label at the midpoint of visible route segment
+        const midIndex = Math.floor(visibleRoutePoints.length / 2);
+        const midPoint = visibleRoutePoints[midIndex];
+        
+        // Calculate offset to move label away from route line and waypoints
+        // Use a northward offset (positive lat) to position above the route
+        // The offset scales inversely with zoom - smaller offset at higher zoom
+        const zoomFactor = Math.max(1, 12 - (currentZoom ?? 8));
+        const latOffset = 0.008 * zoomFactor; // ~800m at zoom 8, less at higher zoom
+        
+        // Check distance to nearest waypoint and increase offset if too close
+        let finalLat = midPoint.lat + latOffset;
+        const finalLng = midPoint.lng;
+        
+        // Find minimum distance to any waypoint in this segment
+        const minWpDistSq = segment.waypoints.reduce((min, wp) => {
+          const distSq = Math.pow(midPoint.lat - wp.lat, 2) + Math.pow(midPoint.lng - wp.lng, 2);
+          return Math.min(min, distSq);
+        }, Infinity);
+        
+        // If very close to a waypoint, shift the label further
+        const minDistThreshold = 0.0001 * zoomFactor; // threshold in degrees squared
+        if (minWpDistSq < minDistThreshold) {
+          finalLat += latOffset * 0.5; // Additional offset
+        }
+        
+        labels.push({
+          day: segment.day,
+          lat: finalLat,
+          lng: finalLng,
+          text: t("dayLabel", { day: segment.day }),
+        });
+      }
+    }
+
+    return labels;
+  }, [mapBounds, daySegments, dayRoutePaths, currentZoom, t]);
+
   const handlePanelItemClick = useCallback(
     (item: PanelPlaceItem) => {
       const map = mapRef.current;
@@ -880,6 +1037,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       center={center}
       onLoad={handleMapLoad}
       onIdle={handleMapIdle}
+      onZoomChanged={handleZoomChanged}
       onClick={handleMapClick}
       options={{
         disableDefaultUI: true,
@@ -1179,16 +1337,71 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         }}
       />
 
-      {routePath && routePath.length > 0 && (
-        <Polyline
-          path={routePath}
-          options={{
-            strokeColor: "#22c55e",
-            strokeOpacity: 0.9,
-            strokeWeight: 4,
-          }}
-        />
+      {/* Route polylines - colored by day (alternating green/cyan) */}
+      {dayRoutePaths.length > 0 ? (
+        dayRoutePaths.map((segment) => (
+          <Polyline
+            key={`route-day-${segment.day}`}
+            path={segment.path}
+            options={{
+              strokeColor: segment.color,
+              strokeOpacity: 0.85,
+              strokeWeight: 4,
+            }}
+          />
+        ))
+      ) : (
+        // Fallback: single color if no day segments computed
+        routePath && routePath.length > 0 && (
+          <Polyline
+            path={routePath}
+            options={{
+              strokeColor: "#22c55e",
+              strokeOpacity: 0.9,
+              strokeWeight: 4,
+            }}
+          />
+        )
       )}
+
+      {/* Day labels - sundial style with dark high-contrast colors */}
+      {currentZoom >= 6 && visibleDayLabels.map((label) => {
+        // Dark colors: deep teal-900 for odd days, dark amber-900 for even days
+        const colors = label.day % 2 === 1 
+          ? { fill: "19,78,74", stroke: "17,94,89", text: "15,63,58" }      // teal-900/800
+          : { fill: "120,53,15", stroke: "146,64,14", text: "92,45,13" };   // amber-900/800
+        
+        const svgSundial = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="60">
+          <!-- Drop shadow -->
+          <path d="M 6,34 A 18,18 0 0,1 42,34" fill="rgba(0,0,0,0.2)" transform="translate(1,1)"/>
+          <!-- Sundial base arc -->
+          <path d="M 6,34 A 18,18 0 0,1 42,34" fill="rgb(255,255,255)" stroke="rgb(${colors.stroke})" stroke-width="2"/>
+          <!-- Hour lines -->
+          <line x1="24" y1="34" x2="24" y2="18" stroke="rgb(${colors.fill})" stroke-width="1.5" opacity="0.5"/>
+          <line x1="24" y1="34" x2="14" y2="20" stroke="rgb(${colors.fill})" stroke-width="1" opacity="0.4"/>
+          <line x1="24" y1="34" x2="34" y2="20" stroke="rgb(${colors.fill})" stroke-width="1" opacity="0.4"/>
+          <line x1="24" y1="34" x2="8" y2="28" stroke="rgb(${colors.fill})" stroke-width="1" opacity="0.3"/>
+          <line x1="24" y1="34" x2="40" y2="28" stroke="rgb(${colors.fill})" stroke-width="1" opacity="0.3"/>
+          <!-- Gnomon -->
+          <polygon points="24,34 21,17 27,17" fill="rgb(${colors.fill})"/>
+          <!-- Day text -->
+          <text x="24" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="11" font-style="italic" font-weight="500" fill="rgb(${colors.text})">${label.text}</text>
+        </svg>`;
+
+        return (
+          <Marker
+            key={`day-label-${label.day}`}
+            position={{ lat: label.lat, lng: label.lng }}
+            icon={{
+              url: `data:image/svg+xml;base64,${btoa(svgSundial)}`,
+              scaledSize: new google.maps.Size(48, 60),
+              anchor: new google.maps.Point(24, 60), // Anchor at bottom with 16px padding below text
+            }}
+            zIndex={200}
+            clickable={false}
+          />
+        );
+      })}
 
       {waypoints.map((position, index) => {
         const wpType = position.type ?? null;

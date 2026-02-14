@@ -645,6 +645,7 @@ export default function TripDetailClient({
     lat: wp.lat,
     lng: wp.lng,
     type: wp.type ?? undefined,
+    isOvernightStop: wp.isOvernightStop === true,
   }));
 
   useEffect(() => {
