@@ -1634,25 +1634,38 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       {panelItems.length > 0 && (
         <div
           className="pointer-events-auto rounded border border-adv-border bg-slate-900/90 p-2 text-[11px] text-slate-200 shadow-adv-glow"
-          style={{ position: "absolute", right: 8, bottom: 8, maxWidth: 260, maxHeight: 180, overflowY: "auto" }}
+          style={{ position: "absolute", right: 8, bottom: 8, maxWidth: 280, maxHeight: 200, overflowY: "auto" }}
         >
           <p className="mb-1 font-semibold text-[11px] text-slate-100">Nearby places</p>
           <ul className="space-y-1">
-            {panelItems.map((p, idx) => (
-              <li key={`${p.category}-${idx}`}>
-                <button
-                  type="button"
-                  className="flex w-full cursor-pointer items-center justify-between gap-2 rounded px-1 text-left hover:bg-slate-800/60"
-                  onClick={() => handlePanelItemClick(p)}
-                >
-                  <span className="truncate">{p.name}</span>
-                  <span className="text-slate-400">
-                    {p.rating != null ? `${p.rating.toFixed(1)}★ · ` : ""}
-                    {p.distanceKm.toFixed(0)} km
-                  </span>
-                </button>
-              </li>
-            ))}
+            {panelItems.map((p, idx) => {
+              // Color-coded dot matching marker colors
+              const categoryColors: Record<string, string> = {
+                fuel: "bg-green-500",
+                lodging: "bg-blue-500",
+                campground: "bg-teal-500",
+                dining: "bg-rose-500",
+                poi: "bg-amber-500",
+              };
+              const dotColor = categoryColors[p.category] || "bg-slate-400";
+              
+              return (
+                <li key={`${p.category}-${idx}`}>
+                  <button
+                    type="button"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded px-1 text-left hover:bg-slate-800/60"
+                    onClick={() => handlePanelItemClick(p)}
+                  >
+                    <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${dotColor}`} />
+                    <span className="flex-1 truncate">{p.name}</span>
+                    <span className="flex-shrink-0 text-slate-400">
+                      {p.rating != null ? `${p.rating.toFixed(1)}★ · ` : ""}
+                      {p.distanceKm.toFixed(0)} km
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
