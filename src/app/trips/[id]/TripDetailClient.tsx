@@ -1080,6 +1080,86 @@ export default function TripDetailClient({
               showPoiPlaces={showPoiPlaces}
               minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
               onlyOpenNow={onlyOpenNow}
+              nearbyPlacesControls={
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={showFuelPlaces}
+                      onChange={(e) => setShowFuelPlaces(e.target.checked)}
+                    />
+                    <span>{t("nearbyFuel")}</span>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={showLodgingPlaces}
+                      onChange={(e) => setShowLodgingPlaces(e.target.checked)}
+                    />
+                    <span>{t("nearbyLodging")}</span>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={showCampgroundPlaces}
+                      onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
+                    />
+                    <span>{t("nearbyCampgrounds")}</span>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={showDiningPlaces}
+                      onChange={(e) => setShowDiningPlaces(e.target.checked)}
+                    />
+                    <span>{t("nearbyDining")}</span>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={showPoiPlaces}
+                      onChange={(e) => setShowPoiPlaces(e.target.checked)}
+                    />
+                    <span>{t("nearbyPois")}</span>
+                  </label>
+                  <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={enableClickToAdd}
+                      onChange={(e) => setEnableClickToAdd(e.target.checked)}
+                    />
+                    <span className="font-semibold text-amber-300">{t("addWaypointsByClick")}</span>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <span className="text-slate-500">{t("minRating")}</span>
+                    <select
+                      className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px]"
+                      value={minPlaceRating}
+                      onChange={(e) => setMinPlaceRating(e.target.value)}
+                    >
+                      <option value="any">{t("any")}</option>
+                      <option value="3.5">3.5+</option>
+                      <option value="4.0">4.0+</option>
+                      <option value="4.5">4.5+</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={onlyOpenNow}
+                      onChange={(e) => setOnlyOpenNow(e.target.checked)}
+                    />
+                    <span>{t("openNowOnly")}</span>
+                  </label>
+                </div>
+              }
               onAddWaypoint={(wp) => {
                 setWaypoints((prev) => {
                   // Find optimal position based on route geometry

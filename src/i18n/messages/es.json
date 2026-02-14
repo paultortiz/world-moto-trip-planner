@@ -594,6 +594,8 @@
     "via": "vía",
     "noRouteFound": "No se encontró ruta",
     "clear": "Limpiar",
-    "dayLabel": "Día {day}"
+    "dayLabel": "Día {day}",
+    "fullscreen": "Pantalla completa",
+    "exitFullscreen": "Salir de pantalla completa"
   }
 }
