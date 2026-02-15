@@ -685,6 +685,8 @@
       "skip": "Pular Tour",
       "finish": "Finalizar",
       "stepOf": "Passo {current} de {total}"
-    }
+    },
+    "viewArticle": "Ver ajuda para {title}",
+    "clickForMore": "Clique para o artigo completo"
   }
 }
