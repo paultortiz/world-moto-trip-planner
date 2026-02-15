@@ -51,6 +51,7 @@ export function HelpButton({ position = "floating" }: HelpButtonProps) {
     <button
       type="button"
       onClick={openDrawer}
+      data-tour-help-button
       className="fixed bottom-4 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-adv-accent text-black shadow-lg transition-transform hover:scale-105 hover:bg-adv-accentMuted focus:outline-none focus:ring-2 focus:ring-adv-accent focus:ring-offset-2 focus:ring-offset-slate-900"
       style={{ zIndex: 999999 }}
       aria-label={t("title")}

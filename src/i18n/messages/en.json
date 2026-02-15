@@ -676,6 +676,8 @@
       "startTour": "Start Tour",
       "newUser": "New User Tour",
       "newUserDesc": "Learn the basics of trip planning",
+      "tripPlanning": "Trip Planning Tour",
+      "tripPlanningDesc": "Learn how to plan your route with waypoints and AI",
       "mapFeatures": "Map Features Tour",
       "mapFeaturesDesc": "Explore map tools and controls"
     },
@@ -685,6 +687,62 @@
       "skip": "Skip Tour",
       "finish": "Finish",
       "stepOf": "Step {current} of {total}"
+    },
+    "tourSteps": {
+      "newUser": {
+        "welcome": {
+          "title": "Welcome to World Moto Trip Planner!",
+          "content": "Let's take a quick tour of the main features. You can skip this tour at any time."
+        },
+        "trips": {
+          "title": "Your Trips",
+          "content": "View and manage all your planned routes here. Each trip contains waypoints, daily plans, and route details."
+        },
+        "newTrip": {
+          "title": "Create a New Trip",
+          "content": "Start planning a new adventure! Give it a name, select your motorcycle, and begin adding waypoints."
+        },
+        "garage": {
+          "title": "Your Garage",
+          "content": "Manage your motorcycles here. Add bikes with their specs for accurate fuel range calculations."
+        },
+        "profile": {
+          "title": "Your Profile",
+          "content": "Set your riding preferences here. The AI uses these to personalize your daily plans."
+        },
+        "help": {
+          "title": "Need Help?",
+          "content": "Press the ? button or the ? key anytime to access help articles and guided tours."
+        }
+      },
+      "tripPlanning": {
+        "map": {
+          "title": "The Trip Map",
+          "content": "Click on the map to add waypoints. Your route will be calculated automatically between stops."
+        },
+        "waypoints": {
+          "title": "Waypoint Editor",
+          "content": "Reorder, edit, or delete waypoints here. Mark overnight stops to split your trip into days."
+        },
+        "aiPlan": {
+          "title": "AI Daily Plan",
+          "content": "Generate a personalized riding itinerary based on your preferences and waypoints."
+        }
+      },
+      "mapFeatures": {
+        "search": {
+          "title": "Search Places",
+          "content": "Search for addresses, cities, or points of interest. Click a result to add it as a waypoint."
+        },
+        "measure": {
+          "title": "Measure Distance",
+          "content": "Measure the driving distance between any two points on the map."
+        },
+        "fullscreen": {
+          "title": "Fullscreen Mode",
+          "content": "Expand the map to full screen for a better view of your route."
+        }
+      }
     },
     "viewArticle": "View help for {title}",
     "clickForMore": "Click for full article"

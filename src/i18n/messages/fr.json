@@ -676,6 +676,8 @@
       "startTour": "Commencer la Visite",
       "newUser": "Visite Nouvel Utilisateur",
       "newUserDesc": "Apprenez les bases de la planification de voyage",
+      "tripPlanning": "Visite Planification de Voyage",
+      "tripPlanningDesc": "Apprenez à planifier votre itinéraire avec des points d'intérêt et l'IA",
       "mapFeatures": "Visite des Fonctionnalités de la Carte",
       "mapFeaturesDesc": "Explorez les outils et contrôles de la carte"
     },
@@ -685,6 +687,62 @@
       "skip": "Passer la Visite",
       "finish": "Terminer",
       "stepOf": "Étape {current} sur {total}"
+    },
+    "tourSteps": {
+      "newUser": {
+        "welcome": {
+          "title": "Bienvenue sur World Moto Trip Planner !",
+          "content": "Faisons un tour rapide des fonctionnalités principales. Vous pouvez passer cette visite à tout moment."
+        },
+        "trips": {
+          "title": "Vos Voyages",
+          "content": "Consultez et gérez tous vos itinéraires planifiés ici. Chaque voyage contient des points d'intérêt, des plans journaliers et des détails d'itinéraire."
+        },
+        "newTrip": {
+          "title": "Créer un Nouveau Voyage",
+          "content": "Commencez à planifier une nouvelle aventure ! Donnez-lui un nom, sélectionnez votre moto et ajoutez des points d'intérêt."
+        },
+        "garage": {
+          "title": "Votre Garage",
+          "content": "Gérez vos motos ici. Ajoutez des motos avec leurs spécifications pour des calculs d'autonomie précis."
+        },
+        "profile": {
+          "title": "Votre Profil",
+          "content": "Définissez vos préférences de conduite ici. L'IA les utilise pour personnaliser vos plans journaliers."
+        },
+        "help": {
+          "title": "Besoin d'Aide ?",
+          "content": "Appuyez sur le bouton ? ou la touche ? à tout moment pour accéder aux articles d'aide et aux visites guidées."
+        }
+      },
+      "tripPlanning": {
+        "map": {
+          "title": "La Carte du Voyage",
+          "content": "Cliquez sur la carte pour ajouter des points d'intérêt. Votre itinéraire sera calculé automatiquement entre les arrêts."
+        },
+        "waypoints": {
+          "title": "Éditeur de Points d'Intérêt",
+          "content": "Réorganisez, modifiez ou supprimez des points d'intérêt ici. Marquez les arrêts nocturnes pour diviser votre voyage en jours."
+        },
+        "aiPlan": {
+          "title": "Plan Journalier IA",
+          "content": "Générez un itinéraire de conduite personnalisé basé sur vos préférences et points d'intérêt."
+        }
+      },
+      "mapFeatures": {
+        "search": {
+          "title": "Rechercher des Lieux",
+          "content": "Recherchez des adresses, des villes ou des points d'intérêt. Cliquez sur un résultat pour l'ajouter comme point d'intérêt."
+        },
+        "measure": {
+          "title": "Mesurer la Distance",
+          "content": "Mesurez la distance de conduite entre deux points sur la carte."
+        },
+        "fullscreen": {
+          "title": "Mode Plein Écran",
+          "content": "Agrandissez la carte en plein écran pour une meilleure vue de votre itinéraire."
+        }
+      }
     },
     "viewArticle": "Voir l'aide pour {title}",
     "clickForMore": "Cliquez pour l'article complet"

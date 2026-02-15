@@ -676,6 +676,8 @@
       "startTour": "Tour starten",
       "newUser": "Tour für neue Benutzer",
       "newUserDesc": "Lerne die Grundlagen der Reiseplanung",
+      "tripPlanning": "Reiseplanungs-Tour",
+      "tripPlanningDesc": "Lerne, wie du deine Route mit Wegpunkten und KI planst",
       "mapFeatures": "Kartenfunktionen-Tour",
       "mapFeaturesDesc": "Erkunde Kartenwerkzeuge und Steuerungen"
     },
@@ -685,6 +687,62 @@
       "skip": "Tour überspringen",
       "finish": "Fertig",
       "stepOf": "Schritt {current} von {total}"
+    },
+    "tourSteps": {
+      "newUser": {
+        "welcome": {
+          "title": "Willkommen bei World Moto Trip Planner!",
+          "content": "Lass uns einen kurzen Rundgang durch die Hauptfunktionen machen. Du kannst diese Tour jederzeit überspringen."
+        },
+        "trips": {
+          "title": "Deine Reisen",
+          "content": "Sieh und verwalte alle deine geplanten Routen hier. Jede Reise enthält Wegpunkte, Tagespläne und Routendetails."
+        },
+        "newTrip": {
+          "title": "Neue Reise erstellen",
+          "content": "Beginne ein neues Abenteuer zu planen! Gib einen Namen, wähle dein Motorrad und füge Wegpunkte hinzu."
+        },
+        "garage": {
+          "title": "Deine Garage",
+          "content": "Verwalte deine Motorräder hier. Füge Bikes mit ihren Spezifikationen für genaue Reichweitenberechnungen hinzu."
+        },
+        "profile": {
+          "title": "Dein Profil",
+          "content": "Stelle deine Fahrpräferenzen hier ein. Die KI nutzt diese, um deine Tagespläne zu personalisieren."
+        },
+        "help": {
+          "title": "Brauchst du Hilfe?",
+          "content": "Drücke jederzeit die ?-Taste oder den ?-Button, um auf Hilfeartikel und geführte Touren zuzugreifen."
+        }
+      },
+      "tripPlanning": {
+        "map": {
+          "title": "Die Reisekarte",
+          "content": "Klicke auf die Karte, um Wegpunkte hinzuzufügen. Deine Route wird automatisch zwischen den Stopps berechnet."
+        },
+        "waypoints": {
+          "title": "Wegpunkt-Editor",
+          "content": "Ordne um, bearbeite oder lösche Wegpunkte hier. Markiere Übernachtungsstopps, um deine Reise in Tage aufzuteilen."
+        },
+        "aiPlan": {
+          "title": "KI-Tagesplan",
+          "content": "Erstelle einen personalisierten Fahrplan basierend auf deinen Präferenzen und Wegpunkten."
+        }
+      },
+      "mapFeatures": {
+        "search": {
+          "title": "Orte suchen",
+          "content": "Suche nach Adressen, Städten oder Sehenswürdigkeiten. Klicke auf ein Ergebnis, um es als Wegpunkt hinzuzufügen."
+        },
+        "measure": {
+          "title": "Entfernung messen",
+          "content": "Miss die Fahrstrecke zwischen zwei Punkten auf der Karte."
+        },
+        "fullscreen": {
+          "title": "Vollbildmodus",
+          "content": "Erweitere die Karte auf Vollbild für eine bessere Übersicht deiner Route."
+        }
+      }
     },
     "viewArticle": "Hilfe anzeigen für {title}",
     "clickForMore": "Klicken für vollständigen Artikel"

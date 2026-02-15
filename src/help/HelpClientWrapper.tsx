@@ -4,6 +4,7 @@ import { type ReactNode } from "react";
 import { HelpProvider } from "./HelpProvider";
 import { HelpDrawer } from "./components/HelpDrawer";
 import { HelpButton } from "./components/HelpButton";
+import { FeatureTour } from "./components/FeatureTour";
 
 interface HelpClientWrapperProps {
   children: ReactNode;
@@ -20,6 +21,7 @@ export function HelpClientWrapper({ children }: HelpClientWrapperProps) {
       {children}
       <HelpButton />
       <HelpDrawer />
+      <FeatureTour />
     </HelpProvider>
   );
 }
