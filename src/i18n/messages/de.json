@@ -5,6 +5,7 @@
     "signInWithGoogle": "Mit Google anmelden",
     "loading": "Laden...",
     "save": "Speichern",
+    "saving": "Speichern...",
     "cancel": "Abbrechen",
     "delete": "Löschen",
     "edit": "Bearbeiten",
@@ -18,6 +19,7 @@
     "trips": "Reisen",
     "newTrip": "Neue Reise",
     "garage": "Garage",
+    "profile": "Profil",
     "sponsor": "Sponsor",
     "admin": "Admin"
   },
@@ -597,5 +599,60 @@
     "dayLabel": "Tag {day}",
     "fullscreen": "Vollbild",
     "exitFullscreen": "Vollbild beenden"
+  },
+  "profile": {
+    "title": "Fahrerprofil",
+    "unnamed": "Unbenannter Fahrer",
+    "memberSince": "Mitglied seit {date}",
+    "saved": "Profil erfolgreich gespeichert!",
+    "displayName": "Anzeigename",
+    "namePlaceholder": "Gib deinen Namen ein",
+    "ridingStyle": "Fahrstil",
+    "experienceLevel": "Erfahrungsstufe",
+    "selectExperience": "Wähle deine Erfahrungsstufe",
+    "paceAndTerrain": "Tempo & Gelände",
+    "pace": "Fahrtempo",
+    "terrain": "Geländepräferenz",
+    "dailyDistance": "Bevorzugte Tagesstrecke",
+    "interests": "Interessen",
+    "preferences": "Routenpräferenzen",
+    "avoidHighways": "Autobahnen und Schnellstraßen vermeiden",
+    "preferCamping": "Camping gegenüber Hotels bevorzugen",
+    "dietary": "Ernährungseinschränkungen",
+    "dietaryPlaceholder": "Z.B. vegetarisch, glutenfrei, Allergien...",
+    "styles": {
+      "TOURING": "Touring",
+      "ADVENTURE": "Adventure",
+      "OFFROAD": "Offroad",
+      "SPORT_TOURING": "Sport-Touring"
+    },
+    "experience": {
+      "BEGINNER": "Anfänger (0-2 Jahre)",
+      "INTERMEDIATE": "Fortgeschritten (2-5 Jahre)",
+      "ADVANCED": "Erfahren (5-10 Jahre)",
+      "EXPERT": "Experte (10+ Jahre)"
+    },
+    "paces": {
+      "RELAXED": "Entspannt",
+      "MODERATE": "Moderat",
+      "AGGRESSIVE": "Sportlich"
+    },
+    "terrains": {
+      "PAVEMENT_ONLY": "Asphalt",
+      "MIXED": "Gemischt",
+      "OFFROAD_FOCUSED": "Offroad"
+    },
+    "interestOptions": {
+      "scenicRoutes": "Landschaftlich schöne Strecken",
+      "localCuisine": "Lokale Küche",
+      "historicSites": "Historische Stätten",
+      "photography": "Fotografie",
+      "camping": "Camping",
+      "twistyRoads": "Kurvenreiche Straßen",
+      "wildlife": "Tierwelt",
+      "beaches": "Strände",
+      "mountains": "Berge",
+      "deserts": "Wüsten"
+    }
   }
 }

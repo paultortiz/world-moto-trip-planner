@@ -17,6 +17,17 @@ model User {
   role           UserRole @default(USER)
   locale         String?  // User's preferred language (e.g., "en", "es")
 
+  // Rider preferences for AI personalization
+  ridingStyle        RidingStyle?
+  pacePreference     PacePreference?
+  terrainPreference  TerrainPreference?
+  experienceLevel    ExperienceLevel?
+  dailyDistanceKm    Int?              // Preferred daily riding distance
+  interests          Json?             // Array: ["scenicRoutes", "localCuisine", "historicSites", "photography", "camping", "twistyRoads"]
+  avoidHighways      Boolean           @default(false)
+  preferCamping      Boolean           @default(false)
+  dietaryRestrictions String?          // For food recommendations
+
   accounts       Account[]
   sessions       Session[]
   trips          Trip[]
@@ -226,6 +237,32 @@ enum UserRole {
   USER
   ADMIN
   SPONSOR
+}
+
+enum RidingStyle {
+  TOURING
+  ADVENTURE
+  OFFROAD
+  SPORT_TOURING
+}
+
+enum PacePreference {
+  RELAXED
+  MODERATE
+  AGGRESSIVE
+}
+
+enum TerrainPreference {
+  PAVEMENT_ONLY
+  MIXED
+  OFFROAD_FOCUSED
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
 }
 
 model ActivityLog {

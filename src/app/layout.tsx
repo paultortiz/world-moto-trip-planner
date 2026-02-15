@@ -42,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       { href: "/trips", label: t("nav.trips") },
                       { href: "/trips/new", label: t("nav.newTrip") },
                       { href: "/motorcycles", label: t("nav.garage") },
+                      { href: "/profile", label: t("nav.profile") },
                       ...((role === "SPONSOR" || role === "ADMIN")
                         ? [{ href: "/sponsor", label: t("nav.sponsor") }]
                         : []),
