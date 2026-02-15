@@ -5,6 +5,7 @@
     "signInWithGoogle": "Se connecter avec Google",
     "loading": "Chargement...",
     "save": "Enregistrer",
+    "saving": "Enregistrement...",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "edit": "Modifier",
@@ -18,6 +19,7 @@
     "trips": "Voyages",
     "newTrip": "Nouveau voyage",
     "garage": "Garage",
+    "profile": "Profil",
     "sponsor": "Sponsor",
     "admin": "Admin"
   },
@@ -597,5 +599,60 @@
     "dayLabel": "Jour {day}",
     "fullscreen": "Plein écran",
     "exitFullscreen": "Quitter le plein écran"
+  },
+  "profile": {
+    "title": "Profil du Motard",
+    "unnamed": "Motard sans nom",
+    "memberSince": "Membre depuis {date}",
+    "saved": "Profil enregistré avec succès!",
+    "displayName": "Nom d'affichage",
+    "namePlaceholder": "Entrez votre nom",
+    "ridingStyle": "Style de conduite",
+    "experienceLevel": "Niveau d'expérience",
+    "selectExperience": "Sélectionnez votre niveau d'expérience",
+    "paceAndTerrain": "Rythme et terrain",
+    "pace": "Rythme de conduite",
+    "terrain": "Préférence de terrain",
+    "dailyDistance": "Distance journalière préférée",
+    "interests": "Intérêts",
+    "preferences": "Préférences d'itinéraire",
+    "avoidHighways": "Préférer éviter autoroutes et voies rapides",
+    "preferCamping": "Préférer le camping aux hôtels si possible",
+    "dietary": "Restrictions alimentaires",
+    "dietaryPlaceholder": "Ex., végétarien, sans gluten, allergies...",
+    "styles": {
+      "TOURING": "Tourisme",
+      "ADVENTURE": "Aventure",
+      "OFFROAD": "Tout-terrain",
+      "SPORT_TOURING": "Sport Touring"
+    },
+    "experience": {
+      "BEGINNER": "Débutant (0-2 ans)",
+      "INTERMEDIATE": "Intermédiaire (2-5 ans)",
+      "ADVANCED": "Avancé (5-10 ans)",
+      "EXPERT": "Expert (10+ ans)"
+    },
+    "paces": {
+      "RELAXED": "Détendu",
+      "MODERATE": "Modéré",
+      "AGGRESSIVE": "Sportif"
+    },
+    "terrains": {
+      "PAVEMENT_ONLY": "Asphalte",
+      "MIXED": "Mixte",
+      "OFFROAD_FOCUSED": "Tout-terrain"
+    },
+    "interestOptions": {
+      "scenicRoutes": "Routes panoramiques",
+      "localCuisine": "Cuisine locale",
+      "historicSites": "Sites historiques",
+      "photography": "Photographie",
+      "camping": "Camping",
+      "twistyRoads": "Routes sinueuses",
+      "wildlife": "Faune sauvage",
+      "beaches": "Plages",
+      "mountains": "Montagnes",
+      "deserts": "Déserts"
+    }
   }
 }

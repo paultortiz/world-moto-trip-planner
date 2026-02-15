@@ -5,6 +5,7 @@
     "signInWithGoogle": "Sign in with Google",
     "loading": "Loading...",
     "save": "Save",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -18,6 +19,7 @@
     "trips": "Trips",
     "newTrip": "New trip",
     "garage": "Garage",
+    "profile": "Profile",
     "sponsor": "Sponsor",
     "admin": "Admin"
   },
@@ -597,5 +599,60 @@
     "dayLabel": "Day {day}",
     "fullscreen": "Fullscreen",
     "exitFullscreen": "Exit fullscreen"
+  },
+  "profile": {
+    "title": "Rider Profile",
+    "unnamed": "Unnamed Rider",
+    "memberSince": "Member since {date}",
+    "saved": "Profile saved successfully!",
+    "displayName": "Display Name",
+    "namePlaceholder": "Enter your name",
+    "ridingStyle": "Riding Style",
+    "experienceLevel": "Experience Level",
+    "selectExperience": "Select your experience level",
+    "paceAndTerrain": "Pace & Terrain",
+    "pace": "Riding Pace",
+    "terrain": "Terrain Preference",
+    "dailyDistance": "Preferred Daily Distance",
+    "interests": "Interests",
+    "preferences": "Route Preferences",
+    "avoidHighways": "Prefer to avoid highways and motorways",
+    "preferCamping": "Prefer camping over hotels when possible",
+    "dietary": "Dietary Restrictions",
+    "dietaryPlaceholder": "E.g., vegetarian, gluten-free, allergies...",
+    "styles": {
+      "TOURING": "Touring",
+      "ADVENTURE": "Adventure",
+      "OFFROAD": "Off-Road",
+      "SPORT_TOURING": "Sport Touring"
+    },
+    "experience": {
+      "BEGINNER": "Beginner (0-2 years)",
+      "INTERMEDIATE": "Intermediate (2-5 years)",
+      "ADVANCED": "Advanced (5-10 years)",
+      "EXPERT": "Expert (10+ years)"
+    },
+    "paces": {
+      "RELAXED": "Relaxed",
+      "MODERATE": "Moderate",
+      "AGGRESSIVE": "Aggressive"
+    },
+    "terrains": {
+      "PAVEMENT_ONLY": "Pavement",
+      "MIXED": "Mixed",
+      "OFFROAD_FOCUSED": "Off-Road"
+    },
+    "interestOptions": {
+      "scenicRoutes": "Scenic Routes",
+      "localCuisine": "Local Cuisine",
+      "historicSites": "Historic Sites",
+      "photography": "Photography",
+      "camping": "Camping",
+      "twistyRoads": "Twisty Roads",
+      "wildlife": "Wildlife",
+      "beaches": "Beaches",
+      "mountains": "Mountains",
+      "deserts": "Deserts"
+    }
   }
 }
