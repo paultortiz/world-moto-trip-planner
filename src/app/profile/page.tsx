@@ -144,7 +144,9 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-slate-400">{t("common.loading")}</div>
+        <div className="text-slate-400" role="status" aria-live="polite">
+          {t("common.loading")}
+        </div>
       </div>
     );
   }
@@ -152,7 +154,9 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-red-400">{error || "Unable to load profile"}</div>
+        <div className="text-red-400" role="alert">
+          {error || "Unable to load profile"}
+        </div>
       </div>
     );
   }
@@ -189,12 +193,20 @@ export default function ProfilePage() {
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="mb-4 rounded border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-400">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mb-4 rounded border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-400"
+        >
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 rounded border border-green-500/50 bg-green-500/10 p-3 text-sm text-green-400">
+        <div
+          role="status"
+          aria-live="polite"
+          className="mb-4 rounded border border-green-500/50 bg-green-500/10 p-3 text-sm text-green-400"
+        >
           {t("profile.saved")}
         </div>
       )}
@@ -203,28 +215,39 @@ export default function ProfilePage() {
       <div className="space-y-6">
         {/* Display Name */}
         <section className="rounded-lg border border-adv-border bg-slate-800/50 p-4">
-          <h2 className="mb-3 text-lg font-semibold text-slate-200">
+          <label
+            htmlFor="displayName"
+            className="mb-3 block text-lg font-semibold text-slate-200"
+          >
             {t("profile.displayName")}
-          </h2>
+          </label>
           <input
+            id="displayName"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("profile.namePlaceholder")}
-            className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 placeholder-slate-400 focus:border-adv-accent focus:outline-none"
+            aria-describedby="displayNameHint"
+            className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 placeholder-slate-400 focus:border-adv-accent focus:outline-none focus:ring-2 focus:ring-adv-accent/50"
           />
         </section>
 
         {/* Riding Style */}
-        <section className="rounded-lg border border-adv-border bg-slate-800/50 p-4">
-          <h2 className="mb-3 text-lg font-semibold text-slate-200">
+        <section
+          className="rounded-lg border border-adv-border bg-slate-800/50 p-4"
+          aria-labelledby="ridingStyleHeading"
+        >
+          <h2
+            id="ridingStyleHeading"
+            className="mb-3 text-lg font-semibold text-slate-200"
+          >
             {t("profile.ridingStyle")}
           </h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-labelledby="ridingStyleHeading">
             {RIDING_STYLES.map((style) => (
               <label
                 key={style}
-                className={`flex cursor-pointer items-center gap-2 rounded border p-3 transition ${
+                className={`flex cursor-pointer items-center gap-2 rounded border p-3 transition focus-within:ring-2 focus-within:ring-adv-accent/50 ${
                   ridingStyle === style
                     ? "border-adv-accent bg-adv-accent/20 text-adv-accent"
                     : "border-slate-600 bg-slate-700/50 text-slate-300 hover:border-slate-500"
@@ -246,13 +269,17 @@ export default function ProfilePage() {
 
         {/* Experience Level */}
         <section className="rounded-lg border border-adv-border bg-slate-800/50 p-4">
-          <h2 className="mb-3 text-lg font-semibold text-slate-200">
+          <label
+            htmlFor="experienceLevel"
+            className="mb-3 block text-lg font-semibold text-slate-200"
+          >
             {t("profile.experienceLevel")}
-          </h2>
+          </label>
           <select
+            id="experienceLevel"
             value={experienceLevel ?? ""}
             onChange={(e) => setExperienceLevel(e.target.value || null)}
-            className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 focus:border-adv-accent focus:outline-none"
+            className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 focus:border-adv-accent focus:outline-none focus:ring-2 focus:ring-adv-accent/50"
           >
             <option value="">{t("profile.selectExperience")}</option>
             {EXPERIENCE_LEVELS.map((level) => (
@@ -264,22 +291,26 @@ export default function ProfilePage() {
         </section>
 
         {/* Pace & Terrain */}
-        <section className="rounded-lg border border-adv-border bg-slate-800/50 p-4">
-          <h2 className="mb-3 text-lg font-semibold text-slate-200">
+        <section
+          className="rounded-lg border border-adv-border bg-slate-800/50 p-4"
+          aria-labelledby="paceTerrainHeading"
+        >
+          <h2 id="paceTerrainHeading" className="mb-3 text-lg font-semibold text-slate-200">
             {t("profile.paceAndTerrain")}
           </h2>
           
           <div className="mb-4">
-            <label className="mb-2 block text-sm text-slate-400">
+            <span id="paceLabel" className="mb-2 block text-sm text-slate-400">
               {t("profile.pace")}
-            </label>
-            <div className="flex gap-2">
+            </span>
+            <div className="flex gap-2" role="group" aria-labelledby="paceLabel">
               {PACE_PREFERENCES.map((pace) => (
                 <button
                   key={pace}
                   type="button"
                   onClick={() => setPacePreference(pace)}
-                  className={`flex-1 rounded border px-3 py-2 text-sm transition ${
+                  aria-pressed={pacePreference === pace}
+                  className={`flex-1 rounded border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-adv-accent/50 ${
                     pacePreference === pace
                       ? "border-adv-accent bg-adv-accent/20 text-adv-accent"
                       : "border-slate-600 bg-slate-700/50 text-slate-300 hover:border-slate-500"
@@ -292,16 +323,17 @@ export default function ProfilePage() {
           </div>
 
           <div className="mb-4">
-            <label className="mb-2 block text-sm text-slate-400">
+            <span id="terrainLabel" className="mb-2 block text-sm text-slate-400">
               {t("profile.terrain")}
-            </label>
-            <div className="flex gap-2">
+            </span>
+            <div className="flex gap-2" role="group" aria-labelledby="terrainLabel">
               {TERRAIN_PREFERENCES.map((terrain) => (
                 <button
                   key={terrain}
                   type="button"
                   onClick={() => setTerrainPreference(terrain)}
-                  className={`flex-1 rounded border px-3 py-2 text-sm transition ${
+                  aria-pressed={terrainPreference === terrain}
+                  className={`flex-1 rounded border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-adv-accent/50 ${
                     terrainPreference === terrain
                       ? "border-adv-accent bg-adv-accent/20 text-adv-accent"
                       : "border-slate-600 bg-slate-700/50 text-slate-300 hover:border-slate-500"
@@ -314,11 +346,12 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-slate-400">
+            <label htmlFor="dailyDistance" className="mb-2 block text-sm text-slate-400">
               {t("profile.dailyDistance")}
             </label>
             <div className="flex items-center gap-2">
               <input
+                id="dailyDistance"
                 type="number"
                 min="50"
                 max="1000"
@@ -326,25 +359,30 @@ export default function ProfilePage() {
                 value={dailyDistanceKm}
                 onChange={(e) => setDailyDistanceKm(e.target.value)}
                 placeholder="300"
-                className="w-24 rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 focus:border-adv-accent focus:outline-none"
+                aria-describedby="dailyDistanceUnit"
+                className="w-24 rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 focus:border-adv-accent focus:outline-none focus:ring-2 focus:ring-adv-accent/50"
               />
-              <span className="text-slate-400">km</span>
+              <span id="dailyDistanceUnit" className="text-slate-400">km</span>
             </div>
           </div>
         </section>
 
         {/* Interests */}
-        <section className="rounded-lg border border-adv-border bg-slate-800/50 p-4">
-          <h2 className="mb-3 text-lg font-semibold text-slate-200">
+        <section
+          className="rounded-lg border border-adv-border bg-slate-800/50 p-4"
+          aria-labelledby="interestsHeading"
+        >
+          <h2 id="interestsHeading" className="mb-3 text-lg font-semibold text-slate-200">
             {t("profile.interests")}
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby="interestsHeading">
             {INTEREST_OPTIONS.map((interest) => (
               <button
                 key={interest}
                 type="button"
                 onClick={() => toggleInterest(interest)}
-                className={`rounded-full border px-3 py-1 text-sm transition ${
+                aria-pressed={interests.includes(interest)}
+                className={`rounded-full border px-3 py-1 text-sm transition focus:outline-none focus:ring-2 focus:ring-adv-accent/50 ${
                   interests.includes(interest)
                     ? "border-adv-accent bg-adv-accent/20 text-adv-accent"
                     : "border-slate-600 bg-slate-700/50 text-slate-300 hover:border-slate-500"
@@ -357,17 +395,17 @@ export default function ProfilePage() {
         </section>
 
         {/* Preferences */}
-        <section className="rounded-lg border border-adv-border bg-slate-800/50 p-4">
-          <h2 className="mb-3 text-lg font-semibold text-slate-200">
+        <fieldset className="rounded-lg border border-adv-border bg-slate-800/50 p-4">
+          <legend className="mb-3 text-lg font-semibold text-slate-200">
             {t("profile.preferences")}
-          </h2>
+          </legend>
           <div className="space-y-3">
             <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={avoidHighways}
                 onChange={(e) => setAvoidHighways(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-adv-accent focus:ring-adv-accent"
+                className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-adv-accent focus:ring-adv-accent focus:ring-2"
               />
               <span className="text-slate-300">{t("profile.avoidHighways")}</span>
             </label>
@@ -376,24 +414,28 @@ export default function ProfilePage() {
                 type="checkbox"
                 checked={preferCamping}
                 onChange={(e) => setPreferCamping(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-adv-accent focus:ring-adv-accent"
+                className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-adv-accent focus:ring-adv-accent focus:ring-2"
               />
               <span className="text-slate-300">{t("profile.preferCamping")}</span>
             </label>
           </div>
-        </section>
+        </fieldset>
 
         {/* Dietary Restrictions */}
         <section className="rounded-lg border border-adv-border bg-slate-800/50 p-4">
-          <h2 className="mb-3 text-lg font-semibold text-slate-200">
+          <label
+            htmlFor="dietaryRestrictions"
+            className="mb-3 block text-lg font-semibold text-slate-200"
+          >
             {t("profile.dietary")}
-          </h2>
+          </label>
           <textarea
+            id="dietaryRestrictions"
             value={dietaryRestrictions}
             onChange={(e) => setDietaryRestrictions(e.target.value)}
             placeholder={t("profile.dietaryPlaceholder")}
             rows={2}
-            className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 placeholder-slate-400 focus:border-adv-accent focus:outline-none"
+            className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 placeholder-slate-400 focus:border-adv-accent focus:outline-none focus:ring-2 focus:ring-adv-accent/50"
           />
         </section>
 
@@ -403,7 +445,8 @@ export default function ProfilePage() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="rounded bg-adv-accent px-6 py-2 font-semibold text-black transition hover:bg-adv-accentMuted disabled:opacity-50"
+            aria-busy={saving}
+            className="rounded bg-adv-accent px-6 py-2 font-semibold text-black transition hover:bg-adv-accentMuted focus:outline-none focus:ring-2 focus:ring-adv-accent focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
           >
             {saving ? t("common.saving") : t("common.save")}
           </button>
