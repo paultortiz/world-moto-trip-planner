@@ -12,7 +12,7 @@ export { HelpProvider, useHelp, useHelpOptional } from "./HelpProvider";
 export { HelpClientWrapper } from "./HelpClientWrapper";
 
 // UI Components
-export { HelpDrawer, HelpSearch, HelpButton } from "./components";
+export { HelpDrawer, HelpSearch, HelpButton, HelpTooltip, HelpPopover } from "./components";
 
 // Types
 export type {

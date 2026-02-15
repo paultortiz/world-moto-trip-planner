@@ -20,6 +20,7 @@ import {
   findOptimalInsertIndex,
   getDayIndexForInsertPosition,
 } from "@/lib/routeInsertion";
+import { HelpTooltip } from "@/help";
 
 interface WaypointDto {
   id?: string;
@@ -1445,7 +1446,10 @@ export default function TripDetailClient({
           {/* AI daily plan suggestion */}
           <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="AI-generated daily riding plan">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("aiDailyPlan")}</h2>
+              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">
+                {t("aiDailyPlan")}
+                <HelpTooltip articleId="ai-daily-plan" />
+              </h2>
               <div className="flex items-center gap-2">
                 {aiPlanText && (
                   <button

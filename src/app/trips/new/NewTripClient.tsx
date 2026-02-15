@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { HelpTooltip } from "@/help";
 
 interface NewTripClientProps {
   motorcycles: any[];
@@ -75,7 +76,10 @@ export default function NewTripClient({ motorcycles }: NewTripClientProps) {
   return (
     <main className="min-h-screen p-6 space-y-4">
       <header className="max-w-5xl">
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <h1 className="text-2xl font-bold">
+          {t("title")}
+          <HelpTooltip articleId="creating-trips" />
+        </h1>
         <p className="mt-2 text-sm text-slate-400">
           {t("subtitle")}
         </p>

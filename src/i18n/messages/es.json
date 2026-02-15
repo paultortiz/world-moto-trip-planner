@@ -685,6 +685,8 @@
       "skip": "Saltar Tour",
       "finish": "Finalizar",
       "stepOf": "Paso {current} de {total}"
-    }
+    },
+    "viewArticle": "Ver ayuda para {title}",
+    "clickForMore": "Clic para ver el artículo completo"
   }
 }

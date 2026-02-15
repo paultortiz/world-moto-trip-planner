@@ -685,6 +685,8 @@
       "skip": "Passer la Visite",
       "finish": "Terminer",
       "stepOf": "Étape {current} sur {total}"
-    }
+    },
+    "viewArticle": "Voir l'aide pour {title}",
+    "clickForMore": "Cliquez pour l'article complet"
   }
 }
