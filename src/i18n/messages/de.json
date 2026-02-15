@@ -643,16 +643,48 @@
       "OFFROAD_FOCUSED": "Offroad"
     },
     "interestOptions": {
-      "scenicRoutes": "Landschaftlich schöne Strecken",
+      "scenicRoutes": "Landschaftsrouten",
       "localCuisine": "Lokale Küche",
       "historicSites": "Historische Stätten",
       "photography": "Fotografie",
       "camping": "Camping",
-      "twistyRoads": "Kurvenreiche Straßen",
-      "wildlife": "Tierwelt",
+      "twistyRoads": "Kurvige Straßen",
+      "wildlife": "Wildtiere",
       "beaches": "Strände",
       "mountains": "Berge",
       "deserts": "Wüsten"
+    }
+  },
+  "help": {
+    "title": "Hilfe",
+    "searchPlaceholder": "Hilfeartikel durchsuchen...",
+    "noResults": "Keine Artikel gefunden",
+    "tryDifferentSearch": "Versuche einen anderen Suchbegriff",
+    "backToArticles": "Zurück zu Artikeln",
+    "relatedArticles": "Verwandte Artikel",
+    "keyboardShortcut": "Drücke ? um Hilfe zu öffnen",
+    "categories": {
+      "getting-started": "Erste Schritte",
+      "trips": "Reisen",
+      "map": "Karte & Navigation",
+      "ai-features": "KI-Funktionen",
+      "profile": "Profil",
+      "garage": "Garage"
+    },
+    "tours": {
+      "title": "Geführte Touren",
+      "startTour": "Tour starten",
+      "newUser": "Tour für neue Benutzer",
+      "newUserDesc": "Lerne die Grundlagen der Reiseplanung",
+      "mapFeatures": "Kartenfunktionen-Tour",
+      "mapFeaturesDesc": "Erkunde Kartenwerkzeuge und Steuerungen"
+    },
+    "tour": {
+      "next": "Weiter",
+      "back": "Zurück",
+      "skip": "Tour überspringen",
+      "finish": "Fertig",
+      "stepOf": "Schritt {current} von {total}"
     }
   }
 }

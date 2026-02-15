@@ -643,16 +643,48 @@
       "OFFROAD_FOCUSED": "Off-Road"
     },
     "interestOptions": {
-      "scenicRoutes": "Rotas cênicas",
-      "localCuisine": "Culinária local",
-      "historicSites": "Sítios históricos",
+      "scenicRoutes": "Rotas Cênicas",
+      "localCuisine": "Culinária Local",
+      "historicSites": "Sítios Históricos",
       "photography": "Fotografia",
       "camping": "Camping",
-      "twistyRoads": "Estradas sinuosas",
-      "wildlife": "Vida selvagem",
+      "twistyRoads": "Estradas Sinuosas",
+      "wildlife": "Vida Selvagem",
       "beaches": "Praias",
       "mountains": "Montanhas",
       "deserts": "Desertos"
+    }
+  },
+  "help": {
+    "title": "Ajuda",
+    "searchPlaceholder": "Pesquisar artigos de ajuda...",
+    "noResults": "Nenhum artigo encontrado",
+    "tryDifferentSearch": "Tente um termo de pesquisa diferente",
+    "backToArticles": "Voltar aos artigos",
+    "relatedArticles": "Artigos Relacionados",
+    "keyboardShortcut": "Pressione ? para abrir a ajuda",
+    "categories": {
+      "getting-started": "Primeiros Passos",
+      "trips": "Viagens",
+      "map": "Mapa e Navegação",
+      "ai-features": "Recursos de IA",
+      "profile": "Perfil",
+      "garage": "Garagem"
+    },
+    "tours": {
+      "title": "Tours Guiados",
+      "startTour": "Iniciar Tour",
+      "newUser": "Tour para Novos Usuários",
+      "newUserDesc": "Aprenda o básico sobre planejamento de viagens",
+      "mapFeatures": "Tour de Recursos do Mapa",
+      "mapFeaturesDesc": "Explore as ferramentas e controles do mapa"
+    },
+    "tour": {
+      "next": "Próximo",
+      "back": "Voltar",
+      "skip": "Pular Tour",
+      "finish": "Finalizar",
+      "stepOf": "Passo {current} de {total}"
     }
   }
 }

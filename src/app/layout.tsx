@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { LocaleSwitcher } from "@/shared/LocaleSwitcher";
 import { MobileNav, MobileNavGuest } from "@/shared/MobileNav";
+import { HelpClientWrapper } from "@/help";
 
 export const metadata: Metadata = {
   title: "World Moto Trip Planner",
@@ -23,6 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale}>
       <body className="min-h-screen bg-adv-night text-slate-100">
         <NextIntlClientProvider messages={messages}>
+          <HelpClientWrapper>
           <div className="flex min-h-screen flex-col">
             <header className="relative border-b border-adv-border bg-slate-900/80 backdrop-blur">
               <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
@@ -90,6 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
             </footer>
           </div>
+          </HelpClientWrapper>
         </NextIntlClientProvider>
       </body>
     </html>

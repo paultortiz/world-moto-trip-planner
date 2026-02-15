@@ -5,6 +5,7 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/shared/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/help/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
