@@ -643,16 +643,48 @@
       "OFFROAD_FOCUSED": "Tout-terrain"
     },
     "interestOptions": {
-      "scenicRoutes": "Routes panoramiques",
-      "localCuisine": "Cuisine locale",
-      "historicSites": "Sites historiques",
+      "scenicRoutes": "Routes Panoramiques",
+      "localCuisine": "Cuisine Locale",
+      "historicSites": "Sites Historiques",
       "photography": "Photographie",
       "camping": "Camping",
-      "twistyRoads": "Routes sinueuses",
-      "wildlife": "Faune sauvage",
+      "twistyRoads": "Routes Sinueuses",
+      "wildlife": "Faune Sauvage",
       "beaches": "Plages",
       "mountains": "Montagnes",
       "deserts": "Déserts"
+    }
+  },
+  "help": {
+    "title": "Aide",
+    "searchPlaceholder": "Rechercher des articles d'aide...",
+    "noResults": "Aucun article trouvé",
+    "tryDifferentSearch": "Essayez un autre terme de recherche",
+    "backToArticles": "Retour aux articles",
+    "relatedArticles": "Articles Connexes",
+    "keyboardShortcut": "Appuyez sur ? pour ouvrir l'aide",
+    "categories": {
+      "getting-started": "Premiers Pas",
+      "trips": "Voyages",
+      "map": "Carte & Navigation",
+      "ai-features": "Fonctionnalités IA",
+      "profile": "Profil",
+      "garage": "Garage"
+    },
+    "tours": {
+      "title": "Visites Guidées",
+      "startTour": "Commencer la Visite",
+      "newUser": "Visite Nouvel Utilisateur",
+      "newUserDesc": "Apprenez les bases de la planification de voyage",
+      "mapFeatures": "Visite des Fonctionnalités de la Carte",
+      "mapFeaturesDesc": "Explorez les outils et contrôles de la carte"
+    },
+    "tour": {
+      "next": "Suivant",
+      "back": "Retour",
+      "skip": "Passer la Visite",
+      "finish": "Terminer",
+      "stepOf": "Étape {current} sur {total}"
     }
   }
 }
