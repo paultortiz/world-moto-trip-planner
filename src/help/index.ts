@@ -35,3 +35,6 @@ export {
 
 // Content loading
 export { loadArticleContent, getArticleIds } from "./lib/contentLoader";
+
+// Tour utilities
+export { tours, getTour, getAllTours } from "./lib/tourDefinitions";

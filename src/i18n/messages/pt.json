@@ -676,6 +676,8 @@
       "startTour": "Iniciar Tour",
       "newUser": "Tour para Novos Usuários",
       "newUserDesc": "Aprenda o básico sobre planejamento de viagens",
+      "tripPlanning": "Tour de Planejamento de Viagem",
+      "tripPlanningDesc": "Aprenda a planejar sua rota com pontos de interesse e IA",
       "mapFeatures": "Tour de Recursos do Mapa",
       "mapFeaturesDesc": "Explore as ferramentas e controles do mapa"
     },
@@ -685,6 +687,62 @@
       "skip": "Pular Tour",
       "finish": "Finalizar",
       "stepOf": "Passo {current} de {total}"
+    },
+    "tourSteps": {
+      "newUser": {
+        "welcome": {
+          "title": "Bem-vindo ao World Moto Trip Planner!",
+          "content": "Vamos fazer um tour rápido pelos recursos principais. Você pode pular este tour a qualquer momento."
+        },
+        "trips": {
+          "title": "Suas Viagens",
+          "content": "Veja e gerencie todas as suas rotas planejadas aqui. Cada viagem contém pontos de interesse, planos diários e detalhes da rota."
+        },
+        "newTrip": {
+          "title": "Criar uma Nova Viagem",
+          "content": "Comece a planejar uma nova aventura! Dê um nome, selecione sua moto e comece a adicionar pontos de interesse."
+        },
+        "garage": {
+          "title": "Sua Garagem",
+          "content": "Gerencie suas motos aqui. Adicione motos com suas especificações para cálculos precisos de autonomia."
+        },
+        "profile": {
+          "title": "Seu Perfil",
+          "content": "Defina suas preferências de pilotagem aqui. A IA as usa para personalizar seus planos diários."
+        },
+        "help": {
+          "title": "Precisa de Ajuda?",
+          "content": "Pressione o botão ? ou a tecla ? a qualquer momento para acessar artigos de ajuda e tours guiados."
+        }
+      },
+      "tripPlanning": {
+        "map": {
+          "title": "O Mapa da Viagem",
+          "content": "Clique no mapa para adicionar pontos de interesse. Sua rota será calculada automaticamente entre as paradas."
+        },
+        "waypoints": {
+          "title": "Editor de Pontos de Interesse",
+          "content": "Reordene, edite ou exclua pontos de interesse aqui. Marque paradas noturnas para dividir sua viagem em dias."
+        },
+        "aiPlan": {
+          "title": "Plano Diário com IA",
+          "content": "Gere um itinerário de pilotagem personalizado baseado em suas preferências e pontos de interesse."
+        }
+      },
+      "mapFeatures": {
+        "search": {
+          "title": "Pesquisar Lugares",
+          "content": "Pesquise endereços, cidades ou pontos de interesse. Clique em um resultado para adicioná-lo como ponto de interesse."
+        },
+        "measure": {
+          "title": "Medir Distância",
+          "content": "Meça a distância de pilotagem entre dois pontos no mapa."
+        },
+        "fullscreen": {
+          "title": "Modo Tela Cheia",
+          "content": "Expanda o mapa para tela cheia para uma melhor visualização da sua rota."
+        }
+      }
     },
     "viewArticle": "Ver ajuda para {title}",
     "clickForMore": "Clique para o artigo completo"
