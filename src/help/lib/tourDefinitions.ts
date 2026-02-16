@@ -76,7 +76,7 @@ export const newUserTour: TourWithContext = {
 
 /**
  * Trip Planning Tour - Comprehensive guide to planning a trip
- * Covers all trip detail features in a logical workflow order
+ * Flows top-to-bottom through left column, then right column
  */
 export const tripPlanningTour: TourWithContext = {
   id: "trip-planning",
@@ -84,7 +84,16 @@ export const tripPlanningTour: TourWithContext = {
   description: "tours.tripPlanningDesc",
   contextPaths: ["/trips/"], // Only on trip detail pages
   steps: [
-    // 1. Map overview
+    // 1. Trip dates (header area)
+    {
+      id: "trip-dates",
+      targetSelector: "[data-tour-trip-dates]",
+      title: "tourSteps.tripPlanning.dates.title",
+      content: "tourSteps.tripPlanning.dates.content",
+      placement: "bottom",
+      highlightPadding: 8,
+    },
+    // 2. Map overview (left column)
     {
       id: "map-overview",
       targetSelector: "#trip-map-container",
@@ -93,21 +102,12 @@ export const tripPlanningTour: TourWithContext = {
       placement: "left",
       highlightPadding: 0,
     },
-    // 2. Search for places
+    // 3. Search for places
     {
       id: "map-search",
       targetSelector: "#trip-map-container input[placeholder]",
       title: "tourSteps.tripPlanning.search.title",
       content: "tourSteps.tripPlanning.search.content",
-      placement: "bottom",
-      highlightPadding: 8,
-    },
-    // 3. Nearby places filtering
-    {
-      id: "nearby-places",
-      targetSelector: "[data-tour-nearby-filters]",
-      title: "tourSteps.tripPlanning.nearbyPlaces.title",
-      content: "tourSteps.tripPlanning.nearbyPlaces.content",
       placement: "bottom",
       highlightPadding: 8,
     },
@@ -120,7 +120,16 @@ export const tripPlanningTour: TourWithContext = {
       placement: "bottom",
       highlightPadding: 8,
     },
-    // 5. Map tools (measure, fit route, fullscreen)
+    // 5. Nearby places filtering
+    {
+      id: "nearby-places",
+      targetSelector: "[data-tour-nearby-filters]",
+      title: "tourSteps.tripPlanning.nearbyPlaces.title",
+      content: "tourSteps.tripPlanning.nearbyPlaces.content",
+      placement: "bottom",
+      highlightPadding: 8,
+    },
+    // 6. Map tools (measure, fit route, fullscreen)
     {
       id: "map-tools",
       targetSelector: "[data-tour-map-tools]",
@@ -129,7 +138,7 @@ export const tripPlanningTour: TourWithContext = {
       placement: "left",
       highlightPadding: 8,
     },
-    // 6. Elevation profile and route stats
+    // 7. Elevation profile and route stats
     {
       id: "elevation-profile",
       targetSelector: "[data-tour-elevation-section]",
@@ -138,34 +147,7 @@ export const tripPlanningTour: TourWithContext = {
       placement: "top",
       highlightPadding: 8,
     },
-    // 7. Trip dates
-    {
-      id: "trip-dates",
-      targetSelector: "[data-tour-trip-dates]",
-      title: "tourSteps.tripPlanning.dates.title",
-      content: "tourSteps.tripPlanning.dates.content",
-      placement: "bottom",
-      highlightPadding: 8,
-    },
-    // 8. Trip sharing
-    {
-      id: "trip-sharing",
-      targetSelector: "section[aria-label*='sharing'], section[aria-label*='Sharing']",
-      title: "tourSteps.tripPlanning.sharing.title",
-      content: "tourSteps.tripPlanning.sharing.content",
-      placement: "left",
-      highlightPadding: 8,
-    },
-    // 9. Waypoint editor
-    {
-      id: "waypoint-editor",
-      targetSelector: "#waypoint-editor-section",
-      title: "tourSteps.tripPlanning.waypoints.title",
-      content: "tourSteps.tripPlanning.waypoints.content",
-      placement: "top",
-      highlightPadding: 8,
-    },
-    // 10. Daily plan summary
+    // 8. Daily plan summary
     {
       id: "daily-plan",
       targetSelector: "[data-tour-daily-plan]",
@@ -174,7 +156,34 @@ export const tripPlanningTour: TourWithContext = {
       placement: "top",
       highlightPadding: 8,
     },
-    // 11. AI daily plan
+    // 9. Export options
+    {
+      id: "export-options",
+      targetSelector: "[data-tour-export]",
+      title: "tourSteps.tripPlanning.export.title",
+      content: "tourSteps.tripPlanning.export.content",
+      placement: "top",
+      highlightPadding: 8,
+    },
+    // 10. Trip sharing (right column)
+    {
+      id: "trip-sharing",
+      targetSelector: "section[aria-label*='sharing'], section[aria-label*='Sharing']",
+      title: "tourSteps.tripPlanning.sharing.title",
+      content: "tourSteps.tripPlanning.sharing.content",
+      placement: "left",
+      highlightPadding: 8,
+    },
+    // 11. Waypoint editor
+    {
+      id: "waypoint-editor",
+      targetSelector: "#waypoint-editor-section",
+      title: "tourSteps.tripPlanning.waypoints.title",
+      content: "tourSteps.tripPlanning.waypoints.content",
+      placement: "top",
+      highlightPadding: 8,
+    },
+    // 12. AI daily plan
     {
       id: "ai-daily-plan",
       targetSelector: "section[aria-label*='AI-generated'], section[aria-label*='AI']",
@@ -183,7 +192,7 @@ export const tripPlanningTour: TourWithContext = {
       placement: "top",
       highlightPadding: 8,
     },
-    // 12. Motorcycle for this trip
+    // 13. Motorcycle for this trip
     {
       id: "motorcycle",
       targetSelector: "[data-tour-motorcycle]",
@@ -192,7 +201,7 @@ export const tripPlanningTour: TourWithContext = {
       placement: "top",
       highlightPadding: 8,
     },
-    // 13. Fuel settings and plan
+    // 14. Fuel settings and plan
     {
       id: "fuel",
       targetSelector: "[data-tour-fuel]",
@@ -201,7 +210,7 @@ export const tripPlanningTour: TourWithContext = {
       placement: "top",
       highlightPadding: 8,
     },
-    // 14. Schedule settings and daily schedule
+    // 15. Schedule settings and daily schedule
     {
       id: "schedule",
       targetSelector: "[data-tour-schedule]",
@@ -210,21 +219,12 @@ export const tripPlanningTour: TourWithContext = {
       placement: "top",
       highlightPadding: 8,
     },
-    // 15. Pre-ride checklist
+    // 16. Pre-ride checklist
     {
       id: "checklist",
       targetSelector: "[data-tour-checklist]",
       title: "tourSteps.tripPlanning.checklist.title",
       content: "tourSteps.tripPlanning.checklist.content",
-      placement: "top",
-      highlightPadding: 8,
-    },
-    // 16. Export options
-    {
-      id: "export-options",
-      targetSelector: "[data-tour-export]",
-      title: "tourSteps.tripPlanning.export.title",
-      content: "tourSteps.tripPlanning.export.content",
       placement: "top",
       highlightPadding: 8,
     },
