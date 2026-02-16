@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import { useHelp } from "../HelpProvider";
 import { searchArticles, categoryOrder, getArticleMeta } from "../lib/articles";
 import { loadArticleContent } from "../lib/contentLoader";
-import { getAllTours } from "../lib/tourDefinitions";
+import { getToursForPath } from "../lib/tourDefinitions";
 import type { HelpArticle, HelpArticleMeta, HelpCategory } from "../types";
 import { HelpSearch } from "./HelpSearch";
 
@@ -23,7 +24,8 @@ export function HelpDrawer() {
     startTour,
   } = useHelp();
 
-  const tours = getAllTours();
+  const pathname = usePathname();
+  const availableTours = getToursForPath(pathname);
 
   const [mounted, setMounted] = useState(false);
   const [articleContent, setArticleContent] = useState<HelpArticle | null>(null);
@@ -237,6 +239,43 @@ export function HelpDrawer() {
 
               {/* Article list */}
               <div className="flex-1 overflow-y-auto px-4 py-3">
+                {/* Guided Tours section - at top, show when not searching */}
+                {!searchQuery && availableTours.length > 0 && (
+                  <div className="mb-4 border-b border-slate-700 pb-4">
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      {t("tours.title")}
+                    </h3>
+                    <div className="space-y-2">
+                      {availableTours.map((tour) => (
+                        <div
+                          key={tour.id}
+                          className="flex items-center justify-between rounded bg-slate-800/50 px-3 py-2"
+                        >
+                          <div>
+                            <div className="text-sm font-medium text-slate-200">
+                              {t(tour.name as any)}
+                            </div>
+                            <div className="text-xs text-slate-400">
+                              {t(tour.description as any)}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              closeDrawer();
+                              // Small delay to let drawer close before starting tour
+                              setTimeout(() => startTour(tour.id), 100);
+                            }}
+                            className="shrink-0 rounded bg-adv-accent/20 px-2 py-1 text-xs font-medium text-adv-accent hover:bg-adv-accent/30 focus:outline-none focus:ring-2 focus:ring-adv-accent"
+                          >
+                            {t("tours.startTour")}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {filteredArticles.length === 0 ? (
                   <div className="py-8 text-center">
                     <p className="text-slate-400">{t("noResults")}</p>
@@ -277,43 +316,6 @@ export function HelpDrawer() {
                         </div>
                       )
                     )}
-                  </div>
-                )}
-
-                {/* Guided Tours section - show when not searching */}
-                {!searchQuery && (
-                  <div className="mt-6 border-t border-slate-700 pt-4">
-                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      {t("tours.title")}
-                    </h3>
-                    <div className="space-y-2">
-                      {tours.map((tour) => (
-                        <div
-                          key={tour.id}
-                          className="flex items-center justify-between rounded bg-slate-800/50 px-3 py-2"
-                        >
-                          <div>
-                            <div className="text-sm font-medium text-slate-200">
-                              {t(tour.name as any)}
-                            </div>
-                            <div className="text-xs text-slate-400">
-                              {t(tour.description as any)}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              closeDrawer();
-                              // Small delay to let drawer close before starting tour
-                              setTimeout(() => startTour(tour.id), 100);
-                            }}
-                            className="shrink-0 rounded bg-adv-accent/20 px-2 py-1 text-xs font-medium text-adv-accent hover:bg-adv-accent/30 focus:outline-none focus:ring-2 focus:ring-adv-accent"
-                          >
-                            {t("tours.startTour")}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 )}
               </div>

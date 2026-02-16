@@ -252,6 +252,7 @@
     "deleteConfirm": "Are you sure you want to delete this trip? This cannot be undone.",
     "failedToDelete": "Failed to delete trip",
     "dailyPlan": "Daily plan",
+    "dailyPlanEmpty": "Add waypoints and save to see your day-by-day breakdown.",
     "day": "Day",
     "dayOptionLabel": "{day} – {date}",
     "sharing": "Sharing",
@@ -677,9 +678,7 @@
       "newUser": "New User Tour",
       "newUserDesc": "Learn the basics of trip planning",
       "tripPlanning": "Trip Planning Tour",
-      "tripPlanningDesc": "Learn how to plan your route with waypoints and AI",
-      "mapFeatures": "Map Features Tour",
-      "mapFeaturesDesc": "Explore map tools and controls"
+      "tripPlanningDesc": "Complete guide to planning your trip"
     },
     "tour": {
       "next": "Next",
@@ -718,29 +717,67 @@
       "tripPlanning": {
         "map": {
           "title": "The Trip Map",
-          "content": "Click on the map to add waypoints. Your route will be calculated automatically between stops."
+          "content": "This is your main planning canvas. Your route will be displayed here with waypoints and daily segments color-coded."
+        },
+        "search": {
+          "title": "Search for Places",
+          "content": "Search for addresses, cities, or points of interest. Click a result to add it as a waypoint on your route."
+        },
+        "nearbyPlaces": {
+          "title": "Nearby Places Filters",
+          "content": "Toggle checkboxes to show nearby places along your route. Results update as you zoom and pan the map. Use Min Rating and Open Now to filter results. Click any place marker to add it as a waypoint."
+        },
+        "clickToAdd": {
+          "title": "Click to Add Waypoints",
+          "content": "Enable this mode to add waypoints by clicking directly on the map. Great for quickly building your route."
+        },
+        "mapTools": {
+          "title": "Map Tools",
+          "content": "Measure checks driving distance between any two points. Fit Route zooms to show your entire route. Fullscreen expands the map. The +/- zoom buttons are on the left side of the map."
+        },
+        "elevation": {
+          "title": "Elevation & Route Stats",
+          "content": "View elevation changes along your route, plus total distance and duration. Use Recalculate Route after editing waypoints to update the route geometry."
+        },
+        "dates": {
+          "title": "Trip Dates",
+          "content": "Set your planned start and end dates. These help the AI generate better daily plans and seasonal recommendations."
+        },
+        "sharing": {
+          "title": "Trip Sharing",
+          "content": "Enable sharing to get a link you can send to friends or riding buddies. They can view your route without signing in."
         },
         "waypoints": {
           "title": "Waypoint Editor",
-          "content": "Reorder, edit, or delete waypoints here. Mark overnight stops to split your trip into days."
+          "content": "Reorder waypoints, set their type (fuel, lodging, etc.), mark overnight stops to define day boundaries, and add notes."
+        },
+        "dailyPlan": {
+          "title": "Daily Plan Summary",
+          "content": "View distance and riding time for each day. Days with heavy mileage are highlighted so you can adjust your pace."
         },
         "aiPlan": {
           "title": "AI Daily Plan",
-          "content": "Generate a personalized riding itinerary based on your preferences and waypoints."
-        }
-      },
-      "mapFeatures": {
-        "search": {
-          "title": "Search Places",
-          "content": "Search for addresses, cities, or points of interest. Click a result to add it as a waypoint."
+          "content": "Generate a personalized riding itinerary with suggested stops, riding tips, and local highlights based on your preferences."
         },
-        "measure": {
-          "title": "Measure Distance",
-          "content": "Measure the driving distance between any two points on the map."
+        "motorcycle": {
+          "title": "Motorcycle for this Trip",
+          "content": "Select a motorcycle from your garage or enter specs manually. AI uses this info for fuel planning and personalized recommendations."
         },
-        "fullscreen": {
-          "title": "Fullscreen Mode",
-          "content": "Expand the map to full screen for a better view of your route."
+        "fuel": {
+          "title": "Fuel Settings & Plan",
+          "content": "Set your fuel range and reserve distance. The fuel plan shows leg distances between fuel stops with warnings for long stretches."
+        },
+        "schedule": {
+          "title": "Schedule Settings",
+          "content": "Set your target daily riding hours and preferred departure/arrival times. View the daily schedule with warnings for heavy days."
+        },
+        "checklist": {
+          "title": "Pre-ride Checklist",
+          "content": "Use built-in templates (T-CLOCS, ADV) or create custom checklists. Track completion status for each item before departure."
+        },
+        "export": {
+          "title": "Export Options",
+          "content": "Download your route as GPX for your GPS device, or as a PDF document for offline reference during your trip."
         }
       }
     },

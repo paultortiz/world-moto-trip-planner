@@ -1205,6 +1205,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
       {/* Fit route, measure, and fullscreen controls */}
       <div
+        data-tour-map-tools
         className="pointer-events-auto flex gap-1"
         style={{ position: "absolute", right: 8, top: 8, zIndex: 30 }}
       >

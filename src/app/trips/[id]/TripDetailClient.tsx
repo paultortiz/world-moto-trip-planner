@@ -854,30 +854,32 @@ export default function TripDetailClient({
           {t("tripId")}: <span className="font-mono">{trip.id}</span>
         </p>
 
-        <div className="mt-2 flex flex-wrap items-end gap-3 text-xs text-slate-300">
-          <div className="flex flex-col">
-            <label htmlFor="trip-start-date" className="text-[11px] text-slate-400">
-              {t("plannedStartDate")}
-            </label>
-            <input
-              id="trip-start-date"
-              type="date"
-              className="mt-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
-              value={startDateInput}
-              onChange={(e) => setStartDateInput(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="trip-end-date" className="text-[11px] text-slate-400">
-              {t("plannedEndDate")}
-            </label>
-            <input
-              id="trip-end-date"
-              type="date"
-              className="mt-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
-              value={endDateInput}
-              onChange={(e) => setEndDateInput(e.target.value)}
-            />
+        <div data-tour-trip-dates className="mt-2 flex flex-wrap items-end gap-3 text-xs text-slate-300">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col">
+              <label htmlFor="trip-start-date" className="text-[11px] text-slate-400">
+                {t("plannedStartDate")}
+              </label>
+              <input
+                id="trip-start-date"
+                type="date"
+                className="mt-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
+                value={startDateInput}
+                onChange={(e) => setStartDateInput(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="trip-end-date" className="text-[11px] text-slate-400">
+                {t("plannedEndDate")}
+              </label>
+              <input
+                id="trip-end-date"
+                type="date"
+                className="mt-1 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-[11px]"
+                value={endDateInput}
+                onChange={(e) => setEndDateInput(e.target.value)}
+              />
+            </div>
           </div>
           <button
             type="button"
@@ -988,7 +990,7 @@ export default function TripDetailClient({
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#d97706" stroke="#fff" strokeWidth="1"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
                 <span>{t("poi")}</span>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div data-tour-nearby-filters className="flex flex-wrap items-center gap-2">
                 <label className="flex items-center gap-1">
                   <input
                     type="checkbox"
@@ -1228,42 +1230,46 @@ export default function TripDetailClient({
             </div>
           )}
 
-          <ElevationProfile
-            tripId={trip.id}
-            refreshKey={elevationRefreshKey}
-          />
+          <div data-tour-elevation-section className="space-y-3">
+            <ElevationProfile
+              tripId={trip.id}
+              refreshKey={elevationRefreshKey}
+            />
 
-          <div className="flex items-center justify-between text-xs text-slate-300">
-            <div>
-              <p>
-                {t("totalDistance")}: {trip.totalDistanceMeters != null
-                  ? `${(trip.totalDistanceMeters / 1000).toFixed(1)} km`
-                  : "--"}
-              </p>
-              <p>
-                {t("totalDuration")}: {trip.totalDurationSeconds != null
-                  ? `${(trip.totalDurationSeconds / 3600).toFixed(1)} h`
-                  : "--"}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <RecalculateRouteButton
-                tripId={trip.id}
-                onRouteRecalculated={() => setElevationRefreshKey((k) => k + 1)}
-              />
-              <a
-                href={`/api/trips/${trip.id}/gpx`}
-                className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
-              >
-                {t("exportGpx")}
-              </a>
-              <a
-                href={`/api/trips/${trip.id}/export/pdf?locale=${locale}`}
-                className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
-              >
-                {t("exportPdf")}
-              </a>
-              <DeleteTripButton tripId={trip.id} />
+            <div className="flex items-center justify-between text-xs text-slate-300">
+              <div>
+                <p>
+                  {t("totalDistance")}: {trip.totalDistanceMeters != null
+                    ? `${(trip.totalDistanceMeters / 1000).toFixed(1)} km`
+                    : "--"}
+                </p>
+                <p>
+                  {t("totalDuration")}: {trip.totalDurationSeconds != null
+                    ? `${(trip.totalDurationSeconds / 3600).toFixed(1)} h`
+                    : "--"}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <RecalculateRouteButton
+                  tripId={trip.id}
+                  onRouteRecalculated={() => setElevationRefreshKey((k) => k + 1)}
+                />
+                <div data-tour-export className="flex items-center gap-3">
+                  <a
+                    href={`/api/trips/${trip.id}/gpx`}
+                    className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
+                  >
+                    {t("exportGpx")}
+                  </a>
+                  <a
+                    href={`/api/trips/${trip.id}/export/pdf?locale=${locale}`}
+                    className="rounded border border-adv-border px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-900"
+                  >
+                    {t("exportPdf")}
+                  </a>
+                </div>
+                <DeleteTripButton tripId={trip.id} />
+              </div>
             </div>
           </div>
 
@@ -1300,11 +1306,11 @@ export default function TripDetailClient({
             </section>
           )}
 
-          {dailyPlan.length > 0 && (
-            <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Daily distance and duration plan by day">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("dailyPlan")}</h2>
-              </div>
+          <section data-tour-daily-plan className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Daily distance and duration plan by day">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("dailyPlan")}</h2>
+            </div>
+            {dailyPlan.length > 0 ? (
               <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
                 {dailyPlan.map((day) => {
                   const isHeavy = day.distanceKm > 600 || day.durationHours > 10;
@@ -1325,8 +1331,12 @@ export default function TripDetailClient({
                   );
                 })}
               </div>
-            </section>
-          )}
+            ) : (
+              <p className="text-[11px] text-slate-400">
+                {t("dailyPlanEmpty")}
+              </p>
+            )}
+          </section>
         </div>
 
         {/* Right column: sharing, accordions, waypoint editor */}
@@ -1767,7 +1777,7 @@ export default function TripDetailClient({
           </section>
 
           {/* Motorcycle section */}
-          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Motorcycle for this trip">
+          <section data-tour-motorcycle className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Motorcycle for this trip">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("motorcycleForTrip")}</h2>
               {trip.motorcycle?.displayName && (
@@ -1950,7 +1960,7 @@ export default function TripDetailClient({
           </section>
 
           {/* Fuel accordion */}
-          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+          <section data-tour-fuel className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
             <button
               type="button"
               id="fuel-settings-header"
@@ -2206,7 +2216,7 @@ export default function TripDetailClient({
           </section>
 
           {/* Schedule accordion */}
-          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+          <section data-tour-schedule className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
             <button
               type="button"
               id="schedule-settings-header"
@@ -2510,7 +2520,7 @@ export default function TripDetailClient({
           )}
 
           {/* Checklist accordion */}
-          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
+          <section data-tour-checklist className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
             <button
               type="button"
               id="checklist-header"
