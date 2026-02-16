@@ -252,6 +252,7 @@
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce voyage ? Cette action est irréversible.",
     "failedToDelete": "Échec de la suppression du voyage",
     "dailyPlan": "Plan journalier",
+    "dailyPlanEmpty": "Ajoutez des points d'intérêt et enregistrez pour voir le détail par jour.",
     "day": "Jour",
     "dayOptionLabel": "{day} – {date}",
     "sharing": "Partage",
@@ -677,9 +678,7 @@
       "newUser": "Visite Nouvel Utilisateur",
       "newUserDesc": "Apprenez les bases de la planification de voyage",
       "tripPlanning": "Visite Planification de Voyage",
-      "tripPlanningDesc": "Apprenez à planifier votre itinéraire avec des points d'intérêt et l'IA",
-      "mapFeatures": "Visite des Fonctionnalités de la Carte",
-      "mapFeaturesDesc": "Explorez les outils et contrôles de la carte"
+      "tripPlanningDesc": "Guide complet pour planifier votre voyage"
     },
     "tour": {
       "next": "Suivant",
@@ -718,29 +717,67 @@
       "tripPlanning": {
         "map": {
           "title": "La Carte du Voyage",
-          "content": "Cliquez sur la carte pour ajouter des points d'intérêt. Votre itinéraire sera calculé automatiquement entre les arrêts."
+          "content": "Ceci est votre surface de planification principale. Votre itinéraire sera affiché ici avec des points d'intérêt et des segments journaliers colorés."
         },
-        "waypoints": {
-          "title": "Éditeur de Points d'Intérêt",
-          "content": "Réorganisez, modifiez ou supprimez des points d'intérêt ici. Marquez les arrêts nocturnes pour diviser votre voyage en jours."
-        },
-        "aiPlan": {
-          "title": "Plan Journalier IA",
-          "content": "Générez un itinéraire de conduite personnalisé basé sur vos préférences et points d'intérêt."
-        }
-      },
-      "mapFeatures": {
         "search": {
           "title": "Rechercher des Lieux",
           "content": "Recherchez des adresses, des villes ou des points d'intérêt. Cliquez sur un résultat pour l'ajouter comme point d'intérêt."
         },
-        "measure": {
-          "title": "Mesurer la Distance",
-          "content": "Mesurez la distance de conduite entre deux points sur la carte."
+        "nearbyPlaces": {
+          "title": "Filtres des Lieux Proches",
+          "content": "Cochez les cases pour afficher les lieux à proximité de votre itinéraire. Les résultats se mettent à jour en zoomant et déplaçant. Utilisez Note Minimum et Ouvert Maintenant pour filtrer. Cliquez sur un marqueur pour l'ajouter comme point d'intérêt."
         },
-        "fullscreen": {
-          "title": "Mode Plein Écran",
-          "content": "Agrandissez la carte en plein écran pour une meilleure vue de votre itinéraire."
+        "clickToAdd": {
+          "title": "Cliquer pour Ajouter",
+          "content": "Activez ce mode pour ajouter des points d'intérêt en cliquant directement sur la carte. Idéal pour construire rapidement votre itinéraire."
+        },
+        "mapTools": {
+          "title": "Outils de la Carte",
+          "content": "Mesurer calcule la distance de conduite entre deux points. Ajuster l'Itinéraire zoome sur toute la route. Plein Écran agrandit la carte. Les boutons +/- de zoom sont sur le côté gauche de la carte."
+        },
+        "elevation": {
+          "title": "Élévation & Statistiques",
+          "content": "Voyez les changements d'élévation le long de votre itinéraire, plus la distance et durée totales. Utilisez Recalculer l'Itinéraire après modification des points."
+        },
+        "dates": {
+          "title": "Dates du Voyage",
+          "content": "Définissez vos dates de début et de fin prévues. Cela aide l'IA à générer de meilleurs plans journaliers et recommandations saisonnières."
+        },
+        "sharing": {
+          "title": "Partage du Voyage",
+          "content": "Activez le partage pour obtenir un lien à envoyer à vos amis ou compagnons de route. Ils peuvent voir votre itinéraire sans se connecter."
+        },
+        "waypoints": {
+          "title": "Éditeur de Points d'Intérêt",
+          "content": "Réorganisez les points, définissez leur type (station-service, hébergement, etc.), marquez les arrêts nocturnes et ajoutez des notes."
+        },
+        "dailyPlan": {
+          "title": "Résumé du Plan Journalier",
+          "content": "Voyez la distance et le temps de conduite pour chaque jour. Les jours à fort kilométrage sont mis en évidence pour ajuster votre rythme."
+        },
+        "aiPlan": {
+          "title": "Plan Journalier IA",
+          "content": "Générez un itinéraire personnalisé avec des arrêts suggérés, des conseils de conduite et des points forts locaux selon vos préférences."
+        },
+        "motorcycle": {
+          "title": "Moto pour ce Voyage",
+          "content": "Sélectionnez une moto de votre garage ou entrez les spécifications manuellement. L'IA utilise ces infos pour la planification du carburant et les recommandations personnalisées."
+        },
+        "fuel": {
+          "title": "Paramètres & Plan Carburant",
+          "content": "Définissez votre autonomie et distance de réserve. Le plan carburant affiche les distances entre les arrêts avec des avertissements pour les longs trajets."
+        },
+        "schedule": {
+          "title": "Paramètres d'Horaire",
+          "content": "Définissez vos heures de conduite cibles par jour et vos horaires préférés de départ/arrivée. Consultez le programme quotidien avec des alertes pour les journées chargées."
+        },
+        "checklist": {
+          "title": "Liste de Contrôle Pré-départ",
+          "content": "Utilisez les modèles intégrés (T-CLOCS, ADV) ou créez des listes personnalisées. Suivez l'état de chaque élément avant le départ."
+        },
+        "export": {
+          "title": "Options d'Exportation",
+          "content": "Téléchargez votre itinéraire en GPX pour votre GPS, ou en document PDF pour référence hors ligne pendant votre voyage."
         }
       }
     },

@@ -252,6 +252,7 @@
     "deleteConfirm": "Bist du sicher, dass du diese Reise löschen möchtest? Dies kann nicht rückgängig gemacht werden.",
     "failedToDelete": "Fehler beim Löschen der Reise",
     "dailyPlan": "Tagesplan",
+    "dailyPlanEmpty": "Füge Wegpunkte hinzu und speichere, um die Tagesübersicht zu sehen.",
     "day": "Tag",
     "dayOptionLabel": "{day} – {date}",
     "sharing": "Teilen",
@@ -677,9 +678,7 @@
       "newUser": "Tour für neue Benutzer",
       "newUserDesc": "Lerne die Grundlagen der Reiseplanung",
       "tripPlanning": "Reiseplanungs-Tour",
-      "tripPlanningDesc": "Lerne, wie du deine Route mit Wegpunkten und KI planst",
-      "mapFeatures": "Kartenfunktionen-Tour",
-      "mapFeaturesDesc": "Erkunde Kartenwerkzeuge und Steuerungen"
+      "tripPlanningDesc": "Vollständiger Leitfaden zur Reiseplanung"
     },
     "tour": {
       "next": "Weiter",
@@ -718,29 +717,67 @@
       "tripPlanning": {
         "map": {
           "title": "Die Reisekarte",
-          "content": "Klicke auf die Karte, um Wegpunkte hinzuzufügen. Deine Route wird automatisch zwischen den Stopps berechnet."
+          "content": "Dies ist deine Hauptplanungsoberfläche. Deine Route wird hier mit Wegpunkten und farbcodierten Tagesabschnitten angezeigt."
         },
-        "waypoints": {
-          "title": "Wegpunkt-Editor",
-          "content": "Ordne um, bearbeite oder lösche Wegpunkte hier. Markiere Übernachtungsstopps, um deine Reise in Tage aufzuteilen."
-        },
-        "aiPlan": {
-          "title": "KI-Tagesplan",
-          "content": "Erstelle einen personalisierten Fahrplan basierend auf deinen Präferenzen und Wegpunkten."
-        }
-      },
-      "mapFeatures": {
         "search": {
           "title": "Orte suchen",
           "content": "Suche nach Adressen, Städten oder Sehenswürdigkeiten. Klicke auf ein Ergebnis, um es als Wegpunkt hinzuzufügen."
         },
-        "measure": {
-          "title": "Entfernung messen",
-          "content": "Miss die Fahrstrecke zwischen zwei Punkten auf der Karte."
+        "nearbyPlaces": {
+          "title": "Filter für nahegelegene Orte",
+          "content": "Aktiviere Kontrollkästchen für nahegelegene Orte entlang deiner Route. Ergebnisse aktualisieren sich beim Zoomen und Schwenken. Nutze Mindestbewertung und Jetzt geöffnet zum Filtern. Klicke auf einen Marker, um ihn als Wegpunkt hinzuzufügen."
         },
-        "fullscreen": {
-          "title": "Vollbildmodus",
-          "content": "Erweitere die Karte auf Vollbild für eine bessere Übersicht deiner Route."
+        "clickToAdd": {
+          "title": "Klicken zum Hinzufügen",
+          "content": "Aktiviere diesen Modus, um Wegpunkte durch direktes Klicken auf die Karte hinzuzufügen. Ideal zum schnellen Erstellen deiner Route."
+        },
+        "mapTools": {
+          "title": "Kartenwerkzeuge",
+          "content": "Messen berechnet die Fahrstrecke zwischen zwei Punkten. Route anpassen zoomt auf die gesamte Route. Vollbild erweitert die Karte. Die +/- Zoom-Tasten befinden sich links auf der Karte."
+        },
+        "elevation": {
+          "title": "Höhenprofil & Statistiken",
+          "content": "Sieh Höhenänderungen entlang deiner Route, plus Gesamtdistanz und -dauer. Nutze Route neu berechnen nach dem Bearbeiten von Wegpunkten."
+        },
+        "dates": {
+          "title": "Reisedaten",
+          "content": "Lege dein geplantes Start- und Enddatum fest. Diese helfen der KI, bessere Tagespläne und saisonale Empfehlungen zu erstellen."
+        },
+        "sharing": {
+          "title": "Reise teilen",
+          "content": "Aktiviere das Teilen, um einen Link zu erhalten, den du an Freunde oder Mitfahrer senden kannst. Sie können deine Route ohne Anmeldung ansehen."
+        },
+        "waypoints": {
+          "title": "Wegpunkt-Editor",
+          "content": "Ordne Wegpunkte neu, lege ihren Typ fest (Tankstelle, Unterkunft usw.), markiere Übernachtungsstopps und füge Notizen hinzu."
+        },
+        "dailyPlan": {
+          "title": "Tagesplan-Übersicht",
+          "content": "Sieh Entfernung und Fahrzeit für jeden Tag. Tage mit hoher Kilometerleistung werden hervorgehoben, damit du dein Tempo anpassen kannst."
+        },
+        "aiPlan": {
+          "title": "KI-Tagesplan",
+          "content": "Erstelle einen personalisierten Reiseplan mit vorgeschlagenen Stopps, Fahrtipps und lokalen Highlights basierend auf deinen Präferenzen."
+        },
+        "motorcycle": {
+          "title": "Motorrad für diese Reise",
+          "content": "Wähle ein Motorrad aus deiner Garage oder gib Spezifikationen manuell ein. Die KI nutzt diese Infos für Kraftstoffplanung und personalisierte Empfehlungen."
+        },
+        "fuel": {
+          "title": "Kraftstoff-Einstellungen & Plan",
+          "content": "Stelle deine Reichweite und Reserveentfernung ein. Der Kraftstoffplan zeigt Streckenabstände zwischen Tankstellen mit Warnungen für lange Abschnitte."
+        },
+        "schedule": {
+          "title": "Zeitplan-Einstellungen",
+          "content": "Lege deine Ziel-Fahrstunden pro Tag und bevorzugte Abfahrts-/Ankunftszeiten fest. Sieh den Tagesplan mit Warnungen für anstrengende Tage."
+        },
+        "checklist": {
+          "title": "Checkliste vor der Fahrt",
+          "content": "Nutze integrierte Vorlagen (T-CLOCS, ADV) oder erstelle eigene Checklisten. Verfolge den Status jedes Punktes vor der Abfahrt."
+        },
+        "export": {
+          "title": "Export-Optionen",
+          "content": "Lade deine Route als GPX für dein GPS-Gerät herunter oder als PDF-Dokument für die Offline-Referenz während deiner Reise."
         }
       }
     },

@@ -71,22 +71,18 @@ export function TourSpotlight({
           });
         }
 
-        // Scroll target into view if needed (only on initial load)
-        if (
-          isInitial && (
-            rect.top < 0 ||
-            rect.bottom > window.innerHeight ||
-            rect.left < 0 ||
-            rect.right > window.innerWidth
-          )
-        ) {
+        // Always scroll target into view on initial load to ensure visibility
+        if (isInitial) {
           // For large elements, scroll to show the top; for small elements, center them
           const isLargeElement = rect.height > window.innerHeight * 0.5;
-          target.scrollIntoView({
-            behavior: "smooth",
-            block: isLargeElement ? "start" : "center",
-            inline: "center",
-          });
+          // Add a small delay to allow DOM to stabilize before scrolling
+          setTimeout(() => {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: isLargeElement ? "start" : "center",
+              inline: "center",
+            });
+          }, 50);
         }
       } else if (isInitial) {
         // Only set to null on initial if target not found

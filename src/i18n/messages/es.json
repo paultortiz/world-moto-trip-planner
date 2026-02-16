@@ -252,6 +252,7 @@
     "deleteConfirm": "¿Estás seguro de que quieres eliminar este viaje? Esta acción no se puede deshacer.",
     "failedToDelete": "Error al eliminar el viaje",
     "dailyPlan": "Plan diario",
+    "dailyPlanEmpty": "Añade puntos de interés y guarda para ver el desglose por días.",
     "day": "Día",
     "dayOptionLabel": "{day} – {date}",
     "sharing": "Compartir",
@@ -677,9 +678,7 @@
       "newUser": "Tour para Nuevos Usuarios",
       "newUserDesc": "Aprende los conceptos básicos de planificación de viajes",
       "tripPlanning": "Tour de Planificación de Viajes",
-      "tripPlanningDesc": "Aprende a planificar tu ruta con puntos de interés e IA",
-      "mapFeatures": "Tour de Funciones del Mapa",
-      "mapFeaturesDesc": "Explora las herramientas y controles del mapa"
+      "tripPlanningDesc": "Guía completa para planificar tu viaje"
     },
     "tour": {
       "next": "Siguiente",
@@ -718,29 +717,67 @@
       "tripPlanning": {
         "map": {
           "title": "El Mapa del Viaje",
-          "content": "Haz clic en el mapa para añadir puntos de interés. Tu ruta se calculará automáticamente entre paradas."
+          "content": "Este es tu lienzo principal de planificación. Tu ruta se mostrará aquí con puntos de interés y segmentos diarios codificados por colores."
+        },
+        "search": {
+          "title": "Buscar Lugares",
+          "content": "Busca direcciones, ciudades o puntos de interés. Haz clic en un resultado para añadirlo como punto de interés en tu ruta."
+        },
+        "nearbyPlaces": {
+          "title": "Filtros de Lugares Cercanos",
+          "content": "Activa las casillas para mostrar lugares cercanos a tu ruta. Los resultados se actualizan al hacer zoom y desplazarte. Usa Puntuación Mínima y Abierto Ahora para filtrar. Haz clic en cualquier marcador para añadirlo como punto de interés."
+        },
+        "clickToAdd": {
+          "title": "Clic para Añadir Puntos",
+          "content": "Activa este modo para añadir puntos de interés haciendo clic directamente en el mapa. Ideal para construir tu ruta rápidamente."
+        },
+        "mapTools": {
+          "title": "Herramientas del Mapa",
+          "content": "Medir calcula la distancia de conducción entre dos puntos. Ajustar Ruta hace zoom para mostrar toda tu ruta. Pantalla Completa expande el mapa. Los botones +/- de zoom están en el lado izquierdo del mapa."
+        },
+        "elevation": {
+          "title": "Elevación y Estadísticas",
+          "content": "Ve los cambios de elevación a lo largo de tu ruta, más la distancia y duración total. Usa Recalcular Ruta después de editar puntos para actualizar la geometría."
+        },
+        "dates": {
+          "title": "Fechas del Viaje",
+          "content": "Establece las fechas de inicio y fin previstas. Esto ayuda a la IA a generar mejores planes diarios y recomendaciones estacionales."
+        },
+        "sharing": {
+          "title": "Compartir Viaje",
+          "content": "Activa compartir para obtener un enlace que puedes enviar a amigos o compañeros de ruta. Pueden ver tu ruta sin iniciar sesión."
         },
         "waypoints": {
           "title": "Editor de Puntos de Interés",
-          "content": "Reordena, edita o elimina puntos de interés aquí. Marca paradas nocturnas para dividir tu viaje en días."
+          "content": "Reordena puntos, establece su tipo (gasolinera, alojamiento, etc.), marca paradas nocturnas para definir límites de días y añade notas."
+        },
+        "dailyPlan": {
+          "title": "Resumen del Plan Diario",
+          "content": "Ve la distancia y tiempo de conducción de cada día. Los días con mucho kilometraje se destacan para que puedas ajustar tu ritmo."
         },
         "aiPlan": {
           "title": "Plan Diario con IA",
-          "content": "Genera un itinerario de conducción personalizado basado en tus preferencias y puntos de interés."
-        }
-      },
-      "mapFeatures": {
-        "search": {
-          "title": "Buscar Lugares",
-          "content": "Busca direcciones, ciudades o puntos de interés. Haz clic en un resultado para añadirlo como punto de interés."
+          "content": "Genera un itinerario personalizado con paradas sugeridas, consejos de conducción y lugares destacados según tus preferencias."
         },
-        "measure": {
-          "title": "Medir Distancia",
-          "content": "Mide la distancia de conducción entre dos puntos en el mapa."
+        "motorcycle": {
+          "title": "Moto para este Viaje",
+          "content": "Selecciona una moto de tu garaje o ingresa las especificaciones manualmente. La IA usa esta información para planificar combustible y recomendaciones personalizadas."
         },
-        "fullscreen": {
-          "title": "Modo Pantalla Completa",
-          "content": "Expande el mapa a pantalla completa para una mejor vista de tu ruta."
+        "fuel": {
+          "title": "Configuración y Plan de Combustible",
+          "content": "Configura tu autonomía y distancia de reserva. El plan de combustible muestra las distancias entre paradas con advertencias para tramos largos."
+        },
+        "schedule": {
+          "title": "Configuración de Horario",
+          "content": "Establece tus horas objetivo de conducción diaria y horarios preferidos de salida/llegada. Ve el horario diario con advertencias para días intensos."
+        },
+        "checklist": {
+          "title": "Lista de Verificación Pre-viaje",
+          "content": "Usa plantillas integradas (T-CLOCS, ADV) o crea listas personalizadas. Rastrea el estado de cada elemento antes de partir."
+        },
+        "export": {
+          "title": "Opciones de Exportación",
+          "content": "Descarga tu ruta como GPX para tu GPS, o como documento PDF para referencia sin conexión durante tu viaje."
         }
       }
     },

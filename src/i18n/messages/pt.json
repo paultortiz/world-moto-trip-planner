@@ -252,6 +252,7 @@
     "deleteConfirm": "Tem certeza que deseja excluir esta viagem? Isso não pode ser desfeito.",
     "failedToDelete": "Falha ao excluir a viagem",
     "dailyPlan": "Plano diário",
+    "dailyPlanEmpty": "Adicione pontos de interesse e salve para ver o detalhamento por dia.",
     "day": "Dia",
     "dayOptionLabel": "{day} – {date}",
     "sharing": "Compartilhamento",
@@ -677,9 +678,7 @@
       "newUser": "Tour para Novos Usuários",
       "newUserDesc": "Aprenda o básico sobre planejamento de viagens",
       "tripPlanning": "Tour de Planejamento de Viagem",
-      "tripPlanningDesc": "Aprenda a planejar sua rota com pontos de interesse e IA",
-      "mapFeatures": "Tour de Recursos do Mapa",
-      "mapFeaturesDesc": "Explore as ferramentas e controles do mapa"
+      "tripPlanningDesc": "Guia completo para planejar sua viagem"
     },
     "tour": {
       "next": "Próximo",
@@ -718,29 +717,67 @@
       "tripPlanning": {
         "map": {
           "title": "O Mapa da Viagem",
-          "content": "Clique no mapa para adicionar pontos de interesse. Sua rota será calculada automaticamente entre as paradas."
+          "content": "Esta é sua superfície principal de planejamento. Sua rota será exibida aqui com pontos de interesse e segmentos diários coloridos."
         },
-        "waypoints": {
-          "title": "Editor de Pontos de Interesse",
-          "content": "Reordene, edite ou exclua pontos de interesse aqui. Marque paradas noturnas para dividir sua viagem em dias."
-        },
-        "aiPlan": {
-          "title": "Plano Diário com IA",
-          "content": "Gere um itinerário de pilotagem personalizado baseado em suas preferências e pontos de interesse."
-        }
-      },
-      "mapFeatures": {
         "search": {
           "title": "Pesquisar Lugares",
           "content": "Pesquise endereços, cidades ou pontos de interesse. Clique em um resultado para adicioná-lo como ponto de interesse."
         },
-        "measure": {
-          "title": "Medir Distância",
-          "content": "Meça a distância de pilotagem entre dois pontos no mapa."
+        "nearbyPlaces": {
+          "title": "Filtros de Lugares Próximos",
+          "content": "Ative as caixas para mostrar lugares próximos à sua rota. Os resultados atualizam ao dar zoom e mover o mapa. Use Avaliação Mínima e Aberto Agora para filtrar. Clique em qualquer marcador para adicioná-lo como ponto de interesse."
         },
-        "fullscreen": {
-          "title": "Modo Tela Cheia",
-          "content": "Expanda o mapa para tela cheia para uma melhor visualização da sua rota."
+        "clickToAdd": {
+          "title": "Clique para Adicionar",
+          "content": "Ative este modo para adicionar pontos de interesse clicando diretamente no mapa. Ideal para construir sua rota rapidamente."
+        },
+        "mapTools": {
+          "title": "Ferramentas do Mapa",
+          "content": "Medir calcula a distância de pilotagem entre dois pontos. Ajustar Rota faz zoom para mostrar toda a rota. Tela Cheia expande o mapa. Os botões +/- de zoom estão no lado esquerdo do mapa."
+        },
+        "elevation": {
+          "title": "Elevação & Estatísticas",
+          "content": "Veja as mudanças de elevação ao longo da rota, mais distância e duração totais. Use Recalcular Rota após editar pontos para atualizar a geometria."
+        },
+        "dates": {
+          "title": "Datas da Viagem",
+          "content": "Defina suas datas de início e fim planejadas. Isso ajuda a IA a gerar melhores planos diários e recomendações sazonais."
+        },
+        "sharing": {
+          "title": "Compartilhar Viagem",
+          "content": "Ative o compartilhamento para obter um link que você pode enviar para amigos ou companheiros de viagem. Eles podem ver sua rota sem fazer login."
+        },
+        "waypoints": {
+          "title": "Editor de Pontos de Interesse",
+          "content": "Reordene pontos, defina seu tipo (posto, hospedagem, etc.), marque paradas noturnas e adicione notas."
+        },
+        "dailyPlan": {
+          "title": "Resumo do Plano Diário",
+          "content": "Veja a distância e o tempo de pilotagem de cada dia. Dias com alta quilometragem são destacados para que você possa ajustar seu ritmo."
+        },
+        "aiPlan": {
+          "title": "Plano Diário com IA",
+          "content": "Gere um itinerário personalizado com paradas sugeridas, dicas de pilotagem e destaques locais baseados em suas preferências."
+        },
+        "motorcycle": {
+          "title": "Moto para esta Viagem",
+          "content": "Selecione uma moto da sua garagem ou insira as especificações manualmente. A IA usa essas informações para planejamento de combustível e recomendações personalizadas."
+        },
+        "fuel": {
+          "title": "Configurações e Plano de Combustível",
+          "content": "Configure sua autonomia e distância de reserva. O plano de combustível mostra as distâncias entre paradas com avisos para trechos longos."
+        },
+        "schedule": {
+          "title": "Configurações de Horário",
+          "content": "Defina suas horas alvo de pilotagem diária e horários preferidos de partida/chegada. Veja a programação diária com avisos para dias intensos."
+        },
+        "checklist": {
+          "title": "Lista de Verificação Pré-viagem",
+          "content": "Use modelos integrados (T-CLOCS, ADV) ou crie listas personalizadas. Acompanhe o status de cada item antes da partida."
+        },
+        "export": {
+          "title": "Opções de Exportação",
+          "content": "Baixe sua rota como GPX para seu GPS, ou como documento PDF para referência offline durante sua viagem."
         }
       }
     },
