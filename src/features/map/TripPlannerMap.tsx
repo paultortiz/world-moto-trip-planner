@@ -30,12 +30,12 @@ type PlaceMarker = {
   name?: string | null;
   rating?: number | null;
   openNow?: boolean | null;
-  category: "fuel" | "lodging" | "campground" | "dining" | "poi";
+  category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging";
 };
 
 type PanelPlaceItem = {
   name: string;
-  category: "fuel" | "lodging" | "campground" | "dining" | "poi";
+  category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging";
   distanceKm: number;
   rating?: number | null;
   lat: number;
@@ -65,6 +65,10 @@ const diningIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox=
 const poiIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#d97706" stroke="#fff" stroke-width="1"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>`;
 const poiIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#fff" stroke-width="2"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>`;
 
+// EV Charging icon (lightning bolt) - cyan/sky
+const chargingIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0ea5e9" stroke="#fff" stroke-width="1"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
+const chargingIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#38bdf8" stroke="#fff" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
+
 // Helper to create icon URL from SVG using base64 encoding
 const svgToIconUrl = (svg: string) => {
   if (typeof window !== 'undefined') {
@@ -90,12 +94,17 @@ interface TripPlannerMapProps {
   showCampgroundPlaces?: boolean;
   showDiningPlaces?: boolean;
   showPoiPlaces?: boolean;
+  showChargingPlaces?: boolean;
   minPlaceRating?: number | null;
   onlyOpenNow?: boolean;
   /**
    * Index of the focused waypoint - map will pan/zoom to this waypoint when set.
    */
   focusedWaypointIndex?: number | null;
+  /**
+   * Trigger counter - changes to this value will re-trigger the pan/zoom even if the index is the same.
+   */
+  focusedWaypointTrigger?: number;
   /**
    * Optional React node containing nearby places controls to show in fullscreen mode.
    */
@@ -114,9 +123,11 @@ export default function TripPlannerMap({
   showCampgroundPlaces,
   showDiningPlaces,
   showPoiPlaces,
+  showChargingPlaces,
   minPlaceRating,
   onlyOpenNow,
   focusedWaypointIndex,
+  focusedWaypointTrigger,
   nearbyPlacesControls,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
@@ -135,11 +146,12 @@ export default function TripPlannerMap({
   const [campgroundPlaces, setCampgroundPlaces] = useState<PlaceMarker[]>([]);
   const [diningPlaces, setDiningPlaces] = useState<PlaceMarker[]>([]);
   const [poiPlaces, setPoiPlaces] = useState<PlaceMarker[]>([]);
+  const [chargingPlaces, setChargingPlaces] = useState<PlaceMarker[]>([]);
   const [placesCenter, setPlacesCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [highlightedPlace, setHighlightedPlace] = useState<{
     lat: number;
     lng: number;
-    category: "fuel" | "lodging" | "campground" | "dining" | "poi";
+    category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging";
   } | null>(null);
   const highlightTimeoutRef = useRef<number | null>(null);
 
@@ -174,6 +186,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const prevShowCampground = useRef(showCampgroundPlaces);
   const prevShowDining = useRef(showDiningPlaces);
   const prevShowPoi = useRef(showPoiPlaces);
+  const prevShowCharging = useRef(showChargingPlaces);
 
   useEffect(() => {
     return () => {
@@ -200,7 +213,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     };
   }, []);
 
-  // Pan/zoom to focused waypoint when it changes
+  // Pan/zoom to focused waypoint when it changes (or when trigger increments)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || focusedWaypointIndex === null || focusedWaypointIndex === undefined) return;
@@ -214,7 +227,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     if (currentZoom < 12) {
       map.setZoom(12);
     }
-  }, [focusedWaypointIndex, waypoints]);
+  }, [focusedWaypointIndex, focusedWaypointTrigger, waypoints]);
 
   // Trigger places fetch immediately when a checkbox is enabled
   useEffect(() => {
@@ -227,6 +240,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     const campgroundJustEnabled = showCampgroundPlaces && !prevShowCampground.current;
     const diningJustEnabled = showDiningPlaces && !prevShowDining.current;
     const poiJustEnabled = showPoiPlaces && !prevShowPoi.current;
+    const chargingJustEnabled = showChargingPlaces && !prevShowCharging.current;
 
     // Update refs for next render
     prevShowFuel.current = showFuelPlaces;
@@ -234,13 +248,15 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     prevShowCampground.current = showCampgroundPlaces;
     prevShowDining.current = showDiningPlaces;
     prevShowPoi.current = showPoiPlaces;
+    prevShowCharging.current = showChargingPlaces;
 
     const anyJustEnabled =
       fuelJustEnabled ||
       lodgingJustEnabled ||
       campgroundJustEnabled ||
       diningJustEnabled ||
-      poiJustEnabled;
+      poiJustEnabled ||
+      chargingJustEnabled;
 
     if (!anyJustEnabled) return;
 
@@ -394,8 +410,33 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           },
         );
       }
+
+      if (chargingJustEnabled) {
+        service.nearbySearch(
+          { bounds, type: "electric_vehicle_charging_station" },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk = !minPlaceRating || (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk = !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              setChargingPlaces(
+                filtered.slice(0, MAX_PLACES_RESULTS).map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "charging",
+                })),
+              );
+            }
+          },
+        );
+      }
     }
-  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, minPlaceRating, onlyOpenNow]);
+  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, showChargingPlaces, minPlaceRating, onlyOpenNow]);
 
   const handleMapClick = useCallback(
     (event: google.maps.MapMouseEvent) => {
@@ -547,6 +588,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
     if (types.includes("gas_station")) {
       category = "fuel";
+    } else if (types.includes("electric_vehicle_charging_station")) {
+      category = "charging";
     } else if (types.includes("lodging")) {
       category = "lodging";
     } else if (types.includes("campground")) {
@@ -634,6 +677,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         setCampgroundPlaces([]);
         setDiningPlaces([]);
         setPoiPlaces([]);
+        setChargingPlaces([]);
         return;
       }
 
@@ -810,8 +854,42 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       } else {
         setPoiPlaces([]);
       }
+
+      if (showChargingPlaces) {
+        service.nearbySearch(
+          {
+            bounds,
+            type: "electric_vehicle_charging_station",
+          },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const filtered = results.filter((r) => {
+                const ratingOk =
+                  !minPlaceRating ||
+                  (typeof r.rating === "number" && r.rating >= minPlaceRating);
+                const openOk =
+                  !onlyOpenNow || r.opening_hours?.open_now === true;
+                return ratingOk && openOk;
+              });
+              const limited = filtered.slice(0, MAX_PLACES_RESULTS);
+              setChargingPlaces(
+                limited.map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "charging",
+                })),
+              );
+            }
+          },
+        );
+      } else {
+        setChargingPlaces([]);
+      }
     }, 500);
-  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, minPlaceRating, onlyOpenNow]);
+  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, showChargingPlaces, minPlaceRating, onlyOpenNow]);
 
   function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
     const R = 6371;
@@ -836,6 +914,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     if (showCampgroundPlaces) all.push(...campgroundPlaces);
     if (showDiningPlaces) all.push(...diningPlaces);
     if (showPoiPlaces) all.push(...poiPlaces);
+    if (showChargingPlaces) all.push(...chargingPlaces);
 
     const withDistance = all.map((p) => ({
       name: p.name ?? "Unnamed",
@@ -861,11 +940,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     showCampgroundPlaces,
     showDiningPlaces,
     showPoiPlaces,
+    showChargingPlaces,
     fuelPlaces,
     lodgingPlaces,
     campgroundPlaces,
     diningPlaces,
     poiPlaces,
+    chargingPlaces,
   ]);
 
   // Compute day segments based on overnight stops
@@ -1158,6 +1239,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                   else if (item.category === "campground") inferredType = "CAMPGROUND";
                   else if (item.category === "dining") inferredType = "DINING";
                   else if (item.category === "poi") inferredType = "POI";
+                  else if (item.category === "charging") inferredType = "CHARGING";
 
                   onAddWaypoint({
                     lat: item.lat,
@@ -1503,6 +1585,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             anchor: new google.maps.Point(14, 14),
           };
           zIndex = 8;
+        } else if (wpType === "CHARGING") {
+          icon = {
+            url: svgToIconUrl(chargingIconSvg),
+            scaledSize: new google.maps.Size(28, 28),
+            anchor: new google.maps.Point(14, 14),
+          };
+          zIndex = 9;
         }
 
         return (
@@ -1689,6 +1778,39 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </MarkerClusterer>
       )}
 
+      {showChargingPlaces && chargingPlaces.length > 0 && (
+        <MarkerClusterer>
+          {(clusterer) => (
+            <>
+              {chargingPlaces.map((p, idx) => {
+              const isHighlighted =
+                highlightedPlace &&
+                highlightedPlace.category === "charging" &&
+                highlightedPlace.lat === p.lat &&
+                highlightedPlace.lng === p.lng;
+
+              const icon = {
+                url: svgToIconUrl(isHighlighted ? chargingIconSvgHighlight : chargingIconSvg),
+                scaledSize: new google.maps.Size(isHighlighted ? 32 : 24, isHighlighted ? 32 : 24),
+                anchor: new google.maps.Point(isHighlighted ? 16 : 12, isHighlighted ? 16 : 12),
+              };
+
+              return (
+                <Marker
+                  key={`charging-place-${idx}`}
+                  position={{ lat: p.lat, lng: p.lng }}
+                  title={p.name ?? undefined}
+                  clusterer={clusterer}
+                  icon={icon}
+                  zIndex={isHighlighted ? 20 : 4}
+                />
+              );
+            })}
+            </>
+          )}
+        </MarkerClusterer>
+      )}
+
       {panelItems.length > 0 && (
         <div
           className="pointer-events-auto rounded border border-adv-border bg-slate-900/90 p-2 text-[11px] text-slate-200 shadow-adv-glow"
@@ -1704,6 +1826,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 campground: "bg-teal-500",
                 dining: "bg-rose-500",
                 poi: "bg-amber-500",
+                charging: "bg-sky-500",
               };
               const dotColor = categoryColors[p.category] || "bg-slate-400";
               

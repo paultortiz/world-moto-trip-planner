@@ -235,7 +235,9 @@
     "nearbyCampgrounds": "Campings à proximité",
     "nearbyDining": "Restaurants à proximité",
     "nearbyPois": "POIs à proximité",
-    "addWaypointsByClick": "Ajouter des points de passage en cliquant sur la carte",
+    "nearbyCharging": "Bornes de recharge",
+    "charging": "Recharge",
+    "addWaypointsByClick": "Ajouter des points en cliquant sur la carte",
     "minRating": "Note min.",
     "any": "Toutes",
     "openNowOnly": "Ouvert maintenant uniquement",
@@ -278,6 +280,7 @@
       "campground": "Camping",
       "dining": "Restauration",
       "poi": "POI",
+      "charging": "Recharge",
       "other": "Autre"
     },
     "waypointsSaved": "Points de passage enregistrés ; itinéraire et profil d'altitude recalculés.",

@@ -624,12 +624,16 @@ export default function TripDetailClient({
   const [showCampgroundPlaces, setShowCampgroundPlaces] = useState(false);
   const [showDiningPlaces, setShowDiningPlaces] = useState(false);
   const [showPoiPlaces, setShowPoiPlaces] = useState(false);
+  const [showChargingPlaces, setShowChargingPlaces] = useState(false);
   const [enableClickToAdd, setEnableClickToAdd] = useState(false);
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
 
   // Waypoint focus state for map <-> editor navigation
-  const [focusedWaypointIndex, setFocusedWaypointIndex] = useState<number | null>(null);
+  // We use an object with a trigger counter so clicking locate on the same waypoint
+  // always triggers the pan/zoom effect (even if the index doesn't change).
+  const [focusedWaypoint, setFocusedWaypoint] = useState<{ index: number; trigger: number } | null>(null);
+  const focusTriggerRef = useRef(0);
 
   const [fuelPanelOpen, setFuelPanelOpen] = useState(false);
   const [schedulePanelOpen, setSchedulePanelOpen] = useState(false);
@@ -990,6 +994,10 @@ export default function TripDetailClient({
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#d97706" stroke="#fff" strokeWidth="1"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
                 <span>{t("poi")}</span>
               </div>
+              <div className="flex items-center gap-1">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#0ea5e9" stroke="#fff" strokeWidth="1"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <span>{t("charging")}</span>
+              </div>
               <div data-tour-nearby-filters className="flex flex-wrap items-center gap-2">
                 <label className="flex items-center gap-1">
                   <input
@@ -1036,6 +1044,15 @@ export default function TripDetailClient({
                   />
                   <span>{t("nearbyPois")}</span>
                 </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={showChargingPlaces}
+                    onChange={(e) => setShowChargingPlaces(e.target.checked)}
+                  />
+                  <span>{t("nearbyCharging")}</span>
+                </label>
                 <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
                   <input
                     type="checkbox"
@@ -1081,6 +1098,7 @@ export default function TripDetailClient({
               showCampgroundPlaces={showCampgroundPlaces}
               showDiningPlaces={showDiningPlaces}
               showPoiPlaces={showPoiPlaces}
+              showChargingPlaces={showChargingPlaces}
               minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
               onlyOpenNow={onlyOpenNow}
               nearbyPlacesControls={
@@ -1092,6 +1110,7 @@ export default function TripDetailClient({
                       checked={showFuelPlaces}
                       onChange={(e) => setShowFuelPlaces(e.target.checked)}
                     />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" />
                     <span>{t("nearbyFuel")}</span>
                   </label>
                   <label className="flex items-center gap-1">
@@ -1101,6 +1120,7 @@ export default function TripDetailClient({
                       checked={showLodgingPlaces}
                       onChange={(e) => setShowLodgingPlaces(e.target.checked)}
                     />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-600" />
                     <span>{t("nearbyLodging")}</span>
                   </label>
                   <label className="flex items-center gap-1">
@@ -1110,6 +1130,7 @@ export default function TripDetailClient({
                       checked={showCampgroundPlaces}
                       onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
                     />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-teal-600" />
                     <span>{t("nearbyCampgrounds")}</span>
                   </label>
                   <label className="flex items-center gap-1">
@@ -1119,6 +1140,7 @@ export default function TripDetailClient({
                       checked={showDiningPlaces}
                       onChange={(e) => setShowDiningPlaces(e.target.checked)}
                     />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-rose-600" />
                     <span>{t("nearbyDining")}</span>
                   </label>
                   <label className="flex items-center gap-1">
@@ -1128,7 +1150,18 @@ export default function TripDetailClient({
                       checked={showPoiPlaces}
                       onChange={(e) => setShowPoiPlaces(e.target.checked)}
                     />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-600" />
                     <span>{t("nearbyPois")}</span>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={showChargingPlaces}
+                      onChange={(e) => setShowChargingPlaces(e.target.checked)}
+                    />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-500" />
+                    <span>{t("nearbyCharging")}</span>
                   </label>
                   <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
                     <input
@@ -1186,10 +1219,12 @@ export default function TripDetailClient({
                 });
                 setIsDirty(true);
               }}
-              focusedWaypointIndex={focusedWaypointIndex}
+              focusedWaypointIndex={focusedWaypoint?.index ?? null}
+              focusedWaypointTrigger={focusedWaypoint?.trigger ?? 0}
               onMarkerClick={(index) => {
                 // Select/focus the waypoint instead of deleting
-                setFocusedWaypointIndex(index);
+                focusTriggerRef.current += 1;
+                setFocusedWaypoint({ index, trigger: focusTriggerRef.current });
                 // Scroll to the specific waypoint row
                 setTimeout(() => {
                   const waypointRow = document.getElementById(`waypoint-row-${index}`);
@@ -1437,9 +1472,10 @@ export default function TripDetailClient({
             }}
             maxDayHint={baseDayHint}
             startDateLabelBase={startDateInput || null}
-            focusedWaypointIndex={focusedWaypointIndex}
+            focusedWaypointIndex={focusedWaypoint?.index ?? null}
             onLocateWaypoint={(index) => {
-              setFocusedWaypointIndex(index);
+              focusTriggerRef.current += 1;
+              setFocusedWaypoint({ index, trigger: focusTriggerRef.current });
               // On mobile (stacked layout), scroll to the map
               setTimeout(() => {
                 const mapContainer = document.getElementById("trip-map-container");

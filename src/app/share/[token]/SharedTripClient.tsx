@@ -69,6 +69,7 @@ export default function SharedTripClient({
   const [showCampgroundPlaces, setShowCampgroundPlaces] = useState(false);
   const [showDiningPlaces, setShowDiningPlaces] = useState(false);
   const [showPoiPlaces, setShowPoiPlaces] = useState(false);
+  const [showChargingPlaces, setShowChargingPlaces] = useState(false);
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
 
@@ -135,6 +136,10 @@ export default function SharedTripClient({
               <span className="inline-block h-2 w-2 rounded-full bg-[#eab308]" />
               <span>POI</span>
             </div>
+            <div className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#0ea5e9]" />
+              <span>Charging</span>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex items-center gap-1">
                 <input
@@ -182,6 +187,15 @@ export default function SharedTripClient({
                 <span>Nearby POIs</span>
               </label>
               <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  className="h-3 w-3 accent-adv-accent"
+                  checked={showChargingPlaces}
+                  onChange={(e) => setShowChargingPlaces(e.target.checked)}
+                />
+                <span>Nearby charging</span>
+              </label>
+              <label className="flex items-center gap-1">
                 <span className="text-slate-500">Min rating</span>
                 <select
                   className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px]"
@@ -216,6 +230,7 @@ export default function SharedTripClient({
             showCampgroundPlaces={showCampgroundPlaces}
             showDiningPlaces={showDiningPlaces}
             showPoiPlaces={showPoiPlaces}
+            showChargingPlaces={showChargingPlaces}
             minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
             onlyOpenNow={onlyOpenNow}
           />
