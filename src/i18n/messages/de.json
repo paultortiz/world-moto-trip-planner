@@ -614,7 +614,13 @@
       "pause": "Pause",
       "stop": "Stopp",
       "recenter": "Zentrieren",
-      "speed": "Tempo"
+      "speed": "Tempo",
+      "fillUp": "Volltanken?",
+      "yes": "Ja",
+      "no": "Nein",
+      "dist": "Dist",
+      "time": "Zeit",
+      "fuel": "Tank"
     }
   },
   "profile": {

@@ -81,6 +81,9 @@ const svgToIconUrl = (svg: string) => {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 };
 
+// Google Maps libraries - defined outside component to prevent unnecessary reloads
+const GOOGLE_MAPS_LIBRARIES: ("places" | "geometry")[] = ["places", "geometry"];
+
 interface TripPlannerMapProps {
   waypoints: WaypointPosition[];
   onAddWaypoint?: (wp: WaypointPosition) => void;
@@ -114,6 +117,18 @@ interface TripPlannerMapProps {
    * Optional React node containing nearby places controls to show in fullscreen mode.
    */
   nearbyPlacesControls?: React.ReactNode;
+  /**
+   * Total route distance in meters - used for simulation telemetry display.
+   */
+  totalDistanceMeters?: number | null;
+  /**
+   * Total route duration in seconds - used for simulation telemetry display.
+   */
+  totalDurationSeconds?: number | null;
+  /**
+   * Motorcycle fuel range in km - used for simulation fuel gauge.
+   */
+  fuelRangeKm?: number | null;
 }
 
 export default function TripPlannerMap({
@@ -135,6 +150,9 @@ export default function TripPlannerMap({
   focusedWaypointIndex,
   focusedWaypointTrigger,
   nearbyPlacesControls,
+  totalDistanceMeters,
+  totalDurationSeconds,
+  fuelRangeKm,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -144,7 +162,7 @@ export default function TripPlannerMap({
   const { isLoaded, loadError } = useJsApiLoader({
     id: "google-maps-trip-planner",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
-    libraries: ["places", "geometry"],
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const [fuelPlaces, setFuelPlaces] = useState<PlaceMarker[]>([]);
@@ -202,6 +220,12 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const waypointPauseTimeoutRef = useRef<number | null>(null);
   const visitedWaypointsRef = useRef<Set<number>>(new Set());
   const currentSimulationPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const lastFuelStopProgressRef = useRef<number>(0); // Track progress at last fuel fill-up
+  const [showFuelPrompt, setShowFuelPrompt] = useState(false);
+  const [simulationPanelExpanded, setSimulationPanelExpanded] = useState(false);
+  // Accurate distance/duration fetched from Directions API for current simulation segment
+  const [simulationSegmentDistanceKm, setSimulationSegmentDistanceKm] = useState<number | null>(null);
+  const [simulationSegmentDurationSeconds, setSimulationSegmentDurationSeconds] = useState<number | null>(null);
 
   // Track previous values of show* props to detect when they change from false to true
   const prevShowFuel = useRef(showFuelPlaces);
@@ -582,6 +606,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           const p1 = prev[0];
           const p2 = point;
 
+          // Debug: log the exact coordinates being measured
+          console.log('[Measure] Origin:', p1.lat.toFixed(5), p1.lng.toFixed(5));
+          console.log('[Measure] Destination:', p2.lat.toFixed(5), p2.lng.toFixed(5));
+
           setMeasureRoadLoading(true);
           const directionsService = new google.maps.DirectionsService();
           directionsService.route(
@@ -609,6 +637,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 });
                 // Sort by distance
                 routes.sort((a, b) => a.distanceKm - b.distanceKm);
+                
+                // Debug: log all routes returned
+                console.log('[Measure] Directions API returned', routes.length, 'routes');
+                routes.forEach((r, i) => {
+                  console.log(`[Measure] Route ${i}: ${r.distanceKm.toFixed(1)} km, ${r.durationMins} mins via ${r.summary}`);
+                });
+                
                 setMeasureRoutes(routes);
               }
             }
@@ -1229,6 +1264,90 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     return dayPath?.path ?? [];
   }, [simulationMode, simulationDay, routePath, dayRoutePaths]);
 
+  // Fetch accurate distance/duration from Directions API for simulation segment
+  // Uses the same approach as Measure feature for consistency
+  useEffect(() => {
+    // Reset when simulation is off
+    if (simulationMode === 'off') {
+      setSimulationSegmentDistanceKm(null);
+      setSimulationSegmentDurationSeconds(null);
+      return;
+    }
+
+    // Wait for Google Maps API to load
+    if (!isLoaded) {
+      return;
+    }
+
+    // Get the segment's start and end points
+    let origin: { lat: number; lng: number } | null = null;
+    let destination: { lat: number; lng: number } | null = null;
+
+    if (simulationMode === 'full') {
+      // Full route: first to last waypoint
+      if (waypoints.length >= 2) {
+        origin = { lat: waypoints[0].lat, lng: waypoints[0].lng };
+        destination = { lat: waypoints[waypoints.length - 1].lat, lng: waypoints[waypoints.length - 1].lng };
+      }
+    } else {
+      // Day mode: first to last waypoint of the day segment
+      const segment = daySegments.find(s => s.day === simulationDay);
+      if (segment && segment.waypoints.length >= 2) {
+        origin = { lat: segment.waypoints[0].lat, lng: segment.waypoints[0].lng };
+        destination = { lat: segment.waypoints[segment.waypoints.length - 1].lat, lng: segment.waypoints[segment.waypoints.length - 1].lng };
+      }
+    }
+
+    if (!origin || !destination) {
+      setSimulationSegmentDistanceKm(null);
+      setSimulationSegmentDurationSeconds(null);
+      return;
+    }
+
+    // Debug: log the exact coordinates being used
+    console.log('[Simulation] Fetching for mode:', simulationMode, 'day:', simulationDay);
+    console.log('[Simulation] Origin:', origin.lat.toFixed(5), origin.lng.toFixed(5));
+    console.log('[Simulation] Destination:', destination.lat.toFixed(5), destination.lng.toFixed(5));
+
+    // Clear previous values while loading
+    setSimulationSegmentDistanceKm(null);
+    setSimulationSegmentDurationSeconds(null);
+
+    // Call Directions API the same way as Measure feature
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin,
+        destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true, // Match Measure feature
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result && result.routes.length > 0) {
+          // Sort routes by distance (same as Measure) and use the shortest
+          const sortedRoutes = [...result.routes].sort((a, b) => {
+            const distA = a.legs[0]?.distance?.value ?? Infinity;
+            const distB = b.legs[0]?.distance?.value ?? Infinity;
+            return distA - distB;
+          });
+          
+          const shortestRoute = sortedRoutes[0];
+          const leg = shortestRoute.legs[0];
+          const distanceKm = (leg?.distance?.value ?? 0) / 1000;
+          const durationSeconds = leg?.duration?.value ?? 0;
+          
+          console.log('[Simulation] Directions API returned', result.routes.length, 'routes');
+          console.log('[Simulation] Shortest route:', distanceKm.toFixed(1), 'km,', Math.floor(durationSeconds / 60), 'mins');
+          
+          setSimulationSegmentDistanceKm(distanceKm);
+          setSimulationSegmentDurationSeconds(durationSeconds);
+        } else {
+          console.log('[Simulation] Directions API failed:', status);
+        }
+      }
+    );
+  }, [simulationMode, simulationDay, daySegments, waypoints, isLoaded]);
+
   // Waypoints for the active simulation (for pause detection)
   const simulationWaypointsForPause = useMemo(() => {
     // Helper to get display name for a waypoint
@@ -1250,6 +1369,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         lat: wp.lat,
         lng: wp.lng,
         name: getWaypointDisplayName(wp, idx + 2),
+        type: wp.type ?? null,
       }));
     }
     // Day mode: waypoints for the selected day, excluding the first (start of day)
@@ -1260,6 +1380,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       lat: wp.lat,
       lng: wp.lng,
       name: getWaypointDisplayName(wp, idx + 2),
+      type: wp.type ?? null,
     }));
   }, [simulationMode, simulationDay, waypoints, daySegments]);
 
@@ -1277,6 +1398,78 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       lng: p1.lng + t * (p2.lng - p1.lng),
     };
   }, [simulationPath, simulationProgress]);
+
+  // Simulation telemetry (odometer, time, fuel)
+  // Computed directly (not memoized) to ensure real-time updates during animation
+  const simulationTelemetry = (() => {
+    if (simulationMode === 'off' || simulationPath.length === 0) {
+      return null;
+    }
+
+    const progress = simulationPath.length > 1
+      ? simulationProgress / (simulationPath.length - 1)
+      : 0;
+    const progressPercent = Math.min(100, Math.max(0, progress * 100));
+
+    // Distance calculation - uses stored route data for consistency with trip totals
+    let totalDistanceKm: number | null = simulationSegmentDistanceKm;
+    let traveledDistanceKm: number | null = null;
+
+    if (totalDistanceKm != null) {
+      traveledDistanceKm = totalDistanceKm * progress;
+    }
+
+    // Time calculation - uses stored route data for consistency with trip totals
+    let totalTimeSeconds: number | null = simulationSegmentDurationSeconds;
+    let elapsedTimeSeconds: number | null = null;
+
+    if (totalTimeSeconds != null) {
+      elapsedTimeSeconds = totalTimeSeconds * progress;
+    }
+
+    // Fuel calculation (% remaining) - based on distance since last fill-up
+    let fuelPercent: number | null = null;
+    const lastFuelProgress = lastFuelStopProgressRef.current;
+    const progressSinceLastFuel = simulationPath.length > 1
+      ? (simulationProgress - lastFuelProgress) / (simulationPath.length - 1)
+      : 0;
+    const distanceSinceLastFuelKm = totalDistanceKm != null
+      ? totalDistanceKm * Math.max(0, progressSinceLastFuel)
+      : null;
+
+    if (fuelRangeKm && distanceSinceLastFuelKm != null) {
+      // Calculate fuel used based on distance since last fill-up
+      const fuelUsedPercent = (distanceSinceLastFuelKm / fuelRangeKm) * 100;
+      fuelPercent = Math.max(0, 100 - fuelUsedPercent);
+    } else if (distanceSinceLastFuelKm != null) {
+      // No fuel range provided - estimate with default 300km range
+      const defaultRangeKm = 300;
+      const fuelUsedPercent = (distanceSinceLastFuelKm / defaultRangeKm) * 100;
+      fuelPercent = Math.max(0, 100 - fuelUsedPercent);
+    }
+
+    // Format helpers
+    const formatDistance = (km: number) => {
+      if (km < 1) return `${Math.round(km * 1000)} m`;
+      return `${km.toFixed(1)} km`;
+    };
+
+    const formatTime = (seconds: number) => {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      if (hours > 0) return `${hours}h ${minutes}m`;
+      return `${minutes}m`;
+    };
+
+    return {
+      progressPercent,
+      distanceTraveled: traveledDistanceKm != null ? formatDistance(traveledDistanceKm) : null,
+      distanceTotal: totalDistanceKm != null ? formatDistance(totalDistanceKm) : null,
+      timeElapsed: elapsedTimeSeconds != null ? formatTime(elapsedTimeSeconds) : null,
+      timeTotal: totalTimeSeconds != null ? formatTime(totalTimeSeconds) : null,
+      fuelPercent,
+    };
+  })();
 
   // Animation engine for route ride simulation
   useEffect(() => {
@@ -1324,12 +1517,18 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
               setSimulationState('waypoint-pause');
               setSimulationWaypointName(wp.name);
               
-              // Auto-resume after 2 seconds
-              waypointPauseTimeoutRef.current = window.setTimeout(() => {
-                setSimulationState('playing');
-                setSimulationWaypointName(null);
-                waypointPauseTimeoutRef.current = null;
-              }, 2000);
+              // Check if this is a FUEL waypoint - show fill-up prompt
+              if (wp.type === 'FUEL') {
+                setShowFuelPrompt(true);
+                // Don't auto-resume - wait for user response
+              } else {
+                // Auto-resume after 2 seconds for non-fuel waypoints
+                waypointPauseTimeoutRef.current = window.setTimeout(() => {
+                  setSimulationState('playing');
+                  setSimulationWaypointName(null);
+                  waypointPauseTimeoutRef.current = null;
+                }, 2000);
+              }
               
               return newProgress;
             }
@@ -1473,8 +1672,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     setSimulationState('playing');
     setSimulationWaypointName(null);
     setUserPannedDuringPause(false);
+    setShowFuelPrompt(false);
     visitedWaypointsRef.current.clear();
     lastAnimationTimeRef.current = 0;
+    lastFuelStopProgressRef.current = 0; // Start with full tank
 
     // Zoom to start of route
     const map = mapRef.current;
@@ -1518,7 +1719,27 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     setSimulationProgress(0);
     setSimulationWaypointName(null);
     setUserPannedDuringPause(false);
+    setShowFuelPrompt(false);
     visitedWaypointsRef.current.clear();
+    lastFuelStopProgressRef.current = 0;
+  }, []);
+
+  // Fuel prompt handlers
+  const handleFillUp = useCallback(() => {
+    // Fill up - reset fuel gauge by recording current progress as last fuel stop
+    lastFuelStopProgressRef.current = simulationProgress;
+    setShowFuelPrompt(false);
+    setSimulationWaypointName(null);
+    setSimulationState('playing');
+    lastAnimationTimeRef.current = 0;
+  }, [simulationProgress]);
+
+  const handleSkipFillUp = useCallback(() => {
+    // Skip fill-up - just resume without refueling
+    setShowFuelPrompt(false);
+    setSimulationWaypointName(null);
+    setSimulationState('playing');
+    lastAnimationTimeRef.current = 0;
   }, []);
 
   const recenterSimulation = useCallback(() => {
@@ -1747,9 +1968,22 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           style={{ position: "absolute", right: 8, top: 44, zIndex: 30 }}
         >
           <div className="rounded border border-adv-border bg-slate-950/95 p-2 text-[11px] shadow-adv-glow">
-            <div className="mb-1.5 text-[10px] font-semibold text-teal-400">
-              {t("simulation.rideSimulation")}
-            </div>
+            {/* Collapsible header */}
+            <button
+              type="button"
+              onClick={() => setSimulationPanelExpanded(!simulationPanelExpanded)}
+              className="flex w-full items-center justify-between gap-2 text-left"
+            >
+              <span className="text-[10px] font-semibold text-teal-400">
+                {t("simulation.rideSimulation")}
+              </span>
+              <span className="text-[10px] text-slate-500">
+                {simulationPanelExpanded || simulationMode !== 'off' ? '▼' : '▶'}
+              </span>
+            </button>
+            {/* Expanded content - show when expanded OR when simulation is active */}
+            {(simulationPanelExpanded || simulationMode !== 'off') && (
+              <div className="mt-1.5">
             {simulationMode === 'off' ? (
               <div className="flex flex-col gap-1.5">
                 <button
@@ -1827,6 +2061,70 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                   />
                   <span className="w-6 text-[9px] font-semibold text-teal-300">{simulationSpeed}x</span>
                 </div>
+                {/* Telemetry dashboard strip */}
+                {simulationTelemetry && (
+                  <div className="mt-2 space-y-1 border-t border-slate-700 pt-2">
+                    {/* Distance (Odometer) */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-slate-400">{t("simulation.dist")}:</span>
+                      <span className="text-[9px] text-slate-200">
+                        {simulationTelemetry.distanceTraveled ?? '--'}
+                        <span className="text-slate-500"> / {simulationTelemetry.distanceTotal ?? '--'}</span>
+                      </span>
+                    </div>
+                    {/* Time elapsed */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-slate-400">{t("simulation.time")}:</span>
+                      <span className="text-[9px] text-slate-200">
+                        {simulationTelemetry.timeElapsed ?? '--'}
+                        <span className="text-slate-500"> / {simulationTelemetry.timeTotal ?? '--'}</span>
+                      </span>
+                    </div>
+                    {/* Fuel gauge */}
+                    {simulationTelemetry.fuelPercent != null && (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[9px] text-slate-400">{t("simulation.fuel")}:</span>
+                        <div className="flex items-center gap-1.5">
+                          <div className="relative h-2 w-16 overflow-hidden rounded bg-slate-700">
+                            <div
+                              className={`absolute left-0 top-0 h-full ${
+                                simulationTelemetry.fuelPercent > 30
+                                  ? 'bg-green-500'
+                                  : simulationTelemetry.fuelPercent > 15
+                                  ? 'bg-amber-500'
+                                  : 'bg-red-500'
+                              }`}
+                              style={{ width: `${simulationTelemetry.fuelPercent}%` }}
+                            />
+                          </div>
+                          <span className={`w-7 text-right text-[9px] font-semibold ${
+                            simulationTelemetry.fuelPercent > 30
+                              ? 'text-green-400'
+                              : simulationTelemetry.fuelPercent > 15
+                              ? 'text-amber-400'
+                              : 'text-red-400'
+                          }`}>
+                            {Math.round(simulationTelemetry.fuelPercent)}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {/* Progress bar */}
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div className="relative h-1.5 flex-1 overflow-hidden rounded bg-slate-700">
+                        <div
+                          className="absolute left-0 top-0 h-full bg-teal-500"
+                          style={{ width: `${simulationTelemetry.progressPercent}%` }}
+                        />
+                      </div>
+                      <span className="w-7 text-right text-[8px] text-slate-400">
+                        {Math.round(simulationTelemetry.progressPercent)}%
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
               </div>
             )}
           </div>
@@ -1941,6 +2239,38 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             aria-live="polite"
           >
             📍 {simulationWaypointName}
+          </div>
+        </div>
+      )}
+
+      {/* Fuel fill-up prompt */}
+      {showFuelPrompt && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 120, zIndex: 46 }}
+        >
+          <div
+            className="pointer-events-auto rounded-lg border-2 border-green-500 bg-slate-950/95 px-4 py-3 shadow-lg"
+            role="dialog"
+            aria-label={t("simulation.fillUp")}
+          >
+            <p className="mb-2 text-sm font-semibold text-green-300">⛽ {t("simulation.fillUp")}</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleFillUp}
+                className="rounded border border-green-500 bg-green-600/80 px-3 py-1 text-[11px] font-semibold text-white hover:bg-green-500"
+              >
+                {t("simulation.yes")}
+              </button>
+              <button
+                type="button"
+                onClick={handleSkipFillUp}
+                className="rounded border border-slate-500 bg-slate-700 px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-600"
+              >
+                {t("simulation.no")}
+              </button>
+            </div>
           </div>
         </div>
       )}

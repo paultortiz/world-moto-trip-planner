@@ -1117,6 +1117,9 @@ export default function TripDetailClient({
               showBorderPlaces={showBorderPlaces}
               minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
               onlyOpenNow={onlyOpenNow}
+              totalDistanceMeters={trip.totalDistanceMeters}
+              totalDurationSeconds={trip.totalDurationSeconds}
+              fuelRangeKm={trip.fuelRangeKm}
               nearbyPlacesControls={
                 <div className="flex flex-wrap items-center gap-2">
                   <label className="flex items-center gap-1">

@@ -614,7 +614,13 @@
       "pause": "Pause",
       "stop": "Arrêt",
       "recenter": "Recentrer",
-      "speed": "Vitesse"
+      "speed": "Vitesse",
+      "fillUp": "Faire le plein ?",
+      "yes": "Oui",
+      "no": "Non",
+      "dist": "Dist",
+      "time": "Temps",
+      "fuel": "Carb"
     }
   },
   "profile": {

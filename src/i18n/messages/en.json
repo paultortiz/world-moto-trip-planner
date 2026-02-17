@@ -614,7 +614,13 @@
       "pause": "Pause",
       "stop": "Stop",
       "recenter": "Recenter",
-      "speed": "Speed"
+      "speed": "Speed",
+      "fillUp": "Fill up?",
+      "yes": "Yes",
+      "no": "No",
+      "dist": "Dist",
+      "time": "Time",
+      "fuel": "Fuel"
     }
   },
   "profile": {

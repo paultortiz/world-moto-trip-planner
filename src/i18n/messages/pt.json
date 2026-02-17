@@ -614,7 +614,13 @@
       "pause": "Pausar",
       "stop": "Parar",
       "recenter": "Recentralizar",
-      "speed": "Velocidade"
+      "speed": "Velocidade",
+      "fillUp": "Abastecer?",
+      "yes": "Sim",
+      "no": "Não",
+      "dist": "Dist",
+      "time": "Tempo",
+      "fuel": "Comb"
     }
   },
   "profile": {
