@@ -235,6 +235,8 @@
     "nearbyCampgrounds": "Nearby campgrounds",
     "nearbyDining": "Nearby dining",
     "nearbyPois": "Nearby POIs",
+    "nearbyCharging": "Nearby charging",
+    "charging": "Charging",
     "addWaypointsByClick": "Add waypoints by clicking map",
     "minRating": "Min rating",
     "any": "Any",
@@ -278,6 +280,7 @@
       "campground": "Campground",
       "dining": "Dining",
       "poi": "POI",
+      "charging": "Charging",
       "other": "Other"
     },
     "waypointsSaved": "Waypoints saved; route and elevation recalculated.",

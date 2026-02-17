@@ -235,6 +235,8 @@
     "nearbyCampgrounds": "Campings próximos",
     "nearbyDining": "Restaurantes próximos",
     "nearbyPois": "POIs próximos",
+    "nearbyCharging": "Carregamento próximo",
+    "charging": "Carregamento",
     "addWaypointsByClick": "Adicionar pontos clicando no mapa",
     "minRating": "Avaliação mín.",
     "any": "Qualquer",
@@ -278,6 +280,7 @@
       "campground": "Camping",
       "dining": "Restaurante",
       "poi": "POI",
+      "charging": "Carregamento",
       "other": "Outro"
     },
     "waypointsSaved": "Pontos salvos; rota e elevação recalculadas.",

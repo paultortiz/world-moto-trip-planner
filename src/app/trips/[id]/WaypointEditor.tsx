@@ -55,6 +55,7 @@ const WAYPOINT_TYPES = [
   "CAMPGROUND",
   "DINING",
   "POI",
+  "CHARGING",
   "OTHER",
 ] as const;
 
