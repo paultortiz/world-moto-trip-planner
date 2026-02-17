@@ -236,7 +236,9 @@
     "nearbyDining": "Restaurantes próximos",
     "nearbyPois": "POIs próximos",
     "nearbyCharging": "Carregamento próximo",
+    "nearbyBorder": "Fronteiras próximas",
     "charging": "Carregamento",
+    "border": "Fronteira",
     "addWaypointsByClick": "Adicionar pontos clicando no mapa",
     "minRating": "Avaliação mín.",
     "any": "Qualquer",
@@ -281,6 +283,7 @@
       "dining": "Restaurante",
       "poi": "POI",
       "charging": "Carregamento",
+      "border": "Passagem de fronteira",
       "other": "Outro"
     },
     "waypointsSaved": "Pontos salvos; rota e elevação recalculadas.",

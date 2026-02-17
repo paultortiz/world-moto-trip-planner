@@ -30,12 +30,12 @@ type PlaceMarker = {
   name?: string | null;
   rating?: number | null;
   openNow?: boolean | null;
-  category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging";
+  category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging" | "border";
 };
 
 type PanelPlaceItem = {
   name: string;
-  category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging";
+  category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging" | "border";
   distanceKm: number;
   rating?: number | null;
   lat: number;
@@ -69,6 +69,10 @@ const poiIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 
 const chargingIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0ea5e9" stroke="#fff" stroke-width="1"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
 const chargingIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#38bdf8" stroke="#fff" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
 
+// Border crossing icon (flag/checkpoint) - purple/violet
+const borderIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8b5cf6" stroke="#fff" stroke-width="1"><path d="M4 2v20M4 4h12l-2 4 2 4H4"/></svg>`;
+const borderIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#a78bfa" stroke="#fff" stroke-width="2"><path d="M4 2v20M4 4h12l-2 4 2 4H4"/></svg>`;
+
 // Helper to create icon URL from SVG using base64 encoding
 const svgToIconUrl = (svg: string) => {
   if (typeof window !== 'undefined') {
@@ -95,6 +99,7 @@ interface TripPlannerMapProps {
   showDiningPlaces?: boolean;
   showPoiPlaces?: boolean;
   showChargingPlaces?: boolean;
+  showBorderPlaces?: boolean;
   minPlaceRating?: number | null;
   onlyOpenNow?: boolean;
   /**
@@ -124,6 +129,7 @@ export default function TripPlannerMap({
   showDiningPlaces,
   showPoiPlaces,
   showChargingPlaces,
+  showBorderPlaces,
   minPlaceRating,
   onlyOpenNow,
   focusedWaypointIndex,
@@ -147,11 +153,12 @@ export default function TripPlannerMap({
   const [diningPlaces, setDiningPlaces] = useState<PlaceMarker[]>([]);
   const [poiPlaces, setPoiPlaces] = useState<PlaceMarker[]>([]);
   const [chargingPlaces, setChargingPlaces] = useState<PlaceMarker[]>([]);
+  const [borderPlaces, setBorderPlaces] = useState<PlaceMarker[]>([]);
   const [placesCenter, setPlacesCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [highlightedPlace, setHighlightedPlace] = useState<{
     lat: number;
     lng: number;
-    category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging";
+    category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging" | "border";
   } | null>(null);
   const highlightTimeoutRef = useRef<number | null>(null);
 
@@ -187,6 +194,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const prevShowDining = useRef(showDiningPlaces);
   const prevShowPoi = useRef(showPoiPlaces);
   const prevShowCharging = useRef(showChargingPlaces);
+  const prevShowBorder = useRef(showBorderPlaces);
 
   useEffect(() => {
     return () => {
@@ -241,6 +249,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     const diningJustEnabled = showDiningPlaces && !prevShowDining.current;
     const poiJustEnabled = showPoiPlaces && !prevShowPoi.current;
     const chargingJustEnabled = showChargingPlaces && !prevShowCharging.current;
+    const borderJustEnabled = showBorderPlaces && !prevShowBorder.current;
 
     // Update refs for next render
     prevShowFuel.current = showFuelPlaces;
@@ -249,6 +258,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     prevShowDining.current = showDiningPlaces;
     prevShowPoi.current = showPoiPlaces;
     prevShowCharging.current = showChargingPlaces;
+    prevShowBorder.current = showBorderPlaces;
 
     const anyJustEnabled =
       fuelJustEnabled ||
@@ -256,23 +266,67 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       campgroundJustEnabled ||
       diningJustEnabled ||
       poiJustEnabled ||
-      chargingJustEnabled;
+      chargingJustEnabled ||
+      borderJustEnabled;
 
     if (!anyJustEnabled) return;
 
     const zoom = map.getZoom() ?? 0;
 
-    if (zoom < 7) {
-      // Show hint to zoom in
-      setZoomHint("Zoom in to see nearby places");
-      if (zoomHintTimeoutRef.current !== null) {
-        window.clearTimeout(zoomHintTimeoutRef.current);
+    // Border crossings can show at lower zoom (4+) since they're sparse
+    const minZoomForBorders = 4;
+    const minZoomForOthers = 7;
+    
+    const nonBorderJustEnabled = fuelJustEnabled || lodgingJustEnabled || campgroundJustEnabled || diningJustEnabled || poiJustEnabled || chargingJustEnabled;
+    
+    if (zoom < minZoomForBorders || (zoom < minZoomForOthers && nonBorderJustEnabled && !borderJustEnabled)) {
+      // Show hint to zoom in (but not if only borders were enabled and we're at 4+)
+      if (!(borderJustEnabled && !nonBorderJustEnabled && zoom >= minZoomForBorders)) {
+        setZoomHint("Zoom in to see nearby places");
+        if (zoomHintTimeoutRef.current !== null) {
+          window.clearTimeout(zoomHintTimeoutRef.current);
+        }
+        zoomHintTimeoutRef.current = window.setTimeout(() => {
+          setZoomHint(null);
+          zoomHintTimeoutRef.current = null;
+        }, 3000);
       }
-      zoomHintTimeoutRef.current = window.setTimeout(() => {
-        setZoomHint(null);
-        zoomHintTimeoutRef.current = null;
-      }, 3000);
-    } else {
+      
+      // Still fetch borders if zoom >= 4 and borders were just enabled
+      if (borderJustEnabled && zoom >= minZoomForBorders) {
+        const bounds = map.getBounds();
+        if (bounds && (google.maps as any).places) {
+          const service = new google.maps.places.PlacesService(map);
+          service.textSearch(
+            { query: "border crossing customs", bounds },
+            (results, status) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                // Filter to only include results within current bounds (textSearch uses bounds as bias, not strict filter)
+                const currentBounds = map.getBounds();
+                const filtered = results.filter((r) => {
+                  if (!r.geometry?.location || !currentBounds) return false;
+                  return currentBounds.contains(r.geometry.location);
+                });
+                setBorderPlaces(
+                  filtered.slice(0, MAX_PLACES_RESULTS).map((r) => ({
+                    lat: r.geometry?.location?.lat() ?? 0,
+                    lng: r.geometry?.location?.lng() ?? 0,
+                    name: r.name ?? null,
+                    rating: typeof r.rating === "number" ? r.rating : null,
+                    openNow: r.opening_hours?.open_now ?? null,
+                    category: "border",
+                  })),
+                );
+              }
+            },
+          );
+        }
+      }
+      
+      if (zoom < minZoomForOthers) return;
+    }
+    
+    if (zoom >= minZoomForOthers) {
       // Trigger fetch immediately by manually calling the idle logic
       const bounds = map.getBounds();
       if (!bounds) return;
@@ -435,8 +489,35 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           },
         );
       }
+
+      // Border fetch is handled earlier for lower zoom levels, but also fetch here at zoom 7+
+      if (borderJustEnabled) {
+        service.textSearch(
+          { query: "border crossing customs", bounds },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              // Filter to only include results within current bounds (textSearch uses bounds as bias, not strict filter)
+              const currentBounds = map.getBounds();
+              const filtered = results.filter((r) => {
+                if (!r.geometry?.location || !currentBounds) return false;
+                return currentBounds.contains(r.geometry.location);
+              });
+              setBorderPlaces(
+                filtered.slice(0, MAX_PLACES_RESULTS).map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "border",
+                })),
+              );
+            }
+          },
+        );
+      }
     }
-  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, showChargingPlaces, minPlaceRating, onlyOpenNow]);
+  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, showChargingPlaces, showBorderPlaces, minPlaceRating, onlyOpenNow]);
 
   const handleMapClick = useCallback(
     (event: google.maps.MapMouseEvent) => {
@@ -598,6 +679,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       category = "dining";
     } else if (types.includes("tourist_attraction") || types.includes("point_of_interest")) {
       category = "poi";
+    } else if (types.includes("local_government_office") || place.name?.toLowerCase().includes("border") || place.name?.toLowerCase().includes("customs")) {
+      category = "border";
     }
 
     const map = mapRef.current;
@@ -671,13 +754,60 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
       const zoom = map.getZoom() ?? 0;
       // Avoid hammering Places API at world zoom levels; only query when zoomed in a bit.
-      if (zoom < 7) {
+      // Border crossings can show at lower zoom (4+) since they're sparse.
+      const minZoomForBorders = 4;
+      const minZoomForOthers = 7;
+      
+      if (zoom < minZoomForBorders) {
         setFuelPlaces([]);
         setLodgingPlaces([]);
         setCampgroundPlaces([]);
         setDiningPlaces([]);
         setPoiPlaces([]);
         setChargingPlaces([]);
+        setBorderPlaces([]);
+        return;
+      }
+      
+      // Clear non-border places if below zoom 7
+      if (zoom < minZoomForOthers) {
+        setFuelPlaces([]);
+        setLodgingPlaces([]);
+        setCampgroundPlaces([]);
+        setDiningPlaces([]);
+        setPoiPlaces([]);
+        setChargingPlaces([]);
+        // But still fetch border crossings at zoom 4-6
+        if (showBorderPlaces) {
+          if (!(google.maps as any).places) return;
+          const service = new google.maps.places.PlacesService(map);
+          service.textSearch(
+            { query: "border crossing customs", bounds },
+            (results, status) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                // Filter to only include results within current bounds (textSearch uses bounds as bias, not strict filter)
+                const currentBounds = map.getBounds();
+                const filtered = results.filter((r) => {
+                  if (!r.geometry?.location || !currentBounds) return false;
+                  return currentBounds.contains(r.geometry.location);
+                });
+                const limited = filtered.slice(0, MAX_PLACES_RESULTS);
+                setBorderPlaces(
+                  limited.map((r) => ({
+                    lat: r.geometry?.location?.lat() ?? 0,
+                    lng: r.geometry?.location?.lng() ?? 0,
+                    name: r.name ?? null,
+                    rating: typeof r.rating === "number" ? r.rating : null,
+                    openNow: r.opening_hours?.open_now ?? null,
+                    category: "border",
+                  })),
+                );
+              }
+            },
+          );
+        } else {
+          setBorderPlaces([]);
+        }
         return;
       }
 
@@ -888,8 +1018,38 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       } else {
         setChargingPlaces([]);
       }
+
+      if (showBorderPlaces) {
+        // Use text search for border crossings since there's no specific place type
+        service.textSearch(
+          { query: "border crossing customs", bounds },
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              // Filter to only include results within current bounds (textSearch uses bounds as bias, not strict filter)
+              const currentBounds = map.getBounds();
+              const filtered = results.filter((r) => {
+                if (!r.geometry?.location || !currentBounds) return false;
+                return currentBounds.contains(r.geometry.location);
+              });
+              const limited = filtered.slice(0, MAX_PLACES_RESULTS);
+              setBorderPlaces(
+                limited.map((r) => ({
+                  lat: r.geometry?.location?.lat() ?? 0,
+                  lng: r.geometry?.location?.lng() ?? 0,
+                  name: r.name ?? null,
+                  rating: typeof r.rating === "number" ? r.rating : null,
+                  openNow: r.opening_hours?.open_now ?? null,
+                  category: "border",
+                })),
+              );
+            }
+          },
+        );
+      } else {
+        setBorderPlaces([]);
+      }
     }, 500);
-  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, showChargingPlaces, minPlaceRating, onlyOpenNow]);
+  }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, showChargingPlaces, showBorderPlaces, minPlaceRating, onlyOpenNow]);
 
   function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
     const R = 6371;
@@ -915,6 +1075,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     if (showDiningPlaces) all.push(...diningPlaces);
     if (showPoiPlaces) all.push(...poiPlaces);
     if (showChargingPlaces) all.push(...chargingPlaces);
+    if (showBorderPlaces) all.push(...borderPlaces);
 
     const withDistance = all.map((p) => ({
       name: p.name ?? "Unnamed",
@@ -941,12 +1102,14 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     showDiningPlaces,
     showPoiPlaces,
     showChargingPlaces,
+    showBorderPlaces,
     fuelPlaces,
     lodgingPlaces,
     campgroundPlaces,
     diningPlaces,
     poiPlaces,
     chargingPlaces,
+    borderPlaces,
   ]);
 
   // Compute day segments based on overnight stops
@@ -1240,6 +1403,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                   else if (item.category === "dining") inferredType = "DINING";
                   else if (item.category === "poi") inferredType = "POI";
                   else if (item.category === "charging") inferredType = "CHARGING";
+                  else if (item.category === "border") inferredType = "BORDER";
 
                   onAddWaypoint({
                     lat: item.lat,
@@ -1592,6 +1756,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             anchor: new google.maps.Point(14, 14),
           };
           zIndex = 9;
+        } else if (wpType === "BORDER") {
+          icon = {
+            url: svgToIconUrl(borderIconSvg),
+            scaledSize: new google.maps.Size(28, 28),
+            anchor: new google.maps.Point(14, 14),
+          };
+          zIndex = 9;
         }
 
         return (
@@ -1811,6 +1982,39 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </MarkerClusterer>
       )}
 
+      {showBorderPlaces && borderPlaces.length > 0 && (
+        <MarkerClusterer>
+          {(clusterer) => (
+            <>
+              {borderPlaces.map((p, idx) => {
+              const isHighlighted =
+                highlightedPlace &&
+                highlightedPlace.category === "border" &&
+                highlightedPlace.lat === p.lat &&
+                highlightedPlace.lng === p.lng;
+
+              const icon = {
+                url: svgToIconUrl(isHighlighted ? borderIconSvgHighlight : borderIconSvg),
+                scaledSize: new google.maps.Size(isHighlighted ? 32 : 24, isHighlighted ? 32 : 24),
+                anchor: new google.maps.Point(isHighlighted ? 16 : 12, isHighlighted ? 16 : 12),
+              };
+
+              return (
+                <Marker
+                  key={`border-place-${idx}`}
+                  position={{ lat: p.lat, lng: p.lng }}
+                  title={p.name ?? undefined}
+                  clusterer={clusterer}
+                  icon={icon}
+                  zIndex={isHighlighted ? 20 : 4}
+                />
+              );
+            })}
+            </>
+          )}
+        </MarkerClusterer>
+      )}
+
       {panelItems.length > 0 && (
         <div
           className="pointer-events-auto rounded border border-adv-border bg-slate-900/90 p-2 text-[11px] text-slate-200 shadow-adv-glow"
@@ -1827,6 +2031,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 dining: "bg-rose-500",
                 poi: "bg-amber-500",
                 charging: "bg-sky-500",
+                border: "bg-violet-500",
               };
               const dotColor = categoryColors[p.category] || "bg-slate-400";
               

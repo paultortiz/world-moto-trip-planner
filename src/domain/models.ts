@@ -5,6 +5,7 @@ export type WaypointType =
   | "DINING"
   | "POI"
   | "CHARGING"
+  | "BORDER"
   | "CHECKPOINT"
   | "OTHER";
 
