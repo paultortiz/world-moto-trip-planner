@@ -150,8 +150,10 @@ export default function TripPlannerMap({
   focusedWaypointIndex,
   focusedWaypointTrigger,
   nearbyPlacesControls,
-  totalDistanceMeters,
-  totalDurationSeconds,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  totalDistanceMeters: _totalDistanceMeters,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  totalDurationSeconds: _totalDurationSeconds,
   fuelRangeKm,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
@@ -1412,7 +1414,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     const progressPercent = Math.min(100, Math.max(0, progress * 100));
 
     // Distance calculation - uses stored route data for consistency with trip totals
-    let totalDistanceKm: number | null = simulationSegmentDistanceKm;
+    const totalDistanceKm: number | null = simulationSegmentDistanceKm;
     let traveledDistanceKm: number | null = null;
 
     if (totalDistanceKm != null) {
@@ -1420,7 +1422,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     }
 
     // Time calculation - uses stored route data for consistency with trip totals
-    let totalTimeSeconds: number | null = simulationSegmentDurationSeconds;
+    const totalTimeSeconds: number | null = simulationSegmentDurationSeconds;
     let elapsedTimeSeconds: number | null = null;
 
     if (totalTimeSeconds != null) {
