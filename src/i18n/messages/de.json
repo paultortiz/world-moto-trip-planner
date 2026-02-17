@@ -605,7 +605,17 @@
     "clear": "Löschen",
     "dayLabel": "Tag {day}",
     "fullscreen": "Vollbild",
-    "exitFullscreen": "Vollbild beenden"
+    "exitFullscreen": "Vollbild beenden",
+    "simulation": {
+      "rideSimulation": "Fahrt-Simulation",
+      "fullRoute": "Gesamte Route",
+      "day": "Tag {day}",
+      "play": "Abspielen",
+      "pause": "Pause",
+      "stop": "Stopp",
+      "recenter": "Zentrieren",
+      "speed": "Tempo"
+    }
   },
   "profile": {
     "title": "Fahrerprofil",

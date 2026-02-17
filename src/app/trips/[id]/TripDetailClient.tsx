@@ -650,6 +650,7 @@ export default function TripDetailClient({
   const mapWaypoints: WaypointPosition[] = waypoints.map((wp) => ({
     lat: wp.lat,
     lng: wp.lng,
+    name: wp.name ?? undefined,
     type: wp.type ?? undefined,
     isOvernightStop: wp.isOvernightStop === true,
   }));

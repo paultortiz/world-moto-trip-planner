@@ -187,6 +187,22 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Route ride simulation state
+  type SimulationMode = 'off' | 'day' | 'full';
+  type SimulationState = 'idle' | 'playing' | 'paused' | 'waypoint-pause';
+  const [simulationMode, setSimulationMode] = useState<SimulationMode>('off');
+  const [simulationDay, setSimulationDay] = useState<number>(1);
+  const [simulationState, setSimulationState] = useState<SimulationState>('idle');
+  const [simulationProgress, setSimulationProgress] = useState<number>(0);
+  const [simulationWaypointName, setSimulationWaypointName] = useState<string | null>(null);
+  const [userPannedDuringPause, setUserPannedDuringPause] = useState(false);
+  const [simulationSpeed, setSimulationSpeed] = useState<number>(1); // Speed multiplier (0.5x to 3x)
+  const animationFrameRef = useRef<number | null>(null);
+  const lastAnimationTimeRef = useRef<number>(0);
+  const waypointPauseTimeoutRef = useRef<number | null>(null);
+  const visitedWaypointsRef = useRef<Set<number>>(new Set());
+  const currentSimulationPosRef = useRef<{ lat: number; lng: number } | null>(null);
+
   // Track previous values of show* props to detect when they change from false to true
   const prevShowFuel = useRef(showFuelPlaces);
   const prevShowLodging = useRef(showLodgingPlaces);
@@ -218,6 +234,18 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  // Cleanup simulation timeouts and animation frames
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (waypointPauseTimeoutRef.current !== null) {
+        window.clearTimeout(waypointPauseTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -1192,6 +1220,145 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     return paths;
   }, [routePath, daySegments]);
 
+  // Simulation path based on mode (full route or single day)
+  const simulationPath = useMemo(() => {
+    if (simulationMode === 'off') return [];
+    if (simulationMode === 'full') return routePath ?? [];
+    // Day mode: find the path for the selected day
+    const dayPath = dayRoutePaths.find(p => p.day === simulationDay);
+    return dayPath?.path ?? [];
+  }, [simulationMode, simulationDay, routePath, dayRoutePaths]);
+
+  // Waypoints for the active simulation (for pause detection)
+  const simulationWaypointsForPause = useMemo(() => {
+    // Helper to get display name for a waypoint
+    const getWaypointDisplayName = (wp: WaypointPosition, fallbackNum: number): string => {
+      if (wp.name && wp.name.trim()) return wp.name;
+      if (wp.type) {
+        // Format type nicely: "FUEL" -> "Fuel Stop", "LODGING" -> "Lodging"
+        const typeLabel = wp.type.charAt(0) + wp.type.slice(1).toLowerCase();
+        return `${typeLabel} Stop`;
+      }
+      return `Waypoint ${fallbackNum}`;
+    };
+
+    if (simulationMode === 'off') return [];
+    if (simulationMode === 'full') {
+      // All waypoints except start (we don't pause at the very beginning)
+      return waypoints.slice(1).map((wp, idx) => ({
+        index: idx + 1,
+        lat: wp.lat,
+        lng: wp.lng,
+        name: getWaypointDisplayName(wp, idx + 2),
+      }));
+    }
+    // Day mode: waypoints for the selected day, excluding the first (start of day)
+    const segment = daySegments.find(s => s.day === simulationDay);
+    if (!segment) return [];
+    return segment.waypoints.slice(1).map((wp, idx) => ({
+      index: idx + 1,
+      lat: wp.lat,
+      lng: wp.lng,
+      name: getWaypointDisplayName(wp, idx + 2),
+    }));
+  }, [simulationMode, simulationDay, waypoints, daySegments]);
+
+  // Interpolated position along the simulation path
+  const simulationPosition = useMemo(() => {
+    if (simulationPath.length === 0) return null;
+    const idx = Math.min(simulationProgress, simulationPath.length - 1);
+    const floorIdx = Math.floor(idx);
+    const ceilIdx = Math.min(floorIdx + 1, simulationPath.length - 1);
+    const t = idx - floorIdx;
+    const p1 = simulationPath[floorIdx];
+    const p2 = simulationPath[ceilIdx];
+    return {
+      lat: p1.lat + t * (p2.lat - p1.lat),
+      lng: p1.lng + t * (p2.lng - p1.lng),
+    };
+  }, [simulationPath, simulationProgress]);
+
+  // Animation engine for route ride simulation
+  useEffect(() => {
+    if (simulationState !== 'playing' || simulationPath.length === 0) {
+      return;
+    }
+
+    const BASE_SPEED = 75; // Path points per second (base pace, was 15)
+    const SPEED = BASE_SPEED * simulationSpeed; // Apply speed multiplier
+    const WAYPOINT_PROXIMITY_THRESHOLD = 0.0005; // ~50m in degrees squared
+
+    const animate = (timestamp: number) => {
+      if (lastAnimationTimeRef.current === 0) {
+        lastAnimationTimeRef.current = timestamp;
+      }
+
+      const deltaTime = (timestamp - lastAnimationTimeRef.current) / 1000;
+      lastAnimationTimeRef.current = timestamp;
+
+      setSimulationProgress((prev) => {
+        const newProgress = prev + SPEED * deltaTime;
+        
+        // Check if we've reached the end
+        if (newProgress >= simulationPath.length - 1) {
+          setSimulationState('idle');
+          setSimulationWaypointName(null);
+          return simulationPath.length - 1;
+        }
+
+        // Check proximity to waypoints for pause
+        const currentIdx = Math.floor(newProgress);
+        const currentPoint = simulationPath[currentIdx];
+        if (currentPoint) {
+          // Store current position for camera tracking
+          currentSimulationPosRef.current = currentPoint;
+
+          for (let i = 0; i < simulationWaypointsForPause.length; i++) {
+            const wp = simulationWaypointsForPause[i];
+            if (visitedWaypointsRef.current.has(i)) continue;
+
+            const distSq = Math.pow(currentPoint.lat - wp.lat, 2) + Math.pow(currentPoint.lng - wp.lng, 2);
+            if (distSq < WAYPOINT_PROXIMITY_THRESHOLD) {
+              // Mark as visited and trigger waypoint pause
+              visitedWaypointsRef.current.add(i);
+              setSimulationState('waypoint-pause');
+              setSimulationWaypointName(wp.name);
+              
+              // Auto-resume after 2 seconds
+              waypointPauseTimeoutRef.current = window.setTimeout(() => {
+                setSimulationState('playing');
+                setSimulationWaypointName(null);
+                waypointPauseTimeoutRef.current = null;
+              }, 2000);
+              
+              return newProgress;
+            }
+          }
+        }
+
+        return newProgress;
+      });
+
+      // Pan camera to follow motorcycle (immediate, no animation)
+      const map = mapRef.current;
+      const pos = currentSimulationPosRef.current;
+      if (map && pos) {
+        map.setCenter({ lat: pos.lat, lng: pos.lng });
+      }
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [simulationState, simulationPath, simulationWaypointsForPause, simulationProgress, simulationSpeed]);
+
   // Compute visible day labels within current viewport
   const visibleDayLabels = useMemo(() => {
     if (!mapBounds || daySegments.length === 0 || dayRoutePaths.length === 0) return [];
@@ -1296,6 +1463,82 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     }
   }, []);
 
+  // Simulation control functions
+  const startSimulation = useCallback((mode: 'day' | 'full', day?: number) => {
+    setSimulationMode(mode);
+    if (mode === 'day' && day !== undefined) {
+      setSimulationDay(day);
+    }
+    setSimulationProgress(0);
+    setSimulationState('playing');
+    setSimulationWaypointName(null);
+    setUserPannedDuringPause(false);
+    visitedWaypointsRef.current.clear();
+    lastAnimationTimeRef.current = 0;
+
+    // Zoom to start of route
+    const map = mapRef.current;
+    if (map) {
+      const path = mode === 'full' ? routePath : dayRoutePaths.find(p => p.day === (day ?? simulationDay))?.path;
+      if (path && path.length > 0) {
+        map.panTo({ lat: path[0].lat, lng: path[0].lng });
+        const zoom = map.getZoom() ?? 10;
+        if (zoom < 11) {
+          map.setZoom(11);
+        }
+      }
+    }
+  }, [routePath, dayRoutePaths, simulationDay]);
+
+  const pauseSimulation = useCallback(() => {
+    if (waypointPauseTimeoutRef.current !== null) {
+      window.clearTimeout(waypointPauseTimeoutRef.current);
+      waypointPauseTimeoutRef.current = null;
+    }
+    setSimulationState('paused');
+  }, []);
+
+  const resumeSimulation = useCallback(() => {
+    setSimulationState('playing');
+    setUserPannedDuringPause(false);
+    lastAnimationTimeRef.current = 0;
+  }, []);
+
+  const stopSimulation = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (waypointPauseTimeoutRef.current !== null) {
+      window.clearTimeout(waypointPauseTimeoutRef.current);
+      waypointPauseTimeoutRef.current = null;
+    }
+    setSimulationMode('off');
+    setSimulationState('idle');
+    setSimulationProgress(0);
+    setSimulationWaypointName(null);
+    setUserPannedDuringPause(false);
+    visitedWaypointsRef.current.clear();
+  }, []);
+
+  const recenterSimulation = useCallback(() => {
+    const map = mapRef.current;
+    if (map && simulationPosition) {
+      map.panTo({ lat: simulationPosition.lat, lng: simulationPosition.lng });
+      setUserPannedDuringPause(false);
+    }
+  }, [simulationPosition]);
+
+  const handleMapDragEnd = useCallback(() => {
+    // Track if user panned away during pause
+    if (simulationState === 'paused' || simulationState === 'waypoint-pause') {
+      setUserPannedDuringPause(true);
+    }
+  }, [simulationState]);
+
+  // Number of days available for simulation
+  const numSimulationDays = daySegments.length;
+
   if (loadError) {
     return (
       <div className="rounded border border-red-700 bg-red-950 p-3 text-sm">
@@ -1322,6 +1565,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       onIdle={handleMapIdle}
       onZoomChanged={handleZoomChanged}
       onClick={handleMapClick}
+      onDragEnd={handleMapDragEnd}
       options={{
         disableDefaultUI: true,
         zoomControl: true,
@@ -1496,6 +1740,99 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </div>
       )}
 
+      {/* Ride simulation controls - shown when route has waypoints */}
+      {routePath && routePath.length > 1 && (
+        <div
+          className="pointer-events-auto"
+          style={{ position: "absolute", right: 8, top: 44, zIndex: 30 }}
+        >
+          <div className="rounded border border-adv-border bg-slate-950/95 p-2 text-[11px] shadow-adv-glow">
+            <div className="mb-1.5 text-[10px] font-semibold text-teal-400">
+              {t("simulation.rideSimulation")}
+            </div>
+            {simulationMode === 'off' ? (
+              <div className="flex flex-col gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => startSimulation('full')}
+                  className="rounded border border-teal-600 bg-teal-700/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-teal-600"
+                >
+                  ▶ {t("simulation.fullRoute")}
+                </button>
+                {numSimulationDays > 1 && (
+                  <div className="flex items-center gap-1">
+                    <select
+                      value={simulationDay}
+                      onChange={(e) => setSimulationDay(Number(e.target.value))}
+                      className="flex-1 rounded border border-slate-600 bg-slate-800 px-1 py-0.5 text-[10px] text-slate-200"
+                    >
+                      {Array.from({ length: numSimulationDays }, (_, i) => i + 1).map((day) => (
+                        <option key={day} value={day}>
+                          {t("simulation.day", { day })}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => startSimulation('day', simulationDay)}
+                      className="rounded border border-slate-600 bg-slate-700 px-2 py-0.5 text-[10px] text-slate-200 hover:bg-slate-600"
+                    >
+                      ▶
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <div className="text-[9px] text-slate-400">
+                  {simulationMode === 'full' ? t("simulation.fullRoute") : t("simulation.day", { day: simulationDay })}
+                </div>
+                <div className="flex gap-1">
+                  {simulationState === 'playing' ? (
+                    <button
+                      type="button"
+                      onClick={pauseSimulation}
+                      className="flex-1 rounded border border-amber-500 bg-amber-600/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-amber-500"
+                    >
+                      ⏸ {t("simulation.pause")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={resumeSimulation}
+                      className="flex-1 rounded border border-teal-600 bg-teal-700/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-teal-600"
+                    >
+                      ▶ {t("simulation.play")}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={stopSimulation}
+                    className="rounded border border-slate-600 bg-slate-700 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-600"
+                  >
+                    ⏹ {t("simulation.stop")}
+                  </button>
+                </div>
+                {/* Speed control */}
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-[9px] text-slate-400">{t("simulation.speed")}:</span>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="3"
+                    step="0.5"
+                    value={simulationSpeed}
+                    onChange={(e) => setSimulationSpeed(Number(e.target.value))}
+                    className="h-1 w-16 cursor-pointer appearance-none rounded bg-slate-600 accent-teal-500"
+                  />
+                  <span className="w-6 text-[9px] font-semibold text-teal-300">{simulationSpeed}x</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Measure mode instruction banner */}
       {measureMode && measurePoints.length === 0 && (
         <div
@@ -1575,6 +1912,52 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
               <div className="text-slate-500">{t("noRouteFound")}</div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Simulation motorcycle marker */}
+      {simulationMode !== 'off' && simulationPosition && (
+        <Marker
+          key="simulation-motorcycle"
+          position={simulationPosition}
+          icon={{
+            url: svgToIconUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#dc2626" stroke="#fff" stroke-width="2"/><circle cx="10" cy="20" r="4" fill="#fff"/><circle cx="22" cy="20" r="4" fill="#fff"/><rect x="8" y="14" width="16" height="6" rx="2" fill="#fff"/><rect x="14" y="10" width="6" height="6" rx="1" fill="#fff"/></svg>`),
+            scaledSize: new google.maps.Size(32, 32),
+            anchor: new google.maps.Point(16, 16),
+          }}
+          zIndex={300}
+        />
+      )}
+
+      {/* Simulation waypoint name overlay */}
+      {simulationWaypointName && (simulationState === 'waypoint-pause' || simulationState === 'paused') && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 80, zIndex: 45 }}
+        >
+          <div
+            className="pointer-events-auto rounded-lg border-2 border-teal-500 bg-slate-950/95 px-4 py-2 text-sm font-semibold text-teal-300 shadow-lg"
+            role="status"
+            aria-live="polite"
+          >
+            📍 {simulationWaypointName}
+          </div>
+        </div>
+      )}
+
+      {/* Simulation recenter button - shown when user panned away during pause */}
+      {simulationMode !== 'off' && userPannedDuringPause && (simulationState === 'paused' || simulationState === 'waypoint-pause') && (
+        <div
+          className="pointer-events-auto"
+          style={{ position: "absolute", right: 8, bottom: 60, zIndex: 35 }}
+        >
+          <button
+            type="button"
+            onClick={recenterSimulation}
+            className="rounded border border-teal-500 bg-teal-600/90 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg hover:bg-teal-500"
+          >
+            {t("simulation.recenter")}
+          </button>
         </div>
       )}
 
