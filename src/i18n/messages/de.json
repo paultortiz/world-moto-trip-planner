@@ -236,7 +236,9 @@
     "nearbyDining": "Restaurants in der Nähe",
     "nearbyPois": "POIs in der Nähe",
     "nearbyCharging": "Ladestationen in der Nähe",
+    "nearbyBorder": "Grenzübergänge in der Nähe",
     "charging": "Ladestation",
+    "border": "Grenze",
     "addWaypointsByClick": "Wegpunkte durch Klicken hinzufügen",
     "minRating": "Min. Bewertung",
     "any": "Alle",
@@ -281,6 +283,7 @@
       "dining": "Restaurant",
       "poi": "POI",
       "charging": "Ladestation",
+      "border": "Grenzübergang",
       "other": "Sonstiges"
     },
     "waypointsSaved": "Wegpunkte gespeichert; Route und Höhenprofil neu berechnet.",

@@ -236,7 +236,9 @@
     "nearbyDining": "Restaurants à proximité",
     "nearbyPois": "POIs à proximité",
     "nearbyCharging": "Bornes de recharge",
+    "nearbyBorder": "Frontières proches",
     "charging": "Recharge",
+    "border": "Frontière",
     "addWaypointsByClick": "Ajouter des points en cliquant sur la carte",
     "minRating": "Note min.",
     "any": "Toutes",
@@ -281,6 +283,7 @@
       "dining": "Restauration",
       "poi": "POI",
       "charging": "Recharge",
+      "border": "Passage frontalier",
       "other": "Autre"
     },
     "waypointsSaved": "Points de passage enregistrés ; itinéraire et profil d'altitude recalculés.",

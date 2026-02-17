@@ -236,7 +236,9 @@
     "nearbyDining": "Nearby dining",
     "nearbyPois": "Nearby POIs",
     "nearbyCharging": "Nearby charging",
+    "nearbyBorder": "Nearby borders",
     "charging": "Charging",
+    "border": "Border",
     "addWaypointsByClick": "Add waypoints by clicking map",
     "minRating": "Min rating",
     "any": "Any",
@@ -281,6 +283,7 @@
       "dining": "Dining",
       "poi": "POI",
       "charging": "Charging",
+      "border": "Border Crossing",
       "other": "Other"
     },
     "waypointsSaved": "Waypoints saved; route and elevation recalculated.",

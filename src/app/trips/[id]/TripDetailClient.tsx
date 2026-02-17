@@ -625,6 +625,7 @@ export default function TripDetailClient({
   const [showDiningPlaces, setShowDiningPlaces] = useState(false);
   const [showPoiPlaces, setShowPoiPlaces] = useState(false);
   const [showChargingPlaces, setShowChargingPlaces] = useState(false);
+  const [showBorderPlaces, setShowBorderPlaces] = useState(false);
   const [enableClickToAdd, setEnableClickToAdd] = useState(false);
   const [minPlaceRating, setMinPlaceRating] = useState<string>("any");
   const [onlyOpenNow, setOnlyOpenNow] = useState(false);
@@ -998,6 +999,10 @@ export default function TripDetailClient({
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#0ea5e9" stroke="#fff" strokeWidth="1"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 <span>{t("charging")}</span>
               </div>
+              <div className="flex items-center gap-1">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#8b5cf6" stroke="#fff" strokeWidth="1"><path d="M4 2v20M4 4h12l-2 4 2 4H4"/></svg>
+                <span>{t("border")}</span>
+              </div>
               <div data-tour-nearby-filters className="flex flex-wrap items-center gap-2">
                 <label className="flex items-center gap-1">
                   <input
@@ -1053,6 +1058,15 @@ export default function TripDetailClient({
                   />
                   <span>{t("nearbyCharging")}</span>
                 </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-adv-accent"
+                    checked={showBorderPlaces}
+                    onChange={(e) => setShowBorderPlaces(e.target.checked)}
+                  />
+                  <span>{t("nearbyBorder")}</span>
+                </label>
                 <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
                   <input
                     type="checkbox"
@@ -1099,6 +1113,7 @@ export default function TripDetailClient({
               showDiningPlaces={showDiningPlaces}
               showPoiPlaces={showPoiPlaces}
               showChargingPlaces={showChargingPlaces}
+              showBorderPlaces={showBorderPlaces}
               minPlaceRating={minPlaceRating === "any" ? null : Number(minPlaceRating)}
               onlyOpenNow={onlyOpenNow}
               nearbyPlacesControls={
@@ -1162,6 +1177,16 @@ export default function TripDetailClient({
                     />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-500" />
                     <span>{t("nearbyCharging")}</span>
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 accent-adv-accent"
+                      checked={showBorderPlaces}
+                      onChange={(e) => setShowBorderPlaces(e.target.checked)}
+                    />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-500" />
+                    <span>{t("nearbyBorder")}</span>
                   </label>
                   <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
                     <input
