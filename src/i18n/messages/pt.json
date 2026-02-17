@@ -605,7 +605,17 @@
     "clear": "Limpar",
     "dayLabel": "Dia {day}",
     "fullscreen": "Tela cheia",
-    "exitFullscreen": "Sair da tela cheia"
+    "exitFullscreen": "Sair da tela cheia",
+    "simulation": {
+      "rideSimulation": "Simulação de Percurso",
+      "fullRoute": "Rota Completa",
+      "day": "Dia {day}",
+      "play": "Iniciar",
+      "pause": "Pausar",
+      "stop": "Parar",
+      "recenter": "Recentralizar",
+      "speed": "Velocidade"
+    }
   },
   "profile": {
     "title": "Perfil do Motociclista",

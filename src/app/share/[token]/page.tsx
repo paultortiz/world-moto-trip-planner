@@ -30,6 +30,7 @@ export default async function SharedTripPage({ params }: SharedTripPageProps) {
   const waypoints: WaypointPosition[] = trip.waypoints.map((wp) => ({
     lat: wp.lat,
     lng: wp.lng,
+    name: wp.name,
     type: wp.type,
   }));
 

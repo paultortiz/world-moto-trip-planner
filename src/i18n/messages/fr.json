@@ -605,7 +605,17 @@
     "clear": "Effacer",
     "dayLabel": "Jour {day}",
     "fullscreen": "Plein écran",
-    "exitFullscreen": "Quitter le plein écran"
+    "exitFullscreen": "Quitter le plein écran",
+    "simulation": {
+      "rideSimulation": "Simulation de Trajet",
+      "fullRoute": "Itinéraire Complet",
+      "day": "Jour {day}",
+      "play": "Lire",
+      "pause": "Pause",
+      "stop": "Arrêt",
+      "recenter": "Recentrer",
+      "speed": "Vitesse"
+    }
   },
   "profile": {
     "title": "Profil du Motard",
