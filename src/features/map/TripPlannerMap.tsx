@@ -225,6 +225,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const lastFuelStopProgressRef = useRef<number>(0); // Track progress at last fuel fill-up
   const [showFuelPrompt, setShowFuelPrompt] = useState(false);
   const [simulationPanelExpanded, setSimulationPanelExpanded] = useState(false);
+  // Mobile detection for responsive panel behavior
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   // Accurate distance/duration fetched from Directions API for current simulation segment
   const [simulationSegmentDistanceKm, setSimulationSegmentDistanceKm] = useState<number | null>(null);
   const [simulationSegmentDurationSeconds, setSimulationSegmentDurationSeconds] = useState<number | null>(null);
@@ -260,6 +262,18 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  // Detect mobile viewport for responsive simulation panel
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+    checkMobile(); // Initial check
+    window.addEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
     };
   }, []);
 
@@ -1679,6 +1693,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     lastAnimationTimeRef.current = 0;
     lastFuelStopProgressRef.current = 0; // Start with full tank
 
+    // Auto-collapse panel on mobile, keep expanded on desktop
+    setSimulationPanelExpanded(!isMobileViewport);
+
     // Zoom to start of route
     const map = mapRef.current;
     if (map) {
@@ -1691,7 +1708,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         }
       }
     }
-  }, [routePath, dayRoutePaths, simulationDay]);
+  }, [routePath, dayRoutePaths, simulationDay, isMobileViewport]);
 
   const pauseSimulation = useCallback(() => {
     if (waypointPauseTimeoutRef.current !== null) {
@@ -1981,11 +1998,56 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 {t("simulation.rideSimulation")}
               </span>
               <span className="text-[10px] text-slate-500">
-                {simulationPanelExpanded || simulationMode !== 'off' ? '▼' : '▶'}
+                {simulationPanelExpanded ? '▼' : '▶'}
               </span>
             </button>
-            {/* Expanded content - show when expanded OR when simulation is active */}
-            {(simulationPanelExpanded || simulationMode !== 'off') && (
+
+            {/* Mobile collapsed view - compact controls when simulation is active but panel collapsed */}
+            {simulationMode !== 'off' && !simulationPanelExpanded && (
+              <div className="mt-1.5 flex items-center gap-2">
+                {/* Progress bar */}
+                {simulationTelemetry && (
+                  <div className="relative h-1.5 w-16 overflow-hidden rounded bg-slate-700">
+                    <div
+                      className="absolute left-0 top-0 h-full bg-teal-500"
+                      style={{ width: `${simulationTelemetry.progressPercent}%` }}
+                    />
+                  </div>
+                )}
+                {/* Play/Pause button */}
+                {simulationState === 'playing' ? (
+                  <button
+                    type="button"
+                    onClick={pauseSimulation}
+                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); pauseSimulation(); }}
+                    className="rounded border border-amber-500 bg-amber-600/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-amber-500 active:bg-amber-400 touch-manipulation"
+                  >
+                    ⏸
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={resumeSimulation}
+                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); resumeSimulation(); }}
+                    className="rounded border border-teal-600 bg-teal-700/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-teal-600 active:bg-teal-500 touch-manipulation"
+                  >
+                    ▶
+                  </button>
+                )}
+                {/* Stop button */}
+                <button
+                  type="button"
+                  onClick={stopSimulation}
+                  onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); stopSimulation(); }}
+                  className="rounded border border-slate-600 bg-slate-700 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-600 active:bg-slate-500 touch-manipulation"
+                >
+                  ⏹
+                </button>
+              </div>
+            )}
+
+            {/* Expanded content - show when panel is expanded */}
+            {simulationPanelExpanded && (
               <div className="mt-1.5">
             {simulationMode === 'off' ? (
               <div className="flex flex-col gap-1.5">
