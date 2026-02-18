@@ -1974,7 +1974,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             <button
               type="button"
               onClick={() => setSimulationPanelExpanded(!simulationPanelExpanded)}
-              className="flex w-full items-center justify-between gap-2 text-left"
+              onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setSimulationPanelExpanded(!simulationPanelExpanded); }}
+              className="flex w-full items-center justify-between gap-2 text-left py-1 touch-manipulation"
             >
               <span className="text-[10px] font-semibold text-teal-400">
                 {t("simulation.rideSimulation")}
@@ -1991,7 +1992,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 <button
                   type="button"
                   onClick={() => startSimulation('full')}
-                  className="rounded border border-teal-600 bg-teal-700/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-teal-600"
+                  onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); startSimulation('full'); }}
+                  className="rounded border border-teal-600 bg-teal-700/80 px-3 py-2 text-[10px] font-semibold text-white hover:bg-teal-600 active:bg-teal-500 touch-manipulation"
                 >
                   ▶ {t("simulation.fullRoute")}
                 </button>
@@ -2000,7 +2002,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     <select
                       value={simulationDay}
                       onChange={(e) => setSimulationDay(Number(e.target.value))}
-                      className="flex-1 rounded border border-slate-600 bg-slate-800 px-1 py-0.5 text-[10px] text-slate-200"
+                      className="flex-1 rounded border border-slate-600 bg-slate-800 px-2 py-1.5 text-[10px] text-slate-200 touch-manipulation"
                     >
                       {Array.from({ length: numSimulationDays }, (_, i) => i + 1).map((day) => (
                         <option key={day} value={day}>
@@ -2011,7 +2013,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     <button
                       type="button"
                       onClick={() => startSimulation('day', simulationDay)}
-                      className="rounded border border-slate-600 bg-slate-700 px-2 py-0.5 text-[10px] text-slate-200 hover:bg-slate-600"
+                      onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); startSimulation('day', simulationDay); }}
+                      className="rounded border border-slate-600 bg-slate-700 px-3 py-1.5 text-[10px] text-slate-200 hover:bg-slate-600 active:bg-slate-500 touch-manipulation"
                     >
                       ▶
                     </button>
@@ -2028,7 +2031,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     <button
                       type="button"
                       onClick={pauseSimulation}
-                      className="flex-1 rounded border border-amber-500 bg-amber-600/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-amber-500"
+                      onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); pauseSimulation(); }}
+                      className="flex-1 rounded border border-amber-500 bg-amber-600/80 px-3 py-2 text-[10px] font-semibold text-white hover:bg-amber-500 active:bg-amber-400 touch-manipulation"
                     >
                       ⏸ {t("simulation.pause")}
                     </button>
@@ -2036,7 +2040,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     <button
                       type="button"
                       onClick={resumeSimulation}
-                      className="flex-1 rounded border border-teal-600 bg-teal-700/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-teal-600"
+                      onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); resumeSimulation(); }}
+                      className="flex-1 rounded border border-teal-600 bg-teal-700/80 px-3 py-2 text-[10px] font-semibold text-white hover:bg-teal-600 active:bg-teal-500 touch-manipulation"
                     >
                       ▶ {t("simulation.play")}
                     </button>
@@ -2044,7 +2049,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                   <button
                     type="button"
                     onClick={stopSimulation}
-                    className="rounded border border-slate-600 bg-slate-700 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-600"
+                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); stopSimulation(); }}
+                    className="rounded border border-slate-600 bg-slate-700 px-3 py-2 text-[10px] text-slate-200 hover:bg-slate-600 active:bg-slate-500 touch-manipulation"
                   >
                     ⏹ {t("simulation.stop")}
                   </button>
@@ -2059,7 +2065,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     step="0.5"
                     value={simulationSpeed}
                     onChange={(e) => setSimulationSpeed(Number(e.target.value))}
-                    className="h-1 w-16 cursor-pointer appearance-none rounded bg-slate-600 accent-teal-500"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    className="h-2 w-20 cursor-pointer appearance-none rounded bg-slate-600 accent-teal-500 touch-manipulation"
                   />
                   <span className="w-6 text-[9px] font-semibold text-teal-300">{simulationSpeed}x</span>
                 </div>
@@ -2261,14 +2269,16 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
               <button
                 type="button"
                 onClick={handleFillUp}
-                className="rounded border border-green-500 bg-green-600/80 px-3 py-1 text-[11px] font-semibold text-white hover:bg-green-500"
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleFillUp(); }}
+                className="rounded border border-green-500 bg-green-600/80 px-4 py-2 text-[11px] font-semibold text-white hover:bg-green-500 active:bg-green-400 touch-manipulation"
               >
                 {t("simulation.yes")}
               </button>
               <button
                 type="button"
                 onClick={handleSkipFillUp}
-                className="rounded border border-slate-500 bg-slate-700 px-3 py-1 text-[11px] text-slate-200 hover:bg-slate-600"
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSkipFillUp(); }}
+                className="rounded border border-slate-500 bg-slate-700 px-4 py-2 text-[11px] text-slate-200 hover:bg-slate-600 active:bg-slate-500 touch-manipulation"
               >
                 {t("simulation.no")}
               </button>
@@ -2286,7 +2296,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           <button
             type="button"
             onClick={recenterSimulation}
-            className="rounded border border-teal-500 bg-teal-600/90 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg hover:bg-teal-500"
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); recenterSimulation(); }}
+            className="rounded border border-teal-500 bg-teal-600/90 px-4 py-2 text-[11px] font-semibold text-white shadow-lg hover:bg-teal-500 active:bg-teal-400 touch-manipulation"
           >
             {t("simulation.recenter")}
           </button>
