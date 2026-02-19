@@ -1488,6 +1488,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   })();
 
   // Animation engine for route ride simulation
+  // Note: simulationProgress removed from deps to prevent effect restart every frame
   useEffect(() => {
     if (simulationState !== 'playing' || simulationPath.length === 0) {
       return;
@@ -1530,11 +1531,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             if (distSq < WAYPOINT_PROXIMITY_THRESHOLD) {
               // Mark as visited and trigger waypoint pause
               visitedWaypointsRef.current.add(i);
+              console.log('[Simulation] Reached waypoint:', wp.name, 'type:', wp.type);
               setSimulationState('waypoint-pause');
               setSimulationWaypointName(wp.name);
               
               // Check if this is a FUEL waypoint - show fill-up prompt
               if (wp.type === 'FUEL') {
+                console.log('[Simulation] FUEL waypoint detected, showing prompt');
                 setShowFuelPrompt(true);
                 // Don't auto-resume - wait for user response
               } else {
@@ -1572,7 +1575,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         animationFrameRef.current = null;
       }
     };
-  }, [simulationState, simulationPath, simulationWaypointsForPause, simulationProgress, simulationSpeed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simulationState, simulationPath, simulationWaypointsForPause, simulationSpeed]);
 
   // Compute visible day labels within current viewport
   const visibleDayLabels = useMemo(() => {
