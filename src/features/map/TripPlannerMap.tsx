@@ -219,6 +219,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const [simulationSpeed, setSimulationSpeed] = useState<number>(1); // Speed multiplier (0.5x to 3x)
   const animationFrameRef = useRef<number | null>(null);
   const lastAnimationTimeRef = useRef<number>(0);
+  const animationFrameCounterRef = useRef<number>(0); // For throttling bounds updates
   const waypointPauseTimeoutRef = useRef<number | null>(null);
   const visitedWaypointsRef = useRef<Set<number>>(new Set());
   const currentSimulationPosRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -1562,6 +1563,12 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       const pos = currentSimulationPosRef.current;
       if (map && pos) {
         map.setCenter({ lat: pos.lat, lng: pos.lng });
+        // Update bounds for day labels to follow during animation (throttled to ~6fps)
+        animationFrameCounterRef.current++;
+        if (animationFrameCounterRef.current % 10 === 0) {
+          const bounds = map.getBounds();
+          if (bounds) setMapBounds(bounds);
+        }
       }
 
       animationFrameRef.current = requestAnimationFrame(animate);
