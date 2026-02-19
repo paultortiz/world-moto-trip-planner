@@ -620,7 +620,8 @@
       "no": "Non",
       "dist": "Dist",
       "time": "Temps",
-      "fuel": "Carb"
+      "fuel": "Carb",
+      "lowFuelAlert": "Carburant bas — stations proches affichées"
     }
   },
   "profile": {

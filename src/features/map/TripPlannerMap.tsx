@@ -129,6 +129,10 @@ interface TripPlannerMapProps {
    * Motorcycle fuel range in km - used for simulation fuel gauge.
    */
   fuelRangeKm?: number | null;
+  /**
+   * Callback when fuel drops below 25% during simulation - parent can enable fuel places filter.
+   */
+  onLowFuelAlert?: () => void;
 }
 
 export default function TripPlannerMap({
@@ -155,6 +159,7 @@ export default function TripPlannerMap({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   totalDurationSeconds: _totalDurationSeconds,
   fuelRangeKm,
+  onLowFuelAlert,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -228,6 +233,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const [simulationPanelExpanded, setSimulationPanelExpanded] = useState(false);
   // Mobile detection for responsive panel behavior
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  // Low fuel alert state - track if alert has been triggered this simulation
+  const lowFuelAlertTriggeredRef = useRef(false);
+  const [lowFuelToast, setLowFuelToast] = useState<string | null>(null);
+  const lowFuelToastTimeoutRef = useRef<number | null>(null);
   // Accurate distance/duration fetched from Directions API for current simulation segment
   const [simulationSegmentDistanceKm, setSimulationSegmentDistanceKm] = useState<number | null>(null);
   const [simulationSegmentDurationSeconds, setSimulationSegmentDurationSeconds] = useState<number | null>(null);
@@ -251,6 +260,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       }
       if (zoomHintTimeoutRef.current !== null) {
         window.clearTimeout(zoomHintTimeoutRef.current);
+      }
+      if (lowFuelToastTimeoutRef.current !== null) {
+        window.clearTimeout(lowFuelToastTimeoutRef.current);
       }
     };
   }, []);
@@ -1488,6 +1500,38 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     };
   })();
 
+  // Low fuel alert - trigger when fuel drops to 25% or below
+  const LOW_FUEL_THRESHOLD = 25;
+  useEffect(() => {
+    // Only check during active simulation
+    if (simulationMode === 'off' || !simulationTelemetry?.fuelPercent) return;
+    
+    // Already triggered for this simulation
+    if (lowFuelAlertTriggeredRef.current) return;
+    
+    // Check if fuel is at or below threshold
+    if (simulationTelemetry.fuelPercent <= LOW_FUEL_THRESHOLD) {
+      lowFuelAlertTriggeredRef.current = true;
+      
+      // Notify parent to enable fuel places filter
+      if (onLowFuelAlert) {
+        onLowFuelAlert();
+      }
+      
+      // Show toast notification
+      setLowFuelToast(t("simulation.lowFuelAlert"));
+      
+      // Auto-dismiss toast after 5 seconds
+      if (lowFuelToastTimeoutRef.current !== null) {
+        window.clearTimeout(lowFuelToastTimeoutRef.current);
+      }
+      lowFuelToastTimeoutRef.current = window.setTimeout(() => {
+        setLowFuelToast(null);
+        lowFuelToastTimeoutRef.current = null;
+      }, 5000);
+    }
+  }, [simulationMode, simulationTelemetry?.fuelPercent, onLowFuelAlert, t]);
+
   // Animation engine for route ride simulation
   // Note: simulationProgress removed from deps to prevent effect restart every frame
   useEffect(() => {
@@ -1703,6 +1747,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     visitedWaypointsRef.current.clear();
     lastAnimationTimeRef.current = 0;
     lastFuelStopProgressRef.current = 0; // Start with full tank
+    lowFuelAlertTriggeredRef.current = false; // Reset low fuel alert for new simulation
 
     // Auto-collapse panel on mobile, keep expanded on desktop
     setSimulationPanelExpanded(!isMobileViewport);
@@ -1752,6 +1797,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     setShowFuelPrompt(false);
     visitedWaypointsRef.current.clear();
     lastFuelStopProgressRef.current = 0;
+    lowFuelAlertTriggeredRef.current = false; // Reset for next simulation
+    setLowFuelToast(null); // Clear any existing toast
   }, []);
 
   // Fuel prompt handlers
@@ -1852,6 +1899,22 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             aria-live="polite"
           >
             {zoomHint}
+          </div>
+        </div>
+      )}
+
+      {/* Low fuel alert toast */}
+      {lowFuelToast && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 160, zIndex: 47 }}
+        >
+          <div
+            className="pointer-events-auto rounded-lg border-2 border-amber-500 bg-amber-600/95 px-4 py-2 text-sm font-semibold text-white shadow-lg"
+            role="alert"
+            aria-live="assertive"
+          >
+            ⛽ {lowFuelToast}
           </div>
         </div>
       )}

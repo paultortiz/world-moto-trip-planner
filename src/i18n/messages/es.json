@@ -620,7 +620,8 @@
       "no": "No",
       "dist": "Dist",
       "time": "Tiempo",
-      "fuel": "Comb"
+      "fuel": "Comb",
+      "lowFuelAlert": "Combustible bajo — estaciones cercanas mostradas"
     }
   },
   "profile": {
