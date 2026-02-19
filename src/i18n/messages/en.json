@@ -620,7 +620,8 @@
       "no": "No",
       "dist": "Dist",
       "time": "Time",
-      "fuel": "Fuel"
+      "fuel": "Fuel",
+      "lowFuelAlert": "Fuel low — nearby stations shown"
     }
   },
   "profile": {

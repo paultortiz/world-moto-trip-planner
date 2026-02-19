@@ -620,7 +620,8 @@
       "no": "Nein",
       "dist": "Dist",
       "time": "Zeit",
-      "fuel": "Tank"
+      "fuel": "Tank",
+      "lowFuelAlert": "Tank niedrig — Tankstellen werden angezeigt"
     }
   },
   "profile": {
