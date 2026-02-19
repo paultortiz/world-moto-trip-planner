@@ -1894,7 +1894,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
         >
           <div
-            className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
+            className="pointer-events-auto rounded border-2 border-amber-700 bg-amber-400 px-3 py-1.5 text-[11px] font-semibold text-black shadow-lg"
             role="status"
             aria-live="polite"
           >
@@ -1910,11 +1910,11 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           style={{ position: "absolute", left: 0, right: 0, top: 160, zIndex: 47 }}
         >
           <div
-            className="pointer-events-auto rounded-lg border-2 border-amber-500 bg-amber-600/95 px-4 py-2 text-sm font-semibold text-white shadow-lg"
+            className="pointer-events-auto rounded-lg border-2 border-amber-700 bg-amber-400 px-4 py-2 text-sm font-semibold text-black shadow-lg"
             role="alert"
             aria-live="assertive"
           >
-            ⛽ {lowFuelToast}
+            <span aria-hidden="true">⛽</span> {lowFuelToast}
           </div>
         </div>
       )}
@@ -2001,6 +2001,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             <input
               type="text"
               placeholder={t("searchPlaceholder")}
+              aria-label={t("searchPlaceholder")}
               className="w-64 rounded border border-adv-border bg-slate-950/90 px-2 py-1 text-[11px] text-slate-100 shadow-adv-glow placeholder:text-slate-500"
             />
           </StandaloneSearchBox>
@@ -2037,8 +2038,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           onClick={toggleFullscreen}
           className="rounded border border-adv-border bg-slate-950/80 px-2 py-1 text-[10px] text-slate-200 shadow-adv-glow hover:bg-slate-900"
           title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
+          aria-label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
         >
-          {isFullscreen ? "⛶" : "⛶"}
+          <span aria-hidden="true">⛶</span>
         </button>
       </div>
 
@@ -2067,6 +2069,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
               onClick={() => setSimulationPanelExpanded(!simulationPanelExpanded)}
               onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setSimulationPanelExpanded(!simulationPanelExpanded); }}
               className="flex w-full items-center justify-between gap-2 text-left py-1 touch-manipulation"
+              aria-expanded={simulationPanelExpanded}
+              aria-controls="simulation-panel-body"
             >
               <span className="text-[10px] font-semibold text-teal-400">
                 {t("simulation.rideSimulation")}
@@ -2078,10 +2082,17 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
             {/* Mobile collapsed view - compact controls when simulation is active but panel collapsed */}
             {simulationMode !== 'off' && !simulationPanelExpanded && (
-              <div className="mt-1.5 flex items-center gap-2">
+              <div className="mt-1.5 flex items-center gap-2" id="simulation-panel-body">
                 {/* Progress bar */}
                 {simulationTelemetry && (
-                  <div className="relative h-1.5 w-16 overflow-hidden rounded bg-slate-700">
+                  <div
+                    className="relative h-1.5 w-16 overflow-hidden rounded bg-slate-700"
+                    role="progressbar"
+                    aria-label={t("simulation.rideSimulation")}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(simulationTelemetry.progressPercent)}
+                  >
                     <div
                       className="absolute left-0 top-0 h-full bg-teal-500"
                       style={{ width: `${simulationTelemetry.progressPercent}%` }}
@@ -2092,37 +2103,40 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 {simulationState === 'playing' ? (
                   <button
                     type="button"
+                    aria-label={t("simulation.pause")}
                     onClick={pauseSimulation}
                     onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); pauseSimulation(); }}
                     className="rounded border border-amber-500 bg-amber-600/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-amber-500 active:bg-amber-400 touch-manipulation"
                   >
-                    ⏸
+                    <span aria-hidden="true">⏸</span>
                   </button>
                 ) : (
                   <button
                     type="button"
+                    aria-label={t("simulation.play")}
                     onClick={resumeSimulation}
                     onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); resumeSimulation(); }}
                     className="rounded border border-teal-600 bg-teal-700/80 px-2 py-1 text-[10px] font-semibold text-white hover:bg-teal-600 active:bg-teal-500 touch-manipulation"
                   >
-                    ▶
+                    <span aria-hidden="true">▶</span>
                   </button>
                 )}
                 {/* Stop button */}
                 <button
                   type="button"
+                  aria-label={t("simulation.stop")}
                   onClick={stopSimulation}
                   onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); stopSimulation(); }}
                   className="rounded border border-slate-600 bg-slate-700 px-2 py-1 text-[10px] text-slate-200 hover:bg-slate-600 active:bg-slate-500 touch-manipulation"
                 >
-                  ⏹
+                  <span aria-hidden="true">⏹</span>
                 </button>
               </div>
             )}
 
             {/* Expanded content - show when panel is expanded */}
             {simulationPanelExpanded && (
-              <div className="mt-1.5">
+              <div id="simulation-panel-body" className="mt-1.5">
             {simulationMode === 'off' ? (
               <div className="flex flex-col gap-1.5">
                 <button
@@ -2138,6 +2152,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     <select
                       value={simulationDay}
                       onChange={(e) => setSimulationDay(Number(e.target.value))}
+                      aria-label={t("simulation.day", { day: simulationDay })}
                       className="flex-1 rounded border border-slate-600 bg-slate-800 px-2 py-1.5 text-[10px] text-slate-200 touch-manipulation"
                     >
                       {Array.from({ length: numSimulationDays }, (_, i) => i + 1).map((day) => (
@@ -2193,7 +2208,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 </div>
                 {/* Speed control */}
                 <div className="flex items-center gap-2 pt-1">
-                  <span className="text-[9px] text-slate-400">{t("simulation.speed")}:</span>
+                  <span id="simulationSpeedLabel" className="text-[9px] text-slate-400">{t("simulation.speed")}:</span>
                   <input
                     type="range"
                     min="0.5"
@@ -2203,6 +2218,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     onChange={(e) => setSimulationSpeed(Number(e.target.value))}
                     onTouchStart={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
+                    aria-labelledby="simulationSpeedLabel"
                     className="h-2 w-20 cursor-pointer appearance-none rounded bg-slate-600 accent-teal-500 touch-manipulation"
                   />
                   <span className="w-6 text-[9px] font-semibold text-teal-300">{simulationSpeed}x</span>
@@ -2257,7 +2273,14 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                     )}
                     {/* Progress bar */}
                     <div className="flex items-center gap-2 pt-0.5">
-                      <div className="relative h-1.5 flex-1 overflow-hidden rounded bg-slate-700">
+                      <div
+                        className="relative h-1.5 flex-1 overflow-hidden rounded bg-slate-700"
+                        role="progressbar"
+                        aria-label={t("simulation.rideSimulation")}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(simulationTelemetry.progressPercent)}
+                      >
                         <div
                           className="absolute left-0 top-0 h-full bg-teal-500"
                           style={{ width: `${simulationTelemetry.progressPercent}%` }}
@@ -2284,7 +2307,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
         >
           <div
-            className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
+            className="pointer-events-auto rounded border-2 border-amber-700 bg-amber-400 px-3 py-1.5 text-[11px] font-semibold text-black shadow-lg"
             role="status"
           >
             {t("clickStartPoint")}
@@ -2298,7 +2321,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
         >
           <div
-            className="pointer-events-auto rounded border-2 border-amber-400 bg-amber-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg"
+            className="pointer-events-auto rounded border-2 border-amber-700 bg-amber-400 px-3 py-1.5 text-[11px] font-semibold text-black shadow-lg"
             role="status"
           >
             {t("clickDestination")}
