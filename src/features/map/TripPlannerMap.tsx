@@ -320,10 +320,21 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     
     const updateDimensions = () => {
       // Use window.innerWidth/Height which are more reliable on iOS than vw/vh
-      setCssFullscreenDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
+      const newWidth = window.innerWidth;
+      const newHeight = window.innerHeight;
+      setCssFullscreenDimensions(prev => {
+        // Only update if dimensions actually changed to avoid unnecessary re-renders
+        if (prev.width !== newWidth || prev.height !== newHeight) {
+          return { width: newWidth, height: newHeight };
+        }
+        return prev;
       });
+      
+      // Force Google Maps to resize when dimensions change
+      const map = mapRef.current;
+      if (map) {
+        google.maps.event.trigger(map, 'resize');
+      }
     };
     
     // Initial dimensions
@@ -331,15 +342,19 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     
     const handleOrientationChange = () => {
       // iOS Safari needs multiple delayed updates to get correct dimensions after rotation
+      // The delays account for Safari's animation and viewport recalculation
       updateDimensions();
-      setTimeout(updateDimensions, 100);
+      setTimeout(updateDimensions, 50);
+      setTimeout(updateDimensions, 150);
       setTimeout(updateDimensions, 300);
       setTimeout(updateDimensions, 500);
+      setTimeout(updateDimensions, 800);
+      setTimeout(updateDimensions, 1000);
     };
     
     // Listen to both orientationchange and resize for better coverage
     window.addEventListener('orientationchange', handleOrientationChange);
-    window.addEventListener('resize', handleOrientationChange);
+    window.addEventListener('resize', updateDimensions);
     
     // Also trigger on screen.orientation change for modern browsers
     screen.orientation?.addEventListener('change', handleOrientationChange);
@@ -351,7 +366,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     
     return () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
-      window.removeEventListener('resize', handleOrientationChange);
+      window.removeEventListener('resize', updateDimensions);
       screen.orientation?.removeEventListener('change', handleOrientationChange);
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', updateDimensions);
