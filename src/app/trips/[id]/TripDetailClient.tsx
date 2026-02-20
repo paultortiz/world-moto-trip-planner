@@ -1123,90 +1123,90 @@ export default function TripDetailClient({
               onLowFuelAlert={() => setShowFuelPlaces(true)}
               onRequestSave={handleSaveWaypoints}
               nearbyPlacesControls={
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={showFuelPlaces}
                       onChange={(e) => setShowFuelPlaces(e.target.checked)}
                     />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" />
                     <span>{t("nearbyFuel")}</span>
                   </label>
-                  <label className="flex items-center gap-1">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={showLodgingPlaces}
                       onChange={(e) => setShowLodgingPlaces(e.target.checked)}
                     />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-600" />
                     <span>{t("nearbyLodging")}</span>
                   </label>
-                  <label className="flex items-center gap-1">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={showCampgroundPlaces}
                       onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
                     />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-teal-600" />
                     <span>{t("nearbyCampgrounds")}</span>
                   </label>
-                  <label className="flex items-center gap-1">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={showDiningPlaces}
                       onChange={(e) => setShowDiningPlaces(e.target.checked)}
                     />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-rose-600" />
                     <span>{t("nearbyDining")}</span>
                   </label>
-                  <label className="flex items-center gap-1">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={showPoiPlaces}
                       onChange={(e) => setShowPoiPlaces(e.target.checked)}
                     />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-600" />
                     <span>{t("nearbyPois")}</span>
                   </label>
-                  <label className="flex items-center gap-1">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={showChargingPlaces}
                       onChange={(e) => setShowChargingPlaces(e.target.checked)}
                     />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-500" />
                     <span>{t("nearbyCharging")}</span>
                   </label>
-                  <label className="flex items-center gap-1">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={showBorderPlaces}
                       onChange={(e) => setShowBorderPlaces(e.target.checked)}
                     />
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-500" />
                     <span>{t("nearbyBorder")}</span>
                   </label>
-                  <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
+                  <label className="flex items-center gap-1.5 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={enableClickToAdd}
                       onChange={(e) => setEnableClickToAdd(e.target.checked)}
                     />
                     <span className="font-semibold text-amber-300">{t("addWaypointsByClick")}</span>
                   </label>
-                  <label className="flex items-center gap-1">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <span className="text-slate-500">{t("minRating")}</span>
                     <select
-                      className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px]"
+                      className="rounded border border-slate-600 bg-slate-950 px-1.5 py-1 text-[11px] touch-manipulation"
                       value={minPlaceRating}
                       onChange={(e) => setMinPlaceRating(e.target.value)}
                     >
@@ -1216,10 +1216,10 @@ export default function TripDetailClient({
                       <option value="4.5">4.5+</option>
                     </select>
                   </label>
-                  <label className="flex items-center gap-1">
+                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
                     <input
                       type="checkbox"
-                      className="h-3 w-3 accent-adv-accent"
+                      className="h-4 w-4 accent-adv-accent"
                       checked={onlyOpenNow}
                       onChange={(e) => setOnlyOpenNow(e.target.checked)}
                     />
