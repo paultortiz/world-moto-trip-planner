@@ -2336,9 +2336,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           style={{
             position: "absolute",
             left: 8,
-            top: 50,
+            bottom: 8,
             zIndex: 30,
-            maxHeight: nearbyPlacesPanelExpanded ? "calc(100vh - 120px)" : "auto",
+            maxHeight: nearbyPlacesPanelExpanded ? "calc(100vh - 60px)" : "auto",
           }}
         >
           <div className="rounded border border-adv-border bg-slate-950/95 p-2 text-[11px] text-slate-200 shadow-adv-glow">
@@ -2360,7 +2360,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             </button>
             {/* Expanded content */}
             {nearbyPlacesPanelExpanded && (
-              <div id="nearby-places-panel-body" className="mt-1" style={{ maxHeight: "calc(100vh - 180px)", overflowY: "auto" }}>
+              <div id="nearby-places-panel-body" className="mt-1" style={{ maxHeight: "calc(100vh - 100px)", overflowY: "auto" }}>
                 {nearbyPlacesControls}
               </div>
             )}
