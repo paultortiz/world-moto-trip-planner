@@ -311,6 +311,26 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isCssFullscreen]);
 
+  // Force re-render on orientation change for CSS fullscreen
+  const [, setOrientationKey] = useState(0);
+  useEffect(() => {
+    if (!isCssFullscreen) return;
+    
+    const handleOrientationChange = () => {
+      // Force re-render to recalculate dimensions
+      setOrientationKey(k => k + 1);
+    };
+    
+    // Listen to both orientationchange and resize for better coverage
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
+    };
+  }, [isCssFullscreen]);
+
   // Detect mobile viewport for responsive simulation panel
   useEffect(() => {
     const checkMobile = () => {
@@ -2304,7 +2324,16 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       {isFullscreen && nearbyPlacesControls && (
         <div
           className="pointer-events-auto"
-          style={{ position: "absolute", left: 8, bottom: 8, zIndex: 30, maxWidth: "calc(100% - 300px)" }}
+          style={{
+            position: "absolute",
+            left: isCssFullscreen ? 48 : 8, // Offset from close button on mobile
+            top: isCssFullscreen ? 8 : undefined, // Top position on mobile CSS fullscreen
+            bottom: isCssFullscreen ? undefined : 8, // Bottom position on desktop native fullscreen
+            zIndex: 30,
+            maxWidth: isCssFullscreen ? "calc(100% - 60px)" : "calc(100% - 300px)",
+            maxHeight: isCssFullscreen ? "calc(100vh - 80px)" : undefined,
+            overflowY: isCssFullscreen ? "auto" : undefined,
+          }}
         >
           <div className="rounded border border-adv-border bg-slate-950/95 p-2 text-[11px] text-slate-200 shadow-adv-glow">
             {nearbyPlacesControls}
