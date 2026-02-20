@@ -216,8 +216,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const [currentZoom, setCurrentZoom] = useState<number>(10);
   const [mapBounds, setMapBounds] = useState<google.maps.LatLngBounds | null>(null);
 
-  // Fullscreen state
+  // Fullscreen state - tracks both native and CSS-based fullscreen
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Track if we're using CSS fallback (for iOS/unsupported browsers)
+  const [isCssFullscreen, setIsCssFullscreen] = useState(false);
 
   // Route ride simulation state
   type SimulationMode = 'off' | 'day' | 'full';
@@ -282,13 +284,32 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   // Track fullscreen changes (e.g., user presses Escape)
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isNativeFullscreen = !!document.fullscreenElement;
+      // Only update if we're not in CSS fullscreen mode
+      if (!isCssFullscreen) {
+        setIsFullscreen(isNativeFullscreen);
+      }
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, []);
+  }, [isCssFullscreen]);
+
+  // Handle Escape key for CSS fullscreen mode
+  useEffect(() => {
+    if (!isCssFullscreen) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsCssFullscreen(false);
+        setIsFullscreen(false);
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isCssFullscreen]);
 
   // Detect mobile viewport for responsive simulation panel
   useEffect(() => {
@@ -1900,14 +1921,33 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     const container = mapContainerRef.current;
     if (!container) return;
 
-    if (!document.fullscreenElement) {
-      container.requestFullscreen().catch((err) => {
-        console.warn("Fullscreen request failed:", err);
+    // If currently in any fullscreen mode, exit
+    if (isFullscreen) {
+      if (isCssFullscreen) {
+        // Exit CSS fullscreen
+        setIsCssFullscreen(false);
+        setIsFullscreen(false);
+      } else if (document.fullscreenElement) {
+        // Exit native fullscreen
+        document.exitFullscreen();
+      }
+      return;
+    }
+
+    // Try native fullscreen first
+    if (container.requestFullscreen) {
+      container.requestFullscreen().catch(() => {
+        // Native fullscreen failed (likely iOS or permission denied)
+        // Fall back to CSS fullscreen
+        setIsCssFullscreen(true);
+        setIsFullscreen(true);
       });
     } else {
-      document.exitFullscreen();
+      // No native fullscreen support - use CSS fallback
+      setIsCssFullscreen(true);
+      setIsFullscreen(true);
     }
-  }, []);
+  }, [isFullscreen, isCssFullscreen]);
 
   // Simulation control functions
   const startSimulation = useCallback((mode: 'day' | 'full', day?: number) => {
@@ -2034,7 +2074,20 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   }
 
   // Dynamic container style for fullscreen
-  const dynamicContainerStyle: React.CSSProperties = isFullscreen
+  // CSS fullscreen uses fixed positioning to cover the viewport
+  const dynamicContainerStyle: React.CSSProperties = isCssFullscreen
+    ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 9999,
+        touchAction: 'none',
+      }
+    : isFullscreen
     ? { width: "100%", height: "100vh", touchAction: "none" }
     : containerStyle;
 
@@ -2192,6 +2245,24 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </div>
       )}
 
+      {/* CSS fullscreen close button - prominent X button for mobile */}
+      {isCssFullscreen && (
+        <div
+          className="pointer-events-auto"
+          style={{ position: "absolute", left: 8, top: 8, zIndex: 40 }}
+        >
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); toggleFullscreen(); }}
+            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-900/95 text-xl text-white shadow-lg active:bg-slate-700 touch-manipulation"
+            aria-label={t("exitFullscreen")}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Fit route, measure, and fullscreen controls */}
       <div
         data-tour-map-tools
@@ -2220,7 +2291,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         <button
           type="button"
           onClick={toggleFullscreen}
-          className="rounded border border-adv-border bg-slate-950/80 px-2 py-1 text-[10px] text-slate-200 shadow-adv-glow hover:bg-slate-900"
+          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); toggleFullscreen(); }}
+          className="rounded border border-adv-border bg-slate-950/80 px-2 py-1 text-[10px] text-slate-200 shadow-adv-glow hover:bg-slate-900 touch-manipulation"
           title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
           aria-label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
         >
