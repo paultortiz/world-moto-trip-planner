@@ -317,17 +317,23 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     if (!isCssFullscreen) return;
     
     const handleOrientationChange = () => {
-      // Force re-render to recalculate dimensions
-      setOrientationKey(k => k + 1);
+      // Delay to allow browser to update viewport dimensions
+      setTimeout(() => {
+        setOrientationKey(k => k + 1);
+      }, 100);
     };
     
     // Listen to both orientationchange and resize for better coverage
     window.addEventListener('orientationchange', handleOrientationChange);
     window.addEventListener('resize', handleOrientationChange);
     
+    // Also trigger on screen.orientation change for modern browsers
+    screen.orientation?.addEventListener('change', handleOrientationChange);
+    
     return () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleOrientationChange);
+      screen.orientation?.removeEventListener('change', handleOrientationChange);
     };
   }, [isCssFullscreen]);
 
@@ -2265,24 +2271,6 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </div>
       )}
 
-      {/* CSS fullscreen close button - prominent X button for mobile */}
-      {isCssFullscreen && (
-        <div
-          className="pointer-events-auto"
-          style={{ position: "absolute", left: 8, top: 8, zIndex: 40 }}
-        >
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); toggleFullscreen(); }}
-            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-900/95 text-xl text-white shadow-lg active:bg-slate-700 touch-manipulation"
-            aria-label={t("exitFullscreen")}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
       {/* Fit route, measure, and fullscreen controls */}
       <div
         data-tour-map-tools
@@ -2326,13 +2314,12 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           className="pointer-events-auto"
           style={{
             position: "absolute",
-            left: isCssFullscreen ? 48 : 8, // Offset from close button on mobile
-            top: isCssFullscreen ? 8 : undefined, // Top position on mobile CSS fullscreen
-            bottom: isCssFullscreen ? undefined : 8, // Bottom position on desktop native fullscreen
+            left: 8,
+            bottom: 8,
             zIndex: 30,
-            maxWidth: isCssFullscreen ? "calc(100% - 60px)" : "calc(100% - 300px)",
-            maxHeight: isCssFullscreen ? "calc(100vh - 80px)" : undefined,
-            overflowY: isCssFullscreen ? "auto" : undefined,
+            maxWidth: isCssFullscreen ? "calc(100vw - 16px)" : "calc(100% - 300px)",
+            maxHeight: "calc(100vh - 100px)", // Leave room for top controls
+            overflowY: "auto",
           }}
         >
           <div className="rounded border border-adv-border bg-slate-950/95 p-2 text-[11px] text-slate-200 shadow-adv-glow">
