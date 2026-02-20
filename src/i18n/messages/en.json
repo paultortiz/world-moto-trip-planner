@@ -621,7 +621,14 @@
       "dist": "Dist",
       "time": "Time",
       "fuel": "Fuel",
-      "lowFuelAlert": "Fuel low — nearby stations shown"
+      "lowFuelAlert": "Fuel low — nearby stations shown",
+      "outOfFuelTitle": "Out of fuel — add a fuel stop or continue",
+      "findStation": "Find station",
+      "refuelHere": "Refuel here",
+      "continueAnyway": "Continue anyway",
+      "rangeEndsHere": "Range ends near here",
+      "fuelStop": "Fuel Stop",
+      "saveToResume": "Save to resume"
     }
   },
   "profile": {

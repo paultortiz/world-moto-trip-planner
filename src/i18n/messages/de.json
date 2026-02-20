@@ -621,7 +621,14 @@
       "dist": "Dist",
       "time": "Zeit",
       "fuel": "Tank",
-      "lowFuelAlert": "Tank niedrig — Tankstellen werden angezeigt"
+      "lowFuelAlert": "Tank niedrig — Tankstellen werden angezeigt",
+      "outOfFuelTitle": "Tank leer — Tankstopp hinzufügen oder fortfahren",
+      "findStation": "Tankstelle finden",
+      "refuelHere": "Hier auftanken",
+      "continueAnyway": "Trotzdem fortfahren",
+      "rangeEndsHere": "Reichweite endet in der Nähe",
+      "fuelStop": "Tankstopp",
+      "saveToResume": "Speichern um fortzufahren"
     }
   },
   "profile": {
