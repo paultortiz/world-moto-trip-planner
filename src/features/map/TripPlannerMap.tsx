@@ -2305,7 +2305,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       {onAddWaypoint && (
         <div
           className="pointer-events-auto"
-          style={{ position: "absolute", left: 8, top: 8, zIndex: 30 }}
+          style={{ position: "absolute", left: 8, top: 8, zIndex: 30, maxWidth: "calc(100% - 180px)" }}
         >
           <StandaloneSearchBox
             onLoad={(ref: google.maps.places.SearchBox) => {
@@ -2317,13 +2317,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
               type="text"
               placeholder={t("searchPlaceholder")}
               aria-label={t("searchPlaceholder")}
-              className="w-48 rounded border border-adv-border bg-slate-950/90 px-2 py-1 text-[11px] text-slate-100 shadow-adv-glow placeholder:text-slate-500 sm:w-64"
+              className="w-full max-w-64 rounded border border-adv-border bg-slate-950/90 px-2 py-1 text-[11px] text-slate-100 shadow-adv-glow placeholder:text-slate-500"
             />
           </StandaloneSearchBox>
         </div>
       )}
 
-      {/* Fit route, measure, and fullscreen controls - positioned to not overlap search */}
+      {/* Fit route, measure, and fullscreen controls */}
       <div
         data-tour-map-tools
         className="pointer-events-auto flex gap-1"
