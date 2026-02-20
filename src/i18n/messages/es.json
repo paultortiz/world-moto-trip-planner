@@ -606,6 +606,7 @@
     "dayLabel": "Día {day}",
     "fullscreen": "Pantalla completa",
     "exitFullscreen": "Salir de pantalla completa",
+    "nearbyPlaces": "Lugares Cercanos",
     "simulation": {
       "rideSimulation": "Simulación de Ruta",
       "fullRoute": "Ruta Completa",
