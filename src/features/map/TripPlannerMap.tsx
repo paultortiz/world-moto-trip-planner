@@ -240,8 +240,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const lastFuelStopProgressRef = useRef<number>(0); // Track progress at last fuel fill-up
   const [showFuelPrompt, setShowFuelPrompt] = useState(false);
   const [simulationPanelExpanded, setSimulationPanelExpanded] = useState(false);
-  // Collapsible state for nearby places panel in fullscreen
-  const [nearbyPlacesPanelExpanded, setNearbyPlacesPanelExpanded] = useState(true);
+  // Collapsible state for nearby places panel in fullscreen (default collapsed)
+  const [nearbyPlacesPanelExpanded, setNearbyPlacesPanelExpanded] = useState(false);
   // Mobile detection for responsive panel behavior
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   // Low fuel alert state - track if alert has been triggered this simulation
@@ -2154,7 +2154,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     : containerStyle;
 
   return (
-    <div ref={mapContainerRef} className="relative">
+    <div ref={mapContainerRef} className="relative" data-map-fullscreen={isCssFullscreen || isFullscreen ? "true" : undefined}>
     <GoogleMap
       mapContainerStyle={dynamicContainerStyle}
       center={center}
@@ -2301,13 +2301,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
               type="text"
               placeholder={t("searchPlaceholder")}
               aria-label={t("searchPlaceholder")}
-              className="w-64 rounded border border-adv-border bg-slate-950/90 px-2 py-1 text-[11px] text-slate-100 shadow-adv-glow placeholder:text-slate-500"
+              className="w-48 rounded border border-adv-border bg-slate-950/90 px-2 py-1 text-[11px] text-slate-100 shadow-adv-glow placeholder:text-slate-500 sm:w-64"
             />
           </StandaloneSearchBox>
         </div>
       )}
 
-      {/* Fit route, measure, and fullscreen controls */}
+      {/* Fit route, measure, and fullscreen controls - positioned to not overlap search */}
       <div
         data-tour-map-tools
         className="pointer-events-auto flex gap-1"

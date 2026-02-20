@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useHelpOptional } from "../HelpProvider";
 
@@ -11,6 +12,32 @@ interface HelpButtonProps {
 export function HelpButton({ position = "floating" }: HelpButtonProps) {
   const t = useTranslations("help");
   const helpContext = useHelpOptional();
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+
+  // Detect when map is in fullscreen mode (native or CSS-based)
+  useEffect(() => {
+    const checkFullscreen = () => {
+      // Check native fullscreen
+      const nativeFullscreen = !!document.fullscreenElement;
+      // Check CSS-based fullscreen via data attribute
+      const cssFullscreen = !!document.querySelector('[data-map-fullscreen="true"]');
+      setIsMapFullscreen(nativeFullscreen || cssFullscreen);
+    };
+
+    checkFullscreen();
+    
+    // Listen for fullscreen changes
+    document.addEventListener('fullscreenchange', checkFullscreen);
+    
+    // Use MutationObserver for CSS fullscreen changes
+    const observer = new MutationObserver(checkFullscreen);
+    observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['data-map-fullscreen'] });
+
+    return () => {
+      document.removeEventListener('fullscreenchange', checkFullscreen);
+      observer.disconnect();
+    };
+  }, []);
 
   // If no context, don't render
   if (!helpContext) return null;
@@ -43,8 +70,8 @@ export function HelpButton({ position = "floating" }: HelpButtonProps) {
     );
   }
 
-  // Don't show floating button when drawer is open
-  if (isDrawerOpen) return null;
+  // Don't show floating button when drawer is open or map is fullscreen
+  if (isDrawerOpen || isMapFullscreen) return null;
 
   // Floating button (bottom-right corner)
   return (
