@@ -48,6 +48,8 @@ const MAX_PLACES_RESULTS = 25;
 // Fuel icon (gas pump) - green
 const fuelIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#16a34a" stroke="#fff" stroke-width="1"><path d="M3 22V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7h1a2 2 0 0 1 2 2v4a1 1 0 0 0 2 0v-7l-2-2V7a1 1 0 0 1 2 0v2l2 2v8a3 3 0 0 1-6 0v-4h-1v7H3z"/><rect x="6" y="8" width="6" height="4" rx="1" fill="#fff"/></svg>`;
 const fuelIconSvgHighlight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#22c55e" stroke="#fff" stroke-width="2"><path d="M3 22V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7h1a2 2 0 0 1 2 2v4a1 1 0 0 0 2 0v-7l-2-2V7a1 1 0 0 1 2 0v2l2 2v8a3 3 0 0 1-6 0v-4h-1v7H3z"/><rect x="6" y="8" width="6" height="4" rx="1" fill="#fff"/></svg>`;
+// Predicted range end icon (red circle with "E" for empty) - distinct from gas stations
+const fuelRangeEndIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ef4444" stroke="#fff" stroke-width="2"/><text x="12" y="16" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="#fff">E</text></svg>`;
 
 // Lodging icon (hotel building) - blue
 const lodgingIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#2563eb" stroke="#fff" stroke-width="1"><path d="M6 2h12v20H6z"/><rect x="9" y="6" width="2" height="2" fill="#fff"/><rect x="13" y="6" width="2" height="2" fill="#fff"/><rect x="9" y="11" width="2" height="2" fill="#fff"/><rect x="13" y="11" width="2" height="2" fill="#fff"/><path d="M10 22v-5h4v5" fill="#fff"/></svg>`;
@@ -133,6 +135,10 @@ interface TripPlannerMapProps {
    * Callback when fuel drops below 25% during simulation - parent can enable fuel places filter.
    */
   onLowFuelAlert?: () => void;
+  /**
+   * Callback to trigger a save - used when adding fuel waypoint during out-of-fuel state.
+   */
+  onRequestSave?: () => void;
 }
 
 export default function TripPlannerMap({
@@ -160,6 +166,7 @@ export default function TripPlannerMap({
   totalDurationSeconds: _totalDurationSeconds,
   fuelRangeKm,
   onLowFuelAlert,
+  onRequestSave,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -240,6 +247,11 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   // Accurate distance/duration fetched from Directions API for current simulation segment
   const [simulationSegmentDistanceKm, setSimulationSegmentDistanceKm] = useState<number | null>(null);
   const [simulationSegmentDurationSeconds, setSimulationSegmentDurationSeconds] = useState<number | null>(null);
+
+  // Out-of-fuel handling (Option 2)
+  const [showOutOfFuelPrompt, setShowOutOfFuelPrompt] = useState(false);
+  const outOfFuelDismissedRef = useRef(false);
+  const prevFuelPercentRef = useRef<number | null>(null);
 
   // Track previous values of show* props to detect when they change from false to true
   const prevShowFuel = useRef(showFuelPlaces);
@@ -1500,6 +1512,33 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     };
   })();
 
+  // Predictive "range ends here" marker position (Option 5)
+  const rangeEndPosition = useMemo(() => {
+    if (simulationMode === 'off') return null;
+    if (!fuelRangeKm || !simulationSegmentDistanceKm || simulationSegmentDistanceKm <= 0) return null;
+    if (simulationPath.length < 2) return null;
+    // Hide marker once empty
+    if (simulationTelemetry?.fuelPercent != null && simulationTelemetry.fuelPercent <= 0) return null;
+
+    const pathLenMinus1 = simulationPath.length - 1;
+    const lastIdx = lastFuelStopProgressRef.current; // index along path
+    const deltaNormalized = fuelRangeKm / simulationSegmentDistanceKm; // portion of segment distance
+    const targetIdx = lastIdx + deltaNormalized * pathLenMinus1;
+
+    // If fuel range would reach beyond end of segment, skip marker (trip completes before empty)
+    if (targetIdx >= pathLenMinus1) return null;
+
+    const floorIdx = Math.max(0, Math.floor(targetIdx));
+    const ceilIdx = Math.min(floorIdx + 1, pathLenMinus1);
+    const tLerp = targetIdx - floorIdx;
+    const p1 = simulationPath[floorIdx];
+    const p2 = simulationPath[ceilIdx];
+    return {
+      lat: p1.lat + tLerp * (p2.lat - p1.lat),
+      lng: p1.lng + tLerp * (p2.lng - p1.lng),
+    };
+  }, [simulationMode, simulationPath, fuelRangeKm, simulationSegmentDistanceKm, simulationTelemetry?.fuelPercent, simulationProgress]);
+
   // Low fuel alert - trigger when fuel drops to 25% or below
   const LOW_FUEL_THRESHOLD = 25;
   useEffect(() => {
@@ -1531,6 +1570,143 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       }, 5000);
     }
   }, [simulationMode, simulationTelemetry?.fuelPercent, onLowFuelAlert, t]);
+
+  // Detect crossing to 0% fuel - auto-pause and prompt (once) unless user chose to continue anyway
+  useEffect(() => {
+    if (simulationMode === 'off' || simulationTelemetry?.fuelPercent == null) return;
+    const current = simulationTelemetry.fuelPercent;
+    const prev = prevFuelPercentRef.current;
+    prevFuelPercentRef.current = current;
+
+    if (outOfFuelDismissedRef.current) return;
+
+    if (!showOutOfFuelPrompt && prev != null && prev > 0 && current <= 0) {
+      setShowOutOfFuelPrompt(true);
+      setSimulationState('paused');
+      if (onLowFuelAlert) onLowFuelAlert(); // ensure stations are visible
+    }
+  }, [simulationMode, simulationTelemetry?.fuelPercent, onLowFuelAlert, showOutOfFuelPrompt]);
+
+  // Track previous waypoints to detect new FUEL waypoint additions
+  const prevWaypointsRef = useRef<WaypointPosition[]>([]);
+  // Store pending fuel waypoint to process after route recalculates
+  const pendingFuelWaypointRef = useRef<WaypointPosition | null>(null);
+  // Store the simulation position when we paused for out-of-fuel (for finding nearest point after route change)
+  const outOfFuelPositionRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  // Capture simulation position when out-of-fuel prompt appears
+  useEffect(() => {
+    if (showOutOfFuelPrompt && simulationPosition) {
+      outOfFuelPositionRef.current = { lat: simulationPosition.lat, lng: simulationPosition.lng };
+    }
+  }, [showOutOfFuelPrompt, simulationPosition]);
+
+  // Detect new FUEL waypoint additions and store for processing
+  useEffect(() => {
+    const prevWaypoints = prevWaypointsRef.current;
+    prevWaypointsRef.current = waypoints;
+
+    if (simulationMode === 'off') return;
+
+    // Check if a new FUEL waypoint was added
+    if (waypoints.length <= prevWaypoints.length) return;
+
+    // Find new fuel waypoints that weren't in the previous list
+    const newFuelWaypoint = waypoints.find(
+      (wp) =>
+        wp.type === 'FUEL' &&
+        !prevWaypoints.some(
+          (prev) =>
+            prev.lat === wp.lat && prev.lng === wp.lng && prev.type === wp.type
+        )
+    );
+
+    if (newFuelWaypoint) {
+      console.log('[Simulation] New fuel waypoint detected, storing for rewind after route update');
+      pendingFuelWaypointRef.current = newFuelWaypoint;
+      
+      // Auto-save to trigger route recalculation if we're in out-of-fuel state
+      if (outOfFuelPositionRef.current && onRequestSave) {
+        console.log('[Simulation] Auto-saving to recalculate route with new fuel stop');
+        onRequestSave();
+      }
+    }
+  }, [waypoints, simulationMode, onRequestSave]);
+
+  // Process pending fuel waypoint rewind after simulationPath updates
+  useEffect(() => {
+    const pendingWp = pendingFuelWaypointRef.current;
+    const outOfFuelPos = outOfFuelPositionRef.current;
+    
+    if (!pendingWp || simulationMode === 'off' || simulationPath.length < 2) {
+      return;
+    }
+
+    // Find the closest point on the NEW simulation path for the fuel waypoint
+    let fuelWpIdx = -1;
+    let fuelWpDistSq = Infinity;
+
+    for (let i = 0; i < simulationPath.length; i++) {
+      const pt = simulationPath[i];
+      const distSq = Math.pow(pt.lat - pendingWp.lat, 2) + Math.pow(pt.lng - pendingWp.lng, 2);
+      if (distSq < fuelWpDistSq) {
+        fuelWpDistSq = distSq;
+        fuelWpIdx = i;
+      }
+    }
+
+    // Find where the out-of-fuel position is on the new path
+    let outOfFuelIdx = simulationPath.length - 1;
+    if (outOfFuelPos) {
+      let closestDist = Infinity;
+      for (let i = 0; i < simulationPath.length; i++) {
+        const pt = simulationPath[i];
+        const distSq = Math.pow(pt.lat - outOfFuelPos.lat, 2) + Math.pow(pt.lng - outOfFuelPos.lng, 2);
+        if (distSq < closestDist) {
+          closestDist = distSq;
+          outOfFuelIdx = i;
+        }
+      }
+    }
+
+    // Clear the pending waypoint
+    pendingFuelWaypointRef.current = null;
+
+    // If the fuel waypoint is behind where we ran out of fuel, rewind
+    if (fuelWpIdx >= 0 && fuelWpIdx < outOfFuelIdx) {
+      console.log('[Simulation] Rewinding to fuel waypoint at index', fuelWpIdx, 'from out-of-fuel position', outOfFuelIdx);
+      
+      // Rewind progress to the fuel waypoint
+      setSimulationProgress(fuelWpIdx);
+      
+      // Reset fuel gauge (filled up at this station)
+      lastFuelStopProgressRef.current = fuelWpIdx;
+      
+      // Reset out-of-fuel state so it can trigger again if needed
+      outOfFuelDismissedRef.current = false;
+      setShowOutOfFuelPrompt(false);
+      outOfFuelPositionRef.current = null;
+      
+      // Reset low fuel alert so it can trigger again
+      lowFuelAlertTriggeredRef.current = false;
+      
+      // Clear all visited waypoints (we'll pass them again on the new route)
+      visitedWaypointsRef.current.clear();
+      
+      // Resume playing
+      setSimulationState('playing');
+      lastAnimationTimeRef.current = 0;
+      
+      // Pan camera to the new position
+      const map = mapRef.current;
+      if (map && simulationPath[fuelWpIdx]) {
+        const rewindPos = simulationPath[fuelWpIdx];
+        map.panTo({ lat: rewindPos.lat, lng: rewindPos.lng });
+      }
+    } else {
+      console.log('[Simulation] Fuel waypoint not behind out-of-fuel position, not rewinding');
+    }
+  }, [simulationPath, simulationMode]);
 
   // Animation engine for route ride simulation
   // Note: simulationProgress removed from deps to prevent effect restart every frame
@@ -1744,6 +1920,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     setSimulationWaypointName(null);
     setUserPannedDuringPause(false);
     setShowFuelPrompt(false);
+    setShowOutOfFuelPrompt(false);
+    outOfFuelDismissedRef.current = false;
+    prevFuelPercentRef.current = null;
     visitedWaypointsRef.current.clear();
     lastAnimationTimeRef.current = 0;
     lastFuelStopProgressRef.current = 0; // Start with full tank
@@ -1795,6 +1974,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     setSimulationWaypointName(null);
     setUserPannedDuringPause(false);
     setShowFuelPrompt(false);
+    setShowOutOfFuelPrompt(false);
+    outOfFuelDismissedRef.current = false;
+    prevFuelPercentRef.current = null;
     visitedWaypointsRef.current.clear();
     lastFuelStopProgressRef.current = 0;
     lowFuelAlertTriggeredRef.current = false; // Reset for next simulation
@@ -1806,6 +1988,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     // Fill up - reset fuel gauge by recording current progress as last fuel stop
     lastFuelStopProgressRef.current = simulationProgress;
     setShowFuelPrompt(false);
+    setShowOutOfFuelPrompt(false);
+    outOfFuelDismissedRef.current = false;
     setSimulationWaypointName(null);
     setSimulationState('playing');
     lastAnimationTimeRef.current = 0;
@@ -2056,8 +2240,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </div>
       )}
 
-      {/* Ride simulation controls - shown when route has waypoints */}
-      {routePath && routePath.length > 1 && (
+      {/* Ride simulation controls - shown when route has waypoints OR simulation is active */}
+      {((routePath && routePath.length > 1) || simulationMode !== 'off') && (
         <div
           className="pointer-events-auto"
           style={{ position: "absolute", right: 8, top: 44, zIndex: 30 }}
@@ -2178,7 +2362,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                   {simulationMode === 'full' ? t("simulation.fullRoute") : t("simulation.day", { day: simulationDay })}
                 </div>
                 <div className="flex gap-1">
-                  {simulationState === 'playing' ? (
+                {simulationState === 'playing' ? (
                     <button
                       type="button"
                       onClick={pauseSimulation}
@@ -2396,6 +2580,21 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         />
       )}
 
+      {/* Predictive range end marker */}
+      {rangeEndPosition && (
+        <Marker
+          key="range-end-marker"
+          position={rangeEndPosition}
+          icon={{
+            url: svgToIconUrl(fuelRangeEndIconSvg),
+            scaledSize: new google.maps.Size(24, 24),
+            anchor: new google.maps.Point(12, 12),
+          }}
+          title={t("simulation.rangeEndsHere")}
+          zIndex={220}
+        />
+      )}
+
       {/* Simulation waypoint name overlay */}
       {simulationWaypointName && (simulationState === 'waypoint-pause' || simulationState === 'paused') && (
         <div
@@ -2408,6 +2607,41 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             aria-live="polite"
           >
             📍 {simulationWaypointName}
+          </div>
+        </div>
+      )}
+
+      {/* Out-of-fuel prompt (auto-pause at 0%) */}
+      {showOutOfFuelPrompt && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 120, zIndex: 48 }}
+        >
+          <div
+            className="pointer-events-auto w-[min(360px,92%)] rounded-lg border-2 border-red-500 bg-slate-950/95 px-4 py-3 shadow-lg"
+            role="alertdialog"
+            aria-modal="false"
+            aria-labelledby="out-of-fuel-title"
+          >
+            <p id="out-of-fuel-title" className="mb-2 text-sm font-semibold text-red-300">⛽ {t("simulation.outOfFuelTitle")}</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => { if (onLowFuelAlert) onLowFuelAlert(); setShowOutOfFuelPrompt(false); }}
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); if (onLowFuelAlert) onLowFuelAlert(); setShowOutOfFuelPrompt(false); }}
+                className="rounded border border-amber-500 bg-amber-600/80 px-3 py-2 text-[11px] font-semibold text-white hover:bg-amber-500 active:bg-amber-400 touch-manipulation"
+              >
+                {t("simulation.findStation")}
+              </button>
+              <button
+                type="button"
+                onClick={() => { outOfFuelDismissedRef.current = true; setShowOutOfFuelPrompt(false); resumeSimulation(); }}
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); outOfFuelDismissedRef.current = true; setShowOutOfFuelPrompt(false); resumeSimulation(); }}
+                className="rounded border border-slate-500 bg-slate-700 px-3 py-2 text-[11px] text-slate-200 hover:bg-slate-600 active:bg-slate-500 touch-manipulation"
+              >
+                {t("simulation.continueAnyway")}
+              </button>
+            </div>
           </div>
         </div>
       )}

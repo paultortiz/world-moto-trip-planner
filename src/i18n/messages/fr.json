@@ -621,7 +621,14 @@
       "dist": "Dist",
       "time": "Temps",
       "fuel": "Carb",
-      "lowFuelAlert": "Carburant bas — stations proches affichées"
+      "lowFuelAlert": "Carburant bas — stations proches affichées",
+      "outOfFuelTitle": "Plus de carburant — ajouter un arrêt carburant ou continuer",
+      "findStation": "Trouver une station",
+      "refuelHere": "Faire le plein ici",
+      "continueAnyway": "Continuer quand même",
+      "rangeEndsHere": "L'autonomie se termine près d'ici",
+      "fuelStop": "Arrêt carburant",
+      "saveToResume": "Enregistrer pour reprendre"
     }
   },
   "profile": {

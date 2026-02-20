@@ -1121,6 +1121,7 @@ export default function TripDetailClient({
               totalDurationSeconds={trip.totalDurationSeconds}
               fuelRangeKm={trip.fuelRangeKm}
               onLowFuelAlert={() => setShowFuelPlaces(true)}
+              onRequestSave={handleSaveWaypoints}
               nearbyPlacesControls={
                 <div className="flex flex-wrap items-center gap-2">
                   <label className="flex items-center gap-1">

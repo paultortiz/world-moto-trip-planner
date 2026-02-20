@@ -621,7 +621,14 @@
       "dist": "Dist",
       "time": "Tiempo",
       "fuel": "Comb",
-      "lowFuelAlert": "Combustible bajo — estaciones cercanas mostradas"
+      "lowFuelAlert": "Combustible bajo — estaciones cercanas mostradas",
+      "outOfFuelTitle": "Sin combustible — añade una parada para repostar o continúa",
+      "findStation": "Buscar gasolinera",
+      "refuelHere": "Repostar aquí",
+      "continueAnyway": "Continuar de todos modos",
+      "rangeEndsHere": "La autonomía termina cerca de aquí",
+      "fuelStop": "Parada de combustible",
+      "saveToResume": "Guardar para continuar"
     }
   },
   "profile": {
