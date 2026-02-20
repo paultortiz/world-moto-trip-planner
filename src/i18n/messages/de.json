@@ -606,6 +606,7 @@
     "dayLabel": "Tag {day}",
     "fullscreen": "Vollbild",
     "exitFullscreen": "Vollbild beenden",
+    "nearbyPlaces": "Orte in der Nähe",
     "simulation": {
       "rideSimulation": "Fahrt-Simulation",
       "fullRoute": "Gesamte Route",

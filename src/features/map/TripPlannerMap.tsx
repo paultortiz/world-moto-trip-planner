@@ -240,6 +240,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const lastFuelStopProgressRef = useRef<number>(0); // Track progress at last fuel fill-up
   const [showFuelPrompt, setShowFuelPrompt] = useState(false);
   const [simulationPanelExpanded, setSimulationPanelExpanded] = useState(false);
+  // Collapsible state for nearby places panel in fullscreen
+  const [nearbyPlacesPanelExpanded, setNearbyPlacesPanelExpanded] = useState(true);
   // Mobile detection for responsive panel behavior
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   // Low fuel alert state - track if alert has been triggered this simulation
@@ -311,16 +313,28 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isCssFullscreen]);
 
-  // Force re-render on orientation change for CSS fullscreen
-  const [, setOrientationKey] = useState(0);
+  // Track actual viewport dimensions for CSS fullscreen (iOS Safari doesn't update 100vh/100vw reliably)
+  const [cssFullscreenDimensions, setCssFullscreenDimensions] = useState({ width: 0, height: 0 });
   useEffect(() => {
     if (!isCssFullscreen) return;
     
+    const updateDimensions = () => {
+      // Use window.innerWidth/Height which are more reliable on iOS than vw/vh
+      setCssFullscreenDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    
+    // Initial dimensions
+    updateDimensions();
+    
     const handleOrientationChange = () => {
-      // Delay to allow browser to update viewport dimensions
-      setTimeout(() => {
-        setOrientationKey(k => k + 1);
-      }, 100);
+      // iOS Safari needs multiple delayed updates to get correct dimensions after rotation
+      updateDimensions();
+      setTimeout(updateDimensions, 100);
+      setTimeout(updateDimensions, 300);
+      setTimeout(updateDimensions, 500);
     };
     
     // Listen to both orientationchange and resize for better coverage
@@ -330,10 +344,18 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     // Also trigger on screen.orientation change for modern browsers
     screen.orientation?.addEventListener('change', handleOrientationChange);
     
+    // iOS specific: listen to visualViewport resize
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateDimensions);
+    }
+    
     return () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleOrientationChange);
       screen.orientation?.removeEventListener('change', handleOrientationChange);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateDimensions);
+      }
     };
   }, [isCssFullscreen]);
 
@@ -2101,15 +2123,14 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
   // Dynamic container style for fullscreen
   // CSS fullscreen uses fixed positioning to cover the viewport
+  // Use explicit pixel dimensions for iOS Safari compatibility (vw/vh are unreliable during rotation)
   const dynamicContainerStyle: React.CSSProperties = isCssFullscreen
     ? {
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
+        width: cssFullscreenDimensions.width > 0 ? `${cssFullscreenDimensions.width}px` : '100vw',
+        height: cssFullscreenDimensions.height > 0 ? `${cssFullscreenDimensions.height}px` : '100vh',
         zIndex: 9999,
         touchAction: 'none',
       }
@@ -2315,15 +2336,34 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           style={{
             position: "absolute",
             left: 8,
-            bottom: 8,
+            top: 50,
             zIndex: 30,
-            maxWidth: isCssFullscreen ? "calc(100vw - 16px)" : "calc(100% - 300px)",
-            maxHeight: "calc(100vh - 100px)", // Leave room for top controls
-            overflowY: "auto",
+            maxHeight: nearbyPlacesPanelExpanded ? "calc(100vh - 120px)" : "auto",
           }}
         >
           <div className="rounded border border-adv-border bg-slate-950/95 p-2 text-[11px] text-slate-200 shadow-adv-glow">
-            {nearbyPlacesControls}
+            {/* Collapsible header */}
+            <button
+              type="button"
+              onClick={() => setNearbyPlacesPanelExpanded(!nearbyPlacesPanelExpanded)}
+              onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setNearbyPlacesPanelExpanded(!nearbyPlacesPanelExpanded); }}
+              className="flex w-full items-center justify-between gap-2 text-left py-1 touch-manipulation"
+              aria-expanded={nearbyPlacesPanelExpanded}
+              aria-controls="nearby-places-panel-body"
+            >
+              <span className="text-[10px] font-semibold text-amber-400">
+                {t("nearbyPlaces")}
+              </span>
+              <span className="text-[10px] text-slate-500">
+                {nearbyPlacesPanelExpanded ? '▼' : '▶'}
+              </span>
+            </button>
+            {/* Expanded content */}
+            {nearbyPlacesPanelExpanded && (
+              <div id="nearby-places-panel-body" className="mt-1" style={{ maxHeight: "calc(100vh - 180px)", overflowY: "auto" }}>
+                {nearbyPlacesControls}
+              </div>
+            )}
           </div>
         </div>
       )}
