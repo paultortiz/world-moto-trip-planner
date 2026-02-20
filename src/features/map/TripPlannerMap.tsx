@@ -315,25 +315,32 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
   // Track actual viewport dimensions for CSS fullscreen (iOS Safari doesn't update 100vh/100vw reliably)
   const [cssFullscreenDimensions, setCssFullscreenDimensions] = useState({ width: 0, height: 0 });
+  const lastDimensionsRef = useRef({ width: 0, height: 0 });
+  
   useEffect(() => {
-    if (!isCssFullscreen) return;
+    if (!isCssFullscreen) {
+      // Reset dimensions when exiting fullscreen
+      setCssFullscreenDimensions({ width: 0, height: 0 });
+      lastDimensionsRef.current = { width: 0, height: 0 };
+      return;
+    }
     
     const updateDimensions = () => {
-      // Use window.innerWidth/Height which are more reliable on iOS than vw/vh
-      const newWidth = window.innerWidth;
-      const newHeight = window.innerHeight;
-      setCssFullscreenDimensions(prev => {
-        // Only update if dimensions actually changed to avoid unnecessary re-renders
-        if (prev.width !== newWidth || prev.height !== newHeight) {
-          return { width: newWidth, height: newHeight };
-        }
-        return prev;
-      });
+      // Use visualViewport if available (more accurate on iOS), fallback to window
+      const vp = window.visualViewport;
+      const newWidth = vp ? Math.round(vp.width) : window.innerWidth;
+      const newHeight = vp ? Math.round(vp.height) : window.innerHeight;
       
-      // Force Google Maps to resize when dimensions change
-      const map = mapRef.current;
-      if (map) {
-        google.maps.event.trigger(map, 'resize');
+      // Only update if dimensions actually changed
+      if (lastDimensionsRef.current.width !== newWidth || lastDimensionsRef.current.height !== newHeight) {
+        lastDimensionsRef.current = { width: newWidth, height: newHeight };
+        setCssFullscreenDimensions({ width: newWidth, height: newHeight });
+        
+        // Force Google Maps to resize when dimensions change
+        const map = mapRef.current;
+        if (map) {
+          google.maps.event.trigger(map, 'resize');
+        }
       }
     };
     
@@ -345,11 +352,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       // The delays account for Safari's animation and viewport recalculation
       updateDimensions();
       setTimeout(updateDimensions, 50);
-      setTimeout(updateDimensions, 150);
-      setTimeout(updateDimensions, 300);
+      setTimeout(updateDimensions, 100);
+      setTimeout(updateDimensions, 200);
+      setTimeout(updateDimensions, 350);
       setTimeout(updateDimensions, 500);
-      setTimeout(updateDimensions, 800);
+      setTimeout(updateDimensions, 750);
       setTimeout(updateDimensions, 1000);
+      setTimeout(updateDimensions, 1500);
     };
     
     // Listen to both orientationchange and resize for better coverage
@@ -359,10 +368,15 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     // Also trigger on screen.orientation change for modern browsers
     screen.orientation?.addEventListener('change', handleOrientationChange);
     
-    // iOS specific: listen to visualViewport resize
+    // iOS specific: listen to visualViewport resize and scroll (scroll can indicate keyboard/rotation)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', updateDimensions);
+      window.visualViewport.addEventListener('scroll', updateDimensions);
     }
+    
+    // Polling fallback: iOS sometimes doesn't fire events reliably
+    // Poll every 500ms while in fullscreen to catch any missed changes
+    const pollInterval = setInterval(updateDimensions, 500);
     
     return () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
@@ -370,7 +384,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       screen.orientation?.removeEventListener('change', handleOrientationChange);
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', updateDimensions);
+        window.visualViewport.removeEventListener('scroll', updateDimensions);
       }
+      clearInterval(pollInterval);
     };
   }, [isCssFullscreen]);
 
