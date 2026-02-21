@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { useTranslations } from "next-intl";
 import { GoogleMap, Marker, Polyline, useJsApiLoader, MarkerClusterer, StandaloneSearchBox } from "@react-google-maps/api";
 
@@ -1882,11 +1882,15 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         }
       }
 
-      // Throttle state updates to ~10fps (every 100ms) for UI display
-      // This prevents constant re-renders while keeping the animation smooth
-      if (timestamp - lastProgressUpdateRef.current > 100) {
+      // Throttle state updates to ~2fps (every 500ms) for UI display
+      // This dramatically reduces re-renders to improve touch responsiveness on mobile
+      // while keeping the animation smooth via refs
+      // Use startTransition to mark these as low-priority updates
+      if (timestamp - lastProgressUpdateRef.current > 500) {
         lastProgressUpdateRef.current = timestamp;
-        setSimulationProgress(newProgress);
+        startTransition(() => {
+          setSimulationProgress(newProgress);
+        });
       }
 
       // Pan camera to follow motorcycle (immediate, no animation)
@@ -1898,7 +1902,11 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         animationFrameCounterRef.current++;
         if (animationFrameCounterRef.current % 10 === 0) {
           const bounds = map.getBounds();
-          if (bounds) setMapBounds(bounds);
+          if (bounds) {
+            startTransition(() => {
+              setMapBounds(bounds);
+            });
+          }
         }
       }
 
