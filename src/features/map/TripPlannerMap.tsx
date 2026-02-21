@@ -236,6 +236,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const animationFrameCounterRef = useRef<number>(0); // For throttling bounds updates
   const simulationProgressRef = useRef<number>(0); // High-frequency progress tracking
   const lastProgressUpdateRef = useRef<number>(0); // For throttling state updates
+  const lastCameraUpdateRef = useRef<number>(0); // For throttling camera updates on mobile
   const waypointPauseTimeoutRef = useRef<number | null>(null);
   const visitedWaypointsRef = useRef<Set<number>>(new Set());
   const currentSimulationPosRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -1893,12 +1894,14 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         });
       }
 
-      // Pan camera to follow motorcycle (immediate, no animation)
+      // Pan camera to follow motorcycle - throttle to ~30fps (33ms) to reduce main thread blocking
+      // This is the key optimization for mobile touch responsiveness
       const map = mapRef.current;
       const pos = currentSimulationPosRef.current;
-      if (map && pos) {
+      if (map && pos && timestamp - lastCameraUpdateRef.current > 33) {
+        lastCameraUpdateRef.current = timestamp;
         map.setCenter({ lat: pos.lat, lng: pos.lng });
-        // Update bounds for day labels to follow during animation (throttled to ~6fps)
+        // Update bounds for day labels to follow during animation (throttled to ~3fps)
         animationFrameCounterRef.current++;
         if (animationFrameCounterRef.current % 10 === 0) {
           const bounds = map.getBounds();
