@@ -205,7 +205,12 @@
       "notes": "Notes"
     },
     "booleanYes": "Yes",
-    "booleanNo": "No"
+    "booleanNo": "No",
+    "selectOrType": "Select or type...",
+    "selectMakeFirst": "Select make first",
+    "loadingModels": "Loading models...",
+    "noMatchingMakes": "No matching makes",
+    "noMatchingModels": "No matching models"
   },
   "tripDetail": {
     "tripId": "Trip ID",

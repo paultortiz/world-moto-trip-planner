@@ -281,3 +281,15 @@ model ActivityLog {
   @@index([action, createdAt])
   @@index([createdAt])
 }
+
+// Cache for AI-generated motorcycle model lists by make
+// Shared across all users to minimize OpenAI API calls
+model MotorcycleModelCache {
+  id        String   @id @default(cuid())
+  make      String   @unique  // Normalized make name (e.g., "Yamaha")
+  models    Json     // Array of model names sorted alphabetically
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([make])
+}
