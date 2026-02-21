@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, memo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import ReactMarkdown from "react-markdown";
@@ -117,6 +117,161 @@ interface TripDetailClientProps {
   routePath?: WaypointPosition[];
   motorcycles?: any[];
 }
+
+// Memoized component for nearby places checkboxes to prevent re-renders during simulation
+interface NearbyPlacesControlsProps {
+  showFuelPlaces: boolean;
+  setShowFuelPlaces: (v: boolean) => void;
+  showLodgingPlaces: boolean;
+  setShowLodgingPlaces: (v: boolean) => void;
+  showCampgroundPlaces: boolean;
+  setShowCampgroundPlaces: (v: boolean) => void;
+  showDiningPlaces: boolean;
+  setShowDiningPlaces: (v: boolean) => void;
+  showPoiPlaces: boolean;
+  setShowPoiPlaces: (v: boolean) => void;
+  showChargingPlaces: boolean;
+  setShowChargingPlaces: (v: boolean) => void;
+  showBorderPlaces: boolean;
+  setShowBorderPlaces: (v: boolean) => void;
+  enableClickToAdd: boolean;
+  setEnableClickToAdd: (v: boolean) => void;
+  minPlaceRating: string;
+  setMinPlaceRating: (v: string) => void;
+  onlyOpenNow: boolean;
+  setOnlyOpenNow: (v: boolean) => void;
+  t: (key: string) => string;
+}
+
+const NearbyPlacesControls = memo(function NearbyPlacesControls({
+  showFuelPlaces,
+  setShowFuelPlaces,
+  showLodgingPlaces,
+  setShowLodgingPlaces,
+  showCampgroundPlaces,
+  setShowCampgroundPlaces,
+  showDiningPlaces,
+  setShowDiningPlaces,
+  showPoiPlaces,
+  setShowPoiPlaces,
+  showChargingPlaces,
+  setShowChargingPlaces,
+  showBorderPlaces,
+  setShowBorderPlaces,
+  enableClickToAdd,
+  setEnableClickToAdd,
+  minPlaceRating,
+  setMinPlaceRating,
+  onlyOpenNow,
+  setOnlyOpenNow,
+  t,
+}: NearbyPlacesControlsProps) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={showFuelPlaces}
+          onChange={(e) => setShowFuelPlaces(e.target.checked)}
+        />
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" />
+        <span>{t("nearbyFuel")}</span>
+      </label>
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={showLodgingPlaces}
+          onChange={(e) => setShowLodgingPlaces(e.target.checked)}
+        />
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-600" />
+        <span>{t("nearbyLodging")}</span>
+      </label>
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={showCampgroundPlaces}
+          onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
+        />
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-teal-600" />
+        <span>{t("nearbyCampgrounds")}</span>
+      </label>
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={showDiningPlaces}
+          onChange={(e) => setShowDiningPlaces(e.target.checked)}
+        />
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-rose-600" />
+        <span>{t("nearbyDining")}</span>
+      </label>
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={showPoiPlaces}
+          onChange={(e) => setShowPoiPlaces(e.target.checked)}
+        />
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-600" />
+        <span>{t("nearbyPois")}</span>
+      </label>
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={showChargingPlaces}
+          onChange={(e) => setShowChargingPlaces(e.target.checked)}
+        />
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-500" />
+        <span>{t("nearbyCharging")}</span>
+      </label>
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={showBorderPlaces}
+          onChange={(e) => setShowBorderPlaces(e.target.checked)}
+        />
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-500" />
+        <span>{t("nearbyBorder")}</span>
+      </label>
+      <label className="flex items-center gap-1.5 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={enableClickToAdd}
+          onChange={(e) => setEnableClickToAdd(e.target.checked)}
+        />
+        <span className="font-semibold text-amber-300">{t("addWaypointsByClick")}</span>
+      </label>
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <span className="text-slate-500">{t("minRating")}</span>
+        <select
+          className="rounded border border-slate-600 bg-slate-950 px-1.5 py-1 text-[11px] touch-manipulation"
+          value={minPlaceRating}
+          onChange={(e) => setMinPlaceRating(e.target.value)}
+        >
+          <option value="any">{t("any")}</option>
+          <option value="3.5">3.5+</option>
+          <option value="4.0">4.0+</option>
+          <option value="4.5">4.5+</option>
+        </select>
+      </label>
+      <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-adv-accent"
+          checked={onlyOpenNow}
+          onChange={(e) => setOnlyOpenNow(e.target.checked)}
+        />
+        <span>{t("openNowOnly")}</span>
+      </label>
+    </div>
+  );
+});
 
 function haversineKm(a: WaypointPosition, b: WaypointPosition): number {
   const R = 6371; // km
@@ -1123,109 +1278,29 @@ export default function TripDetailClient({
               onLowFuelAlert={() => setShowFuelPlaces(true)}
               onRequestSave={handleSaveWaypoints}
               nearbyPlacesControls={
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={showFuelPlaces}
-                      onChange={(e) => setShowFuelPlaces(e.target.checked)}
-                    />
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" />
-                    <span>{t("nearbyFuel")}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={showLodgingPlaces}
-                      onChange={(e) => setShowLodgingPlaces(e.target.checked)}
-                    />
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-600" />
-                    <span>{t("nearbyLodging")}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={showCampgroundPlaces}
-                      onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
-                    />
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-teal-600" />
-                    <span>{t("nearbyCampgrounds")}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={showDiningPlaces}
-                      onChange={(e) => setShowDiningPlaces(e.target.checked)}
-                    />
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-rose-600" />
-                    <span>{t("nearbyDining")}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={showPoiPlaces}
-                      onChange={(e) => setShowPoiPlaces(e.target.checked)}
-                    />
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-600" />
-                    <span>{t("nearbyPois")}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={showChargingPlaces}
-                      onChange={(e) => setShowChargingPlaces(e.target.checked)}
-                    />
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-500" />
-                    <span>{t("nearbyCharging")}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={showBorderPlaces}
-                      onChange={(e) => setShowBorderPlaces(e.target.checked)}
-                    />
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-500" />
-                    <span>{t("nearbyBorder")}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={enableClickToAdd}
-                      onChange={(e) => setEnableClickToAdd(e.target.checked)}
-                    />
-                    <span className="font-semibold text-amber-300">{t("addWaypointsByClick")}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <span className="text-slate-500">{t("minRating")}</span>
-                    <select
-                      className="rounded border border-slate-600 bg-slate-950 px-1.5 py-1 text-[11px] touch-manipulation"
-                      value={minPlaceRating}
-                      onChange={(e) => setMinPlaceRating(e.target.value)}
-                    >
-                      <option value="any">{t("any")}</option>
-                      <option value="3.5">3.5+</option>
-                      <option value="4.0">4.0+</option>
-                      <option value="4.5">4.5+</option>
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-adv-accent"
-                      checked={onlyOpenNow}
-                      onChange={(e) => setOnlyOpenNow(e.target.checked)}
-                    />
-                    <span>{t("openNowOnly")}</span>
-                  </label>
-                </div>
+                <NearbyPlacesControls
+                  showFuelPlaces={showFuelPlaces}
+                  setShowFuelPlaces={setShowFuelPlaces}
+                  showLodgingPlaces={showLodgingPlaces}
+                  setShowLodgingPlaces={setShowLodgingPlaces}
+                  showCampgroundPlaces={showCampgroundPlaces}
+                  setShowCampgroundPlaces={setShowCampgroundPlaces}
+                  showDiningPlaces={showDiningPlaces}
+                  setShowDiningPlaces={setShowDiningPlaces}
+                  showPoiPlaces={showPoiPlaces}
+                  setShowPoiPlaces={setShowPoiPlaces}
+                  showChargingPlaces={showChargingPlaces}
+                  setShowChargingPlaces={setShowChargingPlaces}
+                  showBorderPlaces={showBorderPlaces}
+                  setShowBorderPlaces={setShowBorderPlaces}
+                  enableClickToAdd={enableClickToAdd}
+                  setEnableClickToAdd={setEnableClickToAdd}
+                  minPlaceRating={minPlaceRating}
+                  setMinPlaceRating={setMinPlaceRating}
+                  onlyOpenNow={onlyOpenNow}
+                  setOnlyOpenNow={setOnlyOpenNow}
+                  t={t}
+                />
               }
               onAddWaypoint={(wp) => {
                 setWaypoints((prev) => {
