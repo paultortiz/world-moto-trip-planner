@@ -234,6 +234,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const lastAnimationTimeRef = useRef<number>(0);
   const animationFrameCounterRef = useRef<number>(0); // For throttling bounds updates
+  const simulationProgressRef = useRef<number>(0); // High-frequency progress tracking
+  const lastProgressUpdateRef = useRef<number>(0); // For throttling state updates
   const waypointPauseTimeoutRef = useRef<number | null>(null);
   const visitedWaypointsRef = useRef<Set<number>>(new Set());
   const currentSimulationPosRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -1777,6 +1779,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       console.log('[Simulation] Rewinding to fuel waypoint at index', fuelWpIdx, 'from out-of-fuel position', outOfFuelIdx);
       
       // Rewind progress to the fuel waypoint
+      simulationProgressRef.current = fuelWpIdx;
       setSimulationProgress(fuelWpIdx);
       
       // Reset fuel gauge (filled up at this station)
@@ -1827,56 +1830,64 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       const deltaTime = (timestamp - lastAnimationTimeRef.current) / 1000;
       lastAnimationTimeRef.current = timestamp;
 
-      setSimulationProgress((prev) => {
-        const newProgress = prev + SPEED * deltaTime;
-        
-        // Check if we've reached the end
-        if (newProgress >= simulationPath.length - 1) {
-          setSimulationState('idle');
-          setSimulationWaypointName(null);
-          return simulationPath.length - 1;
-        }
+      // Update progress using ref (no re-render)
+      const newProgress = simulationProgressRef.current + SPEED * deltaTime;
+      simulationProgressRef.current = newProgress;
+      
+      // Check if we've reached the end
+      if (newProgress >= simulationPath.length - 1) {
+        simulationProgressRef.current = simulationPath.length - 1;
+        setSimulationProgress(simulationPath.length - 1);
+        setSimulationState('idle');
+        setSimulationWaypointName(null);
+        return;
+      }
 
-        // Check proximity to waypoints for pause
-        const currentIdx = Math.floor(newProgress);
-        const currentPoint = simulationPath[currentIdx];
-        if (currentPoint) {
-          // Store current position for camera tracking
-          currentSimulationPosRef.current = currentPoint;
+      // Check proximity to waypoints for pause
+      const currentIdx = Math.floor(newProgress);
+      const currentPoint = simulationPath[currentIdx];
+      if (currentPoint) {
+        // Store current position for camera tracking
+        currentSimulationPosRef.current = currentPoint;
 
-          for (let i = 0; i < simulationWaypointsForPause.length; i++) {
-            const wp = simulationWaypointsForPause[i];
-            if (visitedWaypointsRef.current.has(i)) continue;
+        for (let i = 0; i < simulationWaypointsForPause.length; i++) {
+          const wp = simulationWaypointsForPause[i];
+          if (visitedWaypointsRef.current.has(i)) continue;
 
-            const distSq = Math.pow(currentPoint.lat - wp.lat, 2) + Math.pow(currentPoint.lng - wp.lng, 2);
-            if (distSq < WAYPOINT_PROXIMITY_THRESHOLD) {
-              // Mark as visited and trigger waypoint pause
-              visitedWaypointsRef.current.add(i);
-              console.log('[Simulation] Reached waypoint:', wp.name, 'type:', wp.type);
-              setSimulationState('waypoint-pause');
-              setSimulationWaypointName(wp.name);
-              
-              // Check if this is a FUEL waypoint - show fill-up prompt
-              if (wp.type === 'FUEL') {
-                console.log('[Simulation] FUEL waypoint detected, showing prompt');
-                setShowFuelPrompt(true);
-                // Don't auto-resume - wait for user response
-              } else {
-                // Auto-resume after 2 seconds for non-fuel waypoints
-                waypointPauseTimeoutRef.current = window.setTimeout(() => {
-                  setSimulationState('playing');
-                  setSimulationWaypointName(null);
-                  waypointPauseTimeoutRef.current = null;
-                }, 2000);
-              }
-              
-              return newProgress;
+          const distSq = Math.pow(currentPoint.lat - wp.lat, 2) + Math.pow(currentPoint.lng - wp.lng, 2);
+          if (distSq < WAYPOINT_PROXIMITY_THRESHOLD) {
+            // Mark as visited and trigger waypoint pause
+            visitedWaypointsRef.current.add(i);
+            console.log('[Simulation] Reached waypoint:', wp.name, 'type:', wp.type);
+            setSimulationProgress(newProgress);
+            setSimulationState('waypoint-pause');
+            setSimulationWaypointName(wp.name);
+            
+            // Check if this is a FUEL waypoint - show fill-up prompt
+            if (wp.type === 'FUEL') {
+              console.log('[Simulation] FUEL waypoint detected, showing prompt');
+              setShowFuelPrompt(true);
+              // Don't auto-resume - wait for user response
+            } else {
+              // Auto-resume after 2 seconds for non-fuel waypoints
+              waypointPauseTimeoutRef.current = window.setTimeout(() => {
+                setSimulationState('playing');
+                setSimulationWaypointName(null);
+                waypointPauseTimeoutRef.current = null;
+              }, 2000);
             }
+            
+            return;
           }
         }
+      }
 
-        return newProgress;
-      });
+      // Throttle state updates to ~10fps (every 100ms) for UI display
+      // This prevents constant re-renders while keeping the animation smooth
+      if (timestamp - lastProgressUpdateRef.current > 100) {
+        lastProgressUpdateRef.current = timestamp;
+        setSimulationProgress(newProgress);
+      }
 
       // Pan camera to follow motorcycle (immediate, no animation)
       const map = mapRef.current;
@@ -2034,6 +2045,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     if (mode === 'day' && day !== undefined) {
       setSimulationDay(day);
     }
+    simulationProgressRef.current = 0;
+    lastProgressUpdateRef.current = 0;
     setSimulationProgress(0);
     setSimulationState('playing');
     setSimulationWaypointName(null);
@@ -2089,6 +2102,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     }
     setSimulationMode('off');
     setSimulationState('idle');
+    simulationProgressRef.current = 0;
+    lastProgressUpdateRef.current = 0;
     setSimulationProgress(0);
     setSimulationWaypointName(null);
     setUserPannedDuringPause(false);
