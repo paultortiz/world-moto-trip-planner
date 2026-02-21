@@ -1159,83 +1159,83 @@ export default function TripDetailClient({
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#8b5cf6" stroke="#fff" strokeWidth="1"><path d="M4 2v20M4 4h12l-2 4 2 4H4"/></svg>
                 <span>{t("border")}</span>
               </div>
-              <div data-tour-nearby-filters className="flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-1">
+              <div data-tour-nearby-filters className="flex flex-wrap items-center gap-2 relative z-50">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={showFuelPlaces}
                     onChange={(e) => setShowFuelPlaces(e.target.checked)}
                   />
                   <span>{t("nearbyFuel")}</span>
                 </label>
-                <label className="flex items-center gap-1">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={showLodgingPlaces}
                     onChange={(e) => setShowLodgingPlaces(e.target.checked)}
                   />
                   <span>{t("nearbyLodging")}</span>
                 </label>
-                <label className="flex items-center gap-1">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={showCampgroundPlaces}
                     onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
                   />
                   <span>{t("nearbyCampgrounds")}</span>
                 </label>
-                <label className="flex items-center gap-1">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={showDiningPlaces}
                     onChange={(e) => setShowDiningPlaces(e.target.checked)}
                   />
                   <span>{t("nearbyDining")}</span>
                 </label>
-                <label className="flex items-center gap-1">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={showPoiPlaces}
                     onChange={(e) => setShowPoiPlaces(e.target.checked)}
                   />
                   <span>{t("nearbyPois")}</span>
                 </label>
-                <label className="flex items-center gap-1">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={showChargingPlaces}
                     onChange={(e) => setShowChargingPlaces(e.target.checked)}
                   />
                   <span>{t("nearbyCharging")}</span>
                 </label>
-                <label className="flex items-center gap-1">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={showBorderPlaces}
                     onChange={(e) => setShowBorderPlaces(e.target.checked)}
                   />
                   <span>{t("nearbyBorder")}</span>
                 </label>
-                <label className="flex items-center gap-1 rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-1">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none rounded-full border border-amber-400/70 bg-amber-500/10 px-2">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={enableClickToAdd}
                     onChange={(e) => setEnableClickToAdd(e.target.checked)}
                   />
                   <span className="font-semibold text-amber-300">{t("addWaypointsByClick")}</span>
                 </label>
-                <label className="flex items-center gap-1">
+                <label className="flex items-center gap-1 touch-manipulation cursor-pointer select-none">
                   <span className="text-slate-500">{t("minRating")}</span>
                   <select
-                    className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px]"
+                    className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px] min-h-[32px]"
                     value={minPlaceRating}
                     onChange={(e) => setMinPlaceRating(e.target.value)}
                   >
@@ -1245,10 +1245,10 @@ export default function TripDetailClient({
                     <option value="4.5">4.5+</option>
                   </select>
                 </label>
-                <label className="flex items-center gap-1">
+                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="h-3 w-3 accent-adv-accent"
+                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
                     checked={onlyOpenNow}
                     onChange={(e) => setOnlyOpenNow(e.target.checked)}
                   />
