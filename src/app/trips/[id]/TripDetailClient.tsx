@@ -1160,78 +1160,86 @@ export default function TripDetailClient({
                 <span>{t("border")}</span>
               </div>
               <div data-tour-nearby-filters className="flex flex-wrap items-center gap-2 relative z-50">
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={showFuelPlaces}
-                    onChange={(e) => setShowFuelPlaces(e.target.checked)}
-                  />
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showFuelPlaces ? 'bg-green-600/30 text-green-300' : 'bg-slate-800 text-slate-400'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setShowFuelPlaces(!showFuelPlaces); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showFuelPlaces ? 'bg-green-500 border-green-500' : 'border-slate-500'}`}>
+                    {showFuelPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
                   <span>{t("nearbyFuel")}</span>
-                </label>
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={showLodgingPlaces}
-                    onChange={(e) => setShowLodgingPlaces(e.target.checked)}
-                  />
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showLodgingPlaces ? 'bg-blue-600/30 text-blue-300' : 'bg-slate-800 text-slate-400'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setShowLodgingPlaces(!showLodgingPlaces); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showLodgingPlaces ? 'bg-blue-500 border-blue-500' : 'border-slate-500'}`}>
+                    {showLodgingPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
                   <span>{t("nearbyLodging")}</span>
-                </label>
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={showCampgroundPlaces}
-                    onChange={(e) => setShowCampgroundPlaces(e.target.checked)}
-                  />
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showCampgroundPlaces ? 'bg-teal-600/30 text-teal-300' : 'bg-slate-800 text-slate-400'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setShowCampgroundPlaces(!showCampgroundPlaces); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showCampgroundPlaces ? 'bg-teal-500 border-teal-500' : 'border-slate-500'}`}>
+                    {showCampgroundPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
                   <span>{t("nearbyCampgrounds")}</span>
-                </label>
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={showDiningPlaces}
-                    onChange={(e) => setShowDiningPlaces(e.target.checked)}
-                  />
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showDiningPlaces ? 'bg-rose-600/30 text-rose-300' : 'bg-slate-800 text-slate-400'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setShowDiningPlaces(!showDiningPlaces); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showDiningPlaces ? 'bg-rose-500 border-rose-500' : 'border-slate-500'}`}>
+                    {showDiningPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
                   <span>{t("nearbyDining")}</span>
-                </label>
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={showPoiPlaces}
-                    onChange={(e) => setShowPoiPlaces(e.target.checked)}
-                  />
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showPoiPlaces ? 'bg-amber-600/30 text-amber-300' : 'bg-slate-800 text-slate-400'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setShowPoiPlaces(!showPoiPlaces); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showPoiPlaces ? 'bg-amber-500 border-amber-500' : 'border-slate-500'}`}>
+                    {showPoiPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
                   <span>{t("nearbyPois")}</span>
-                </label>
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={showChargingPlaces}
-                    onChange={(e) => setShowChargingPlaces(e.target.checked)}
-                  />
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showChargingPlaces ? 'bg-sky-600/30 text-sky-300' : 'bg-slate-800 text-slate-400'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setShowChargingPlaces(!showChargingPlaces); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showChargingPlaces ? 'bg-sky-500 border-sky-500' : 'border-slate-500'}`}>
+                    {showChargingPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
                   <span>{t("nearbyCharging")}</span>
-                </label>
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={showBorderPlaces}
-                    onChange={(e) => setShowBorderPlaces(e.target.checked)}
-                  />
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showBorderPlaces ? 'bg-violet-600/30 text-violet-300' : 'bg-slate-800 text-slate-400'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setShowBorderPlaces(!showBorderPlaces); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showBorderPlaces ? 'bg-violet-500 border-violet-500' : 'border-slate-500'}`}>
+                    {showBorderPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
                   <span>{t("nearbyBorder")}</span>
-                </label>
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none rounded-full border border-amber-400/70 bg-amber-500/10 px-2">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={enableClickToAdd}
-                    onChange={(e) => setEnableClickToAdd(e.target.checked)}
-                  />
-                  <span className="font-semibold text-amber-300">{t("addWaypointsByClick")}</span>
-                </label>
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded-full touch-manipulation select-none transition-colors border ${enableClickToAdd ? 'bg-amber-500/30 text-amber-300 border-amber-400/70' : 'bg-slate-800 text-slate-400 border-slate-600'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setEnableClickToAdd(!enableClickToAdd); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${enableClickToAdd ? 'bg-amber-500 border-amber-500' : 'border-slate-500'}`}>
+                    {enableClickToAdd && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
+                  <span className="font-semibold">{t("addWaypointsByClick")}</span>
+                </button>
                 <label className="flex items-center gap-1 touch-manipulation cursor-pointer select-none">
                   <span className="text-slate-500">{t("minRating")}</span>
                   <select
@@ -1245,15 +1253,16 @@ export default function TripDetailClient({
                     <option value="4.5">4.5+</option>
                   </select>
                 </label>
-                <label className="flex items-center gap-1.5 py-1 touch-manipulation cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-adv-accent flex-shrink-0"
-                    checked={onlyOpenNow}
-                    onChange={(e) => setOnlyOpenNow(e.target.checked)}
-                  />
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${onlyOpenNow ? 'bg-emerald-600/30 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}
+                  onPointerDown={(e) => { e.preventDefault(); setOnlyOpenNow(!onlyOpenNow); }}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${onlyOpenNow ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'}`}>
+                    {onlyOpenNow && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
+                  </span>
                   <span>{t("openNowOnly")}</span>
-                </label>
+                </button>
               </div>
             </div>
           </div>
