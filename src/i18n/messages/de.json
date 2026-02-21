@@ -205,7 +205,12 @@
       "notes": "Anmerkungen"
     },
     "booleanYes": "Ja",
-    "booleanNo": "Nein"
+    "booleanNo": "Nein",
+    "selectOrType": "Auswählen oder eingeben...",
+    "selectMakeFirst": "Erst Marke wählen",
+    "loadingModels": "Modelle werden geladen...",
+    "noMatchingMakes": "Keine passenden Marken",
+    "noMatchingModels": "Keine passenden Modelle"
   },
   "tripDetail": {
     "tripId": "Reise-ID",
