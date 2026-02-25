@@ -692,6 +692,34 @@
       "deserts": "Desiertos"
     }
   },
+  "borderCrossings": {
+    "title": "Preparación para Cruces Fronterizos",
+    "crossings": "cruce(s)",
+    "countriesTab": "Países y Tiempos de Espera",
+    "requirementsTab": "Requisitos de Documentos",
+    "detectingCountries": "Detectando países a lo largo de la ruta...",
+    "countriesOnRoute": "Países en la ruta",
+    "borderCrossings": "Cruces fronterizos",
+    "unnamedCrossing": "Cruce sin nombre",
+    "loading": "Cargando...",
+    "minutes": "min",
+    "lanesOpen": "carriles abiertos",
+    "noWaitData": "Datos de tiempo de espera no disponibles",
+    "noBorderCrossings": "No hay cruces fronterizos añadidos a la ruta. Añade un punto fronterizo para ver información.",
+    "generateRequirements": "Generar Requisitos",
+    "generating": "Generando...",
+    "singleCountryTrip": "Este viaje permanece dentro de un solo país. No se necesitan requisitos de cruce fronterizo.",
+    "noRequirements": "Expande el panel y espera la detección de países para ver los requisitos fronterizos.",
+    "categories": {
+      "passport": "Pasaporte",
+      "visa": "Visa",
+      "vehicle": "Documentos del Vehículo",
+      "insurance": "Seguro",
+      "health": "Salud",
+      "customs": "Aduanas",
+      "tips": "Consejos"
+    }
+  },
   "help": {
     "title": "Ayuda",
     "searchPlaceholder": "Buscar artículos de ayuda...",

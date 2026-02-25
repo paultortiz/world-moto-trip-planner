@@ -21,6 +21,7 @@ import {
   getDayIndexForInsertPosition,
 } from "@/lib/routeInsertion";
 import { HelpTooltip } from "@/help";
+import BorderPrepPanel from "./BorderPrepPanel";
 
 interface WaypointDto {
   id?: string;
@@ -2871,6 +2872,9 @@ export default function TripDetailClient({
               </div>
             )}
           </section>
+
+          {/* Border Crossing Prep Panel */}
+          <BorderPrepPanel waypoints={waypoints} tripId={trip.id} />
 
           {sponsorDemoEnabled && (
             <section
