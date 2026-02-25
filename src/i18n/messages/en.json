@@ -692,6 +692,34 @@
       "deserts": "Deserts"
     }
   },
+  "borderCrossings": {
+    "title": "Border Crossing Prep",
+    "crossings": "crossing(s)",
+    "countriesTab": "Countries & Wait Times",
+    "requirementsTab": "Document Requirements",
+    "detectingCountries": "Detecting countries along route...",
+    "countriesOnRoute": "Countries on route",
+    "borderCrossings": "Border crossings",
+    "unnamedCrossing": "Unnamed crossing",
+    "loading": "Loading...",
+    "minutes": "min",
+    "lanesOpen": "lanes open",
+    "noWaitData": "Wait time data not available",
+    "noBorderCrossings": "No border crossings added to route. Add a border waypoint to see crossing info.",
+    "generateRequirements": "Generate Requirements",
+    "generating": "Generating...",
+    "singleCountryTrip": "This trip stays within a single country. No border crossing requirements needed.",
+    "noRequirements": "Expand the panel and wait for country detection to see border requirements.",
+    "categories": {
+      "passport": "Passport",
+      "visa": "Visa",
+      "vehicle": "Vehicle Documents",
+      "insurance": "Insurance",
+      "health": "Health",
+      "customs": "Customs",
+      "tips": "Tips"
+    }
+  },
   "help": {
     "title": "Help",
     "searchPlaceholder": "Search help articles...",

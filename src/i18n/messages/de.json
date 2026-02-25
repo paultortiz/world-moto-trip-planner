@@ -692,6 +692,34 @@
       "deserts": "Wüsten"
     }
   },
+  "borderCrossings": {
+    "title": "Grenzübergang-Vorbereitung",
+    "crossings": "Grenzübergänge",
+    "countriesTab": "Länder & Wartezeiten",
+    "requirementsTab": "Dokumentanforderungen",
+    "detectingCountries": "Länder auf der Route werden ermittelt...",
+    "countriesOnRoute": "Länder auf Ihrer Route",
+    "borderCrossings": "Grenzübergänge",
+    "unnamedCrossing": "Unbenannter Grenzübergang",
+    "loading": "Wartezeiten werden geladen...",
+    "minutes": "Min",
+    "lanesOpen": "Spuren offen",
+    "noWaitData": "Keine Wartezeitdaten verfügbar",
+    "noBorderCrossings": "Keine Grenzübergänge auf dieser Route",
+    "generateRequirements": "Anforderungen generieren",
+    "generating": "Anforderungen werden generiert...",
+    "singleCountryTrip": "Diese Reise bleibt in einem Land",
+    "noRequirements": "Keine Anforderungen gefunden",
+    "categories": {
+      "passport": "Reisepass",
+      "visa": "Visum",
+      "vehicle": "Fahrzeugdokumente",
+      "insurance": "Versicherung",
+      "health": "Gesundheit",
+      "customs": "Zoll",
+      "tips": "Tipps"
+    }
+  },
   "help": {
     "title": "Hilfe",
     "searchPlaceholder": "Hilfeartikel durchsuchen...",

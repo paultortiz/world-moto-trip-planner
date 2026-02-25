@@ -692,6 +692,34 @@
       "deserts": "Déserts"
     }
   },
+  "borderCrossings": {
+    "title": "Préparation Passage Frontière",
+    "crossings": "Passages Frontière",
+    "countriesTab": "Pays & Temps d'Attente",
+    "requirementsTab": "Documents Requis",
+    "detectingCountries": "Détection des pays sur l'itinéraire...",
+    "countriesOnRoute": "Pays sur votre itinéraire",
+    "borderCrossings": "Passages frontière",
+    "unnamedCrossing": "Passage frontière sans nom",
+    "loading": "Chargement des temps d'attente...",
+    "minutes": "min",
+    "lanesOpen": "voies ouvertes",
+    "noWaitData": "Pas de données de temps d'attente",
+    "noBorderCrossings": "Aucun passage frontière sur cet itinéraire",
+    "generateRequirements": "Générer les exigences",
+    "generating": "Génération des exigences...",
+    "singleCountryTrip": "Ce voyage reste dans un seul pays",
+    "noRequirements": "Aucune exigence trouvée",
+    "categories": {
+      "passport": "Passeport",
+      "visa": "Visa",
+      "vehicle": "Documents Véhicule",
+      "insurance": "Assurance",
+      "health": "Santé",
+      "customs": "Douane",
+      "tips": "Conseils"
+    }
+  },
   "help": {
     "title": "Aide",
     "searchPlaceholder": "Rechercher des articles d'aide...",

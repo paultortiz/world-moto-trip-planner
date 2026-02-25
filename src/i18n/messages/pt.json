@@ -692,6 +692,34 @@
       "deserts": "Desertos"
     }
   },
+  "borderCrossings": {
+    "title": "Preparação para Fronteira",
+    "crossings": "Travessias de Fronteira",
+    "countriesTab": "Países e Tempos de Espera",
+    "requirementsTab": "Requisitos de Documentos",
+    "detectingCountries": "Detectando países na rota...",
+    "countriesOnRoute": "Países na sua rota",
+    "borderCrossings": "Travessias de fronteira",
+    "unnamedCrossing": "Travessia sem nome",
+    "loading": "Carregando tempos de espera...",
+    "minutes": "min",
+    "lanesOpen": "faixas abertas",
+    "noWaitData": "Sem dados de tempo de espera",
+    "noBorderCrossings": "Nenhuma travessia de fronteira nesta rota",
+    "generateRequirements": "Gerar requisitos",
+    "generating": "Gerando requisitos...",
+    "singleCountryTrip": "Esta viagem permanece em um país",
+    "noRequirements": "Nenhum requisito encontrado",
+    "categories": {
+      "passport": "Passaporte",
+      "visa": "Visto",
+      "vehicle": "Documentos do Veículo",
+      "insurance": "Seguro",
+      "health": "Saúde",
+      "customs": "Alfândega",
+      "tips": "Dicas"
+    }
+  },
   "help": {
     "title": "Ajuda",
     "searchPlaceholder": "Pesquisar artigos de ajuda...",
