@@ -13,9 +13,7 @@ import {
   findCountryTransitions,
   getUniqueCountriesInOrder,
   getCountryPairs,
-  type CountryInfo,
   type WaypointWithCountry,
-  type CountryTransition,
 } from "@/lib/countryDetection";
 
 interface WaypointDto {
@@ -28,7 +26,6 @@ interface WaypointDto {
 
 interface BorderPrepPanelProps {
   waypoints: WaypointDto[];
-  tripId: string;
 }
 
 // Category icons for document requirements
@@ -45,7 +42,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 // Category display order
 const CATEGORY_ORDER = ["passport", "visa", "vehicle", "insurance", "health", "customs", "tips"];
 
-export default function BorderPrepPanel({ waypoints, tripId }: BorderPrepPanelProps) {
+export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   const t = useTranslations("borderCrossings");
   const locale = useLocale();
 

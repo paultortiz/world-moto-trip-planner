@@ -2874,7 +2874,7 @@ export default function TripDetailClient({
           </section>
 
           {/* Border Crossing Prep Panel */}
-          <BorderPrepPanel waypoints={waypoints} tripId={trip.id} />
+          <BorderPrepPanel waypoints={waypoints} />
 
           {sponsorDemoEnabled && (
             <section

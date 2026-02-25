@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { openai } from "@/lib/openai";
 import { auth } from "@/auth";
@@ -164,7 +163,7 @@ Be specific and practical. Include costs where known.`;
       // Remove trailing commas
       jsonStr = jsonStr.replace(/,\s*([\]}])/g, "$1");
       parsed = JSON.parse(jsonStr);
-    } catch (parseErr) {
+    } catch {
       console.error("Failed to parse AI border requirements response:", rawText);
       return NextResponse.json(
         { error: "Failed to parse AI response" },
