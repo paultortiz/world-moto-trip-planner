@@ -428,7 +428,10 @@
     "leavePageTitle": "Modifications non enregistrées",
     "leavePageMessage": "Vous avez des modifications de points de passage non enregistrées. Si vous partez maintenant, ces modifications seront perdues. Voulez-vous rester et enregistrer vos modifications ?",
     "stayOnPage": "Rester sur la page",
-    "leavePage": "Partir sans enregistrer"
+    "leavePage": "Partir sans enregistrer",
+    "tabRoute": "Itinéraire",
+    "tabPlan": "Plan",
+    "tabSettings": "Paramètres"
   },
   "sponsor": {
     "title": "Console sponsor",

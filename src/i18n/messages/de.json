@@ -428,7 +428,10 @@
     "leavePageTitle": "Ungespeicherte Änderungen",
     "leavePageMessage": "Du hast ungespeicherte Wegpunktänderungen. Wenn du jetzt gehst, gehen diese Änderungen verloren. Möchtest du bleiben und deine Änderungen speichern?",
     "stayOnPage": "Auf Seite bleiben",
-    "leavePage": "Ohne Speichern verlassen"
+    "leavePage": "Ohne Speichern verlassen",
+    "tabRoute": "Route",
+    "tabPlan": "Plan",
+    "tabSettings": "Einstellungen"
   },
   "sponsor": {
     "title": "Sponsor-Konsole",

@@ -428,7 +428,10 @@
     "leavePageTitle": "Unsaved changes",
     "leavePageMessage": "You have unsaved waypoint changes. If you leave now, these changes will be lost. Do you want to stay and save your changes?",
     "stayOnPage": "Stay on page",
-    "leavePage": "Leave without saving"
+    "leavePage": "Leave without saving",
+    "tabRoute": "Route",
+    "tabPlan": "Plan",
+    "tabSettings": "Settings"
   },
   "sponsor": {
     "title": "Sponsor console",

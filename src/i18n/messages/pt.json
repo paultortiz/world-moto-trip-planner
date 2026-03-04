@@ -428,7 +428,10 @@
     "leavePageTitle": "Alterações não salvas",
     "leavePageMessage": "Você tem alterações de pontos não salvas. Se sair agora, essas alterações serão perdidas. Deseja ficar e salvar suas alterações?",
     "stayOnPage": "Ficar na página",
-    "leavePage": "Sair sem salvar"
+    "leavePage": "Sair sem salvar",
+    "tabRoute": "Rota",
+    "tabPlan": "Plano",
+    "tabSettings": "Configurações"
   },
   "sponsor": {
     "title": "Console do patrocinador",
