@@ -428,7 +428,10 @@
     "leavePageTitle": "Cambios sin guardar",
     "leavePageMessage": "Tienes cambios de puntos sin guardar. Si te vas ahora, estos cambios se perderán. ¿Quieres quedarte y guardar tus cambios?",
     "stayOnPage": "Quedarme en la página",
-    "leavePage": "Salir sin guardar"
+    "leavePage": "Salir sin guardar",
+    "tabRoute": "Ruta",
+    "tabPlan": "Plan",
+    "tabSettings": "Ajustes"
   },
   "sponsor": {
     "title": "Consola de patrocinador",

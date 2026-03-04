@@ -22,6 +22,7 @@ import {
 } from "@/lib/routeInsertion";
 import { HelpTooltip } from "@/help";
 import BorderPrepPanel from "./BorderPrepPanel";
+import SidebarTabs, { type SidebarTabId } from "./SidebarTabs";
 
 interface WaypointDto {
   id?: string;
@@ -1493,8 +1494,21 @@ export default function TripDetailClient({
           </section>
         </div>
 
-        {/* Right column: sharing, accordions, waypoint editor */}
-        <div className="space-y-3 md:overflow-y-auto md:pr-2">
+        {/* Right column: tabbed sections */}
+        <div className="md:h-full md:overflow-hidden">
+          <SidebarTabs
+            tabs={[
+              { id: "route", label: t("tabRoute"), icon: "📍" },
+              { id: "plan", label: t("tabPlan"), icon: "📋" },
+              { id: "settings", label: t("tabSettings"), icon: "⚙️" },
+            ]}
+            defaultTab="route"
+          >
+            {(activeTab: SidebarTabId) => (
+              <div className="space-y-3">
+                {/* ===== ROUTE TAB ===== */}
+                {activeTab === "route" && (
+                  <>
           {/* Sharing panel */}
           <section className="space-y-2 rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Trip sharing settings">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1605,7 +1619,12 @@ export default function TripDetailClient({
             }}
           />
           </div>
+                  </>
+                )}
 
+                {/* ===== PLAN TAB ===== */}
+                {activeTab === "plan" && (
+                  <>
           <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("planningTools")}</h2>
 
           {/* AI daily plan suggestion */}
@@ -1930,7 +1949,12 @@ export default function TripDetailClient({
               </div>
             )}
           </section>
+                  </>
+                )}
 
+                {/* ===== SETTINGS TAB ===== */}
+                {activeTab === "settings" && (
+                  <>
           {/* Motorcycle section */}
           <section data-tour-motorcycle className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Motorcycle for this trip">
             <div className="flex items-center justify-between gap-2">
@@ -2673,7 +2697,12 @@ export default function TripDetailClient({
               )}
             </section>
           )}
+                  </>
+                )}
 
+                {/* ===== PLAN TAB (continued) ===== */}
+                {activeTab === "plan" && (
+                  <>
           {/* Checklist accordion */}
           <section data-tour-checklist className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow">
             <button
@@ -2875,8 +2904,15 @@ export default function TripDetailClient({
 
           {/* Border Crossing Prep Panel */}
           <BorderPrepPanel waypoints={waypoints} />
+                  </>
+                )}
+              </div>
+            )}
+          </SidebarTabs>
+        </div>
+      </section>
 
-          {sponsorDemoEnabled && (
+      {sponsorDemoEnabled && (
             <section
               className="rounded border border-amber-500/60 bg-amber-500/5 p-3 text-xs text-slate-100 shadow-adv-glow"
               aria-label="Trip gear plan demo based on season and route"
@@ -2936,9 +2972,6 @@ export default function TripDetailClient({
               </p>
             </section>
           )}
-
-        </div>
-      </section>
     </>
   );
 }
