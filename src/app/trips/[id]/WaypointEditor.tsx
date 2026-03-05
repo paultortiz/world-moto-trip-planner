@@ -46,6 +46,10 @@ interface Props {
    * Callback when user wants to locate a waypoint on the map.
    */
   onLocateWaypoint?: (index: number) => void;
+  /**
+   * Whether there are unsaved changes. When false, save button is disabled.
+   */
+  hasUnsavedChanges?: boolean;
 }
 
 const WAYPOINT_TYPES = [
@@ -71,6 +75,7 @@ export default function WaypointEditor({
   startDateLabelBase,
   focusedWaypointIndex,
   onLocateWaypoint,
+  hasUnsavedChanges = false,
 }: Props) {
   const t = useTranslations("tripDetail");
   const locale = useLocale();
@@ -81,6 +86,10 @@ export default function WaypointEditor({
   
   // Refs for scroll-into-view when a waypoint is focused
   const waypointRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
+  // Refs for day sections (for quick-jump)
+  const dayRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
+  // Ref for the scrollable container
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   
   // Scroll to focused waypoint when it changes
   useEffect(() => {
@@ -342,27 +351,74 @@ export default function WaypointEditor({
     return OVERNIGHT_TYPES.includes(type.toUpperCase());
   }
 
+  // Scroll to a specific day section
+  function scrollToDay(day: number) {
+    const el = dayRefs.current.get(day);
+    const container = scrollContainerRef.current;
+    if (el && container) {
+      // Calculate offset within container
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const scrollOffset = elRect.top - containerRect.top + container.scrollTop;
+      container.scrollTo({ top: scrollOffset, behavior: "smooth" });
+    }
+  }
+
+  // Get list of days for quick-jump
+  const availableDays = useMemo(() => {
+    return waypointGroups.map((g) => g.day);
+  }, [waypointGroups]);
+
   return (
-    <div className="mt-6 space-y-3 text-xs">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("editWaypoints")}</h2>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="rounded bg-adv-accent px-3 py-1 text-xs font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
-        >
-          {saving ? t("savingWaypoints") : t("saveChangesRecalc")}
-        </button>
+    <div className="flex flex-col text-xs" style={{ maxHeight: 'calc(100vh - 14rem)' }}>
+      {/* Sticky header */}
+      <div className="sticky top-0 z-20 space-y-2 bg-slate-900/95 pb-2 pt-2 backdrop-blur-sm border-b border-slate-800">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("editWaypoints")}</h2>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !hasUnsavedChanges}
+            className="rounded bg-adv-accent px-3 py-1 text-xs font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? t("savingWaypoints") : t("saveChangesRecalc")}
+          </button>
+        </div>
+
+        {/* Day quick-jump and hint row */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] text-slate-400 flex-1">
+            {t("pivotWaypointHint")}
+          </p>
+          {availableDays.length > 1 && (
+            <div className="flex items-center gap-1">
+              <label htmlFor="day-jump" className="text-[10px] text-slate-500">{t("day")}:</label>
+              <select
+                id="day-jump"
+                className="rounded border border-slate-600 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-300 hover:border-adv-accent transition-colors"
+                onChange={(e) => {
+                  const day = Number(e.target.value);
+                  if (day) scrollToDay(day);
+                  e.target.value = ""; // Reset to placeholder after jump
+                }}
+                defaultValue=""
+              >
+                <option value="" disabled>1–{availableDays.length}</option>
+                {availableDays.map((day) => (
+                  <option key={day} value={day}>
+                    {formatDayLabel(day)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {status && <p className="text-slate-300">{status}</p>}
       </div>
 
-      {/* Pivot waypoint hint */}
-      <p className="text-[11px] text-slate-400">
-        {t("pivotWaypointHint")}
-      </p>
-
-      {status && <p className="text-slate-300">{status}</p>}
-
+      {/* Scrollable waypoints list */}
+      <div className="flex-1 overflow-y-auto mt-2" ref={scrollContainerRef}>
       <div className="rounded border border-adv-border bg-slate-900/70 shadow-adv-glow">
         {waypoints.length === 0 ? (
           <div className="p-3 text-[11px] text-slate-400">
@@ -370,7 +426,13 @@ export default function WaypointEditor({
           </div>
         ) : (
           waypointGroups.map((group) => (
-            <div key={`day-${group.day}`}>
+            <div
+              key={`day-${group.day}`}
+              ref={(el) => {
+                if (el) dayRefs.current.set(group.day, el);
+                else dayRefs.current.delete(group.day);
+              }}
+            >
               {/* Day header */}
               <div className="sticky top-0 z-10 flex flex-col gap-0.5 bg-slate-800/90 px-3 py-1.5 text-[11px] font-semibold backdrop-blur-sm">
                 <span className="text-adv-accent">{formatDayLabel(group.day)}</span>
@@ -511,6 +573,7 @@ export default function WaypointEditor({
             </div>
           ))
         )}
+      </div>
       </div>
     </div>
   );

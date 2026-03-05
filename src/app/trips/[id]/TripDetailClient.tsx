@@ -1606,6 +1606,7 @@ export default function TripDetailClient({
             maxDayHint={baseDayHint}
             startDateLabelBase={startDateInput || null}
             focusedWaypointIndex={focusedWaypoint?.index ?? null}
+            hasUnsavedChanges={isDirty}
             onLocateWaypoint={(index) => {
               focusTriggerRef.current += 1;
               setFocusedWaypoint({ index, trigger: focusTriggerRef.current });
