@@ -14,6 +14,29 @@ interface SpecPayload {
   notes?: string;
 }
 
+interface MaintenanceSchedule {
+  serviceIntervals?: Array<{
+    intervalMiles?: number;
+    intervalKm?: number;
+    name?: string;
+    tasks?: string[];
+    estimatedCostUsd?: number;
+  }>;
+  wearItems?: Array<{
+    item?: string;
+    intervalMiles?: number;
+    intervalKm?: number;
+    notes?: string;
+  }>;
+  fluidCapacities?: {
+    engineOilLiters?: number;
+    coolantLiters?: number;
+    forkOilMlPerLeg?: number;
+    brakeFluidMl?: number;
+  };
+  notes?: string;
+}
+
 function coerceNumber(value: unknown): number | undefined {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : undefined;
@@ -82,9 +105,13 @@ export async function POST(req: NextRequest) {
     });
 
     let specs: SpecPayload | null = null;
+    let maintenanceSchedule: MaintenanceSchedule | null = null;
 
     if (motorcycle?.specs) {
       specs = motorcycle.specs as SpecPayload;
+    }
+    if (motorcycle?.maintenanceSchedule) {
+      maintenanceSchedule = motorcycle.maintenanceSchedule as MaintenanceSchedule;
     }
 
     if (!specs) {
@@ -94,9 +121,10 @@ export async function POST(req: NextRequest) {
         {
           type: "input_text" as const,
           text:
-            `You are an expert on motorcycle specifications. ` +
+            `You are an expert on motorcycle specifications and maintenance. ` +
             `Given a motorcycle described as: ${displayName}. ` +
-            `Provide comprehensive specifications. Return a single JSON object with these keys (use null if unknown):\n` +
+            `Provide comprehensive specifications AND maintenance schedule. Return a single JSON object with two top-level keys: "specs" and "maintenance".\n\n` +
+            `The "specs" object should have these keys (use null if unknown):\n` +
             `{\n` +
             `  "engineDisplacementCc": number,\n` +
             `  "engineType": string (e.g. "parallel twin", "V-twin", "inline-4", "single"),\n` +
@@ -148,8 +176,21 @@ export async function POST(req: NextRequest) {
             `  "yearIntroduced": number,\n` +
             `  "yearDiscontinued": number,\n` +
             `  "notes": string (caveats or estimation notes)\n` +
-            `}\n` +
-            `Be accurate where possible. Output only valid JSON, no other text.`,
+            `}\n\n` +
+            `The "maintenance" object should have these keys:\n` +
+            `{\n` +
+            `  "serviceIntervals": [\n` +
+            `    { "intervalMiles": number, "intervalKm": number, "name": string, "tasks": string[], "estimatedCostUsd": number }\n` +
+            `  ],\n` +
+            `  "wearItems": [\n` +
+            `    { "item": string, "intervalMiles": number, "intervalKm": number, "notes": string }\n` +
+            `  ],\n` +
+            `  "fluidCapacities": { "engineOilLiters": number, "coolantLiters": number, "forkOilMlPerLeg": number, "brakeFluidMl": number },\n` +
+            `  "notes": string\n` +
+            `}\n\n` +
+            `Include typical service intervals like break-in (600mi/1000km), minor service (4000mi/6000km), major service (8000mi/12000km), valve check (16000mi/24000km).\n` +
+            `Include common wear items like tires, brake pads, chain/sprockets, air filter, spark plugs, coolant, brake fluid.\n` +
+            `Be accurate where possible based on manufacturer recommendations. Output only valid JSON, no other text.`,
         },
       ];
 
@@ -185,21 +226,30 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Handle both old format (flat specs) and new format (specs + maintenance)
+      const specsData = parsed.specs ?? parsed;
+      const maintenanceData = parsed.maintenance ?? null;
+
       // Coerce core numeric fields, but preserve all other fields from AI response
       specs = {
-        ...parsed,
-        engineDisplacementCc: coerceNumber(parsed.engineDisplacementCc),
-        wetWeightKg: coerceNumber(parsed.wetWeightKg),
-        fuelCapacityLiters: coerceNumber(parsed.fuelCapacityLiters),
-        estimatedRangeKm: coerceNumber(parsed.estimatedRangeKm),
-        seatHeightMm: coerceNumber(parsed.seatHeightMm),
-        offroadBias: clamp01(parsed.offroadBias),
-        highwayComfort: clamp01(parsed.highwayComfort),
-        notes: typeof parsed.notes === "string" ? parsed.notes : undefined,
+        ...specsData,
+        engineDisplacementCc: coerceNumber(specsData.engineDisplacementCc),
+        wetWeightKg: coerceNumber(specsData.wetWeightKg),
+        fuelCapacityLiters: coerceNumber(specsData.fuelCapacityLiters),
+        estimatedRangeKm: coerceNumber(specsData.estimatedRangeKm),
+        seatHeightMm: coerceNumber(specsData.seatHeightMm),
+        offroadBias: clamp01(specsData.offroadBias),
+        highwayComfort: clamp01(specsData.highwayComfort),
+        notes: typeof specsData.notes === "string" ? specsData.notes : undefined,
       };
 
-      // Create or update motorcycle record with specs.
-      const specsData = specs!;
+      // Process maintenance schedule if present
+      if (maintenanceData) {
+        maintenanceSchedule = maintenanceData as MaintenanceSchedule;
+      }
+
+      // Create or update motorcycle record with specs and maintenance.
+      const specsToSave = specs!;
       if (!motorcycle) {
         motorcycle = await prismaAny.motorcycle.create({
           data: {
@@ -208,14 +258,15 @@ export async function POST(req: NextRequest) {
             make: makeStr,
             model: modelStr,
             displayName,
-            engineDisplacementCc: specsData.engineDisplacementCc ?? null,
-            wetWeightKg: specsData.wetWeightKg ?? null,
-            fuelCapacityLiters: specsData.fuelCapacityLiters ?? null,
-            estimatedRangeKm: specsData.estimatedRangeKm ?? null,
-            seatHeightMm: specsData.seatHeightMm ?? null,
-            offroadBias: specsData.offroadBias ?? null,
-            highwayComfort: specsData.highwayComfort ?? null,
-            specs: specsData as any,
+            engineDisplacementCc: specsToSave.engineDisplacementCc ?? null,
+            wetWeightKg: specsToSave.wetWeightKg ?? null,
+            fuelCapacityLiters: specsToSave.fuelCapacityLiters ?? null,
+            estimatedRangeKm: specsToSave.estimatedRangeKm ?? null,
+            seatHeightMm: specsToSave.seatHeightMm ?? null,
+            offroadBias: specsToSave.offroadBias ?? null,
+            highwayComfort: specsToSave.highwayComfort ?? null,
+            specs: specsToSave as any,
+            maintenanceSchedule: maintenanceSchedule as any,
           },
         });
       } else {
@@ -226,14 +277,15 @@ export async function POST(req: NextRequest) {
             make: makeStr,
             model: modelStr,
             displayName,
-            engineDisplacementCc: specsData.engineDisplacementCc ?? null,
-            wetWeightKg: specsData.wetWeightKg ?? null,
-            fuelCapacityLiters: specsData.fuelCapacityLiters ?? null,
-            estimatedRangeKm: specsData.estimatedRangeKm ?? null,
-            seatHeightMm: specsData.seatHeightMm ?? null,
-            offroadBias: specsData.offroadBias ?? null,
-            highwayComfort: specsData.highwayComfort ?? null,
-            specs: specsData as any,
+            engineDisplacementCc: specsToSave.engineDisplacementCc ?? null,
+            wetWeightKg: specsToSave.wetWeightKg ?? null,
+            fuelCapacityLiters: specsToSave.fuelCapacityLiters ?? null,
+            estimatedRangeKm: specsToSave.estimatedRangeKm ?? null,
+            seatHeightMm: specsToSave.seatHeightMm ?? null,
+            offroadBias: specsToSave.offroadBias ?? null,
+            highwayComfort: specsToSave.highwayComfort ?? null,
+            specs: specsToSave as any,
+            maintenanceSchedule: maintenanceSchedule as any,
           },
         });
       }
@@ -270,11 +322,12 @@ export async function POST(req: NextRequest) {
           offroadBias: updatedTrip.motorcycle!.offroadBias,
           highwayComfort: updatedTrip.motorcycle!.highwayComfort,
           specs: updatedTrip.motorcycle!.specs,
+          maintenanceSchedule: updatedTrip.motorcycle!.maintenanceSchedule,
         },
       });
     }
 
-    // No trip provided: just return the updated motorcycle with specs.
+    // No trip provided: just return the updated motorcycle with specs and maintenance.
     return NextResponse.json({
       motorcycle: {
         id: motorcycle!.id,
@@ -290,6 +343,7 @@ export async function POST(req: NextRequest) {
         offroadBias: motorcycle!.offroadBias,
         highwayComfort: motorcycle!.highwayComfort,
         specs: motorcycle!.specs,
+        maintenanceSchedule: motorcycle!.maintenanceSchedule,
       },
     });
   } catch (err: any) {

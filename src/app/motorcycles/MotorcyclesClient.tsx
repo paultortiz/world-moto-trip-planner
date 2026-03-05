@@ -16,6 +16,87 @@ function generateYearOptions(): number[] {
   return years;
 }
 
+// Progress stages for AI fetch - faster initial stages, then slow creep
+const FETCH_STAGES = [
+  { key: "lookingUpSpecs", progress: 20, duration: 1000 },
+  { key: "fetchingMaintenance", progress: 45, duration: 1200 },
+  { key: "processingData", progress: 70, duration: 1500 },
+  { key: "almostDone", progress: 85, duration: 0 }, // No fixed duration - creeps slowly
+] as const;
+
+function useAiFetchProgress(isFetching: boolean, t: (key: string) => string) {
+  const [stageIndex, setStageIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!isFetching) {
+      setStageIndex(0);
+      setProgress(0);
+      setElapsedSeconds(0);
+      return;
+    }
+
+    // Start progress animation
+    setProgress(FETCH_STAGES[0].progress);
+
+    let currentStage = 0;
+    const timers: NodeJS.Timeout[] = [];
+    let creepInterval: NodeJS.Timeout | null = null;
+    let elapsedInterval: NodeJS.Timeout | null = null;
+
+    const advanceStage = () => {
+      if (currentStage < FETCH_STAGES.length - 1) {
+        currentStage++;
+        setStageIndex(currentStage);
+        setProgress(FETCH_STAGES[currentStage].progress);
+
+        // When we reach the final stage, start slow creep toward 95% and elapsed counter
+        if (currentStage === FETCH_STAGES.length - 1) {
+          let creepProgress: number = FETCH_STAGES[currentStage].progress;
+          creepInterval = setInterval(() => {
+            creepProgress += 0.5; // Slow increment
+            if (creepProgress >= 95) {
+              creepProgress = 95; // Cap at 95%
+              if (creepInterval) clearInterval(creepInterval);
+            }
+            setProgress(creepProgress);
+          }, 200);
+
+          // Start elapsed time counter
+          let seconds = 0;
+          elapsedInterval = setInterval(() => {
+            seconds++;
+            setElapsedSeconds(seconds);
+          }, 1000);
+        }
+      }
+    };
+
+    // Set up timers to advance through stages
+    let elapsed = 0;
+    for (let i = 0; i < FETCH_STAGES.length - 1; i++) {
+      elapsed += FETCH_STAGES[i].duration;
+      timers.push(setTimeout(advanceStage, elapsed));
+    }
+
+    return () => {
+      timers.forEach(clearTimeout);
+      if (creepInterval) clearInterval(creepInterval);
+      if (elapsedInterval) clearInterval(elapsedInterval);
+    };
+  }, [isFetching]);
+
+  const stage = FETCH_STAGES[stageIndex];
+  const baseMessage = t(`fetchProgress.${stage.key}`);
+  // Show elapsed time during final stage
+  const message = stageIndex === FETCH_STAGES.length - 1 && elapsedSeconds > 0
+    ? `${baseMessage} (${elapsedSeconds}s)`
+    : baseMessage;
+
+  return { progress, message };
+}
+
 interface MotorcyclesClientProps {
   motorcycles: any[];
 }
@@ -278,6 +359,7 @@ interface MotorcycleRowProps {
 
 function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, onSetDefault, isFetchingSpecs, specsJustLoaded }: MotorcycleRowProps) {
   const t = useTranslations("garage");
+  const { progress, message: progressMessage } = useAiFetchProgress(isFetchingSpecs ?? false, t);
   const [rangeInput, setRangeInput] = useState<string>(
     initialRange === "" ? "" : String(initialRange),
   );
@@ -292,6 +374,19 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showSpecs, setShowSpecs] = useState(false);
+  const [showMaintenance, setShowMaintenance] = useState(false);
+  const [maintenanceData, setMaintenanceData] = useState<any>(moto.maintenanceSchedule ?? null);
+  const [maintenanceJustLoaded, setMaintenanceJustLoaded] = useState(false);
+
+  // Sync maintenanceData when moto prop changes (e.g., after AI fetch completes)
+  useEffect(() => {
+    if (moto.maintenanceSchedule && !maintenanceData) {
+      setMaintenanceData(moto.maintenanceSchedule);
+      // Trigger pulse animation to indicate data is ready
+      setMaintenanceJustLoaded(true);
+      setTimeout(() => setMaintenanceJustLoaded(false), 3000);
+    }
+  }, [moto.maintenanceSchedule, maintenanceData]);
 
   // Model fetching state
   const [models, setModels] = useState<string[]>([]);
@@ -357,13 +452,17 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
             </span>
           )}
           {isFetchingSpecs && (
-            <span className="flex items-center gap-1.5 rounded-full bg-amber-900/50 px-2 py-0.5 text-[10px] text-amber-300">
-              <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              {t("fetchingSpecsFromAI")}
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="flex h-5 w-32 items-center overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-amber-300 transition-opacity duration-300">
+                {progressMessage}
+              </span>
+            </div>
           )}
         </div>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300">
@@ -499,6 +598,19 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
             }`}
           >
             {showSpecs ? t("hideSpecs") : t("showAllSpecs")}
+        </button>
+        )}
+        {maintenanceData && (
+          <button
+            type="button"
+            onClick={() => setShowMaintenance(!showMaintenance)}
+            className={`rounded border px-3 py-1 text-[11px] transition-all duration-300 ${
+              maintenanceJustLoaded
+                ? "animate-pulse border-emerald-400 bg-emerald-500/20 text-emerald-300 ring-2 ring-emerald-400/50"
+                : "border-slate-600 text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            {showMaintenance ? t("maintenance.hide") : t("maintenance.show")}
           </button>
         )}
       </div>
@@ -523,6 +635,103 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
               );
             })}
           </div>
+        </div>
+      )}
+      {showMaintenance && maintenanceData && (
+        <div className="mt-3 rounded border border-teal-800 bg-slate-900/50 p-3">
+          <h4 className="mb-3 text-[12px] font-semibold text-teal-300">{t("maintenance.title")}</h4>
+          
+          {/* Service Intervals */}
+          {maintenanceData.serviceIntervals && maintenanceData.serviceIntervals.length > 0 && (
+            <div className="mb-4">
+              <h5 className="mb-2 text-[11px] font-semibold text-slate-200">{t("maintenance.serviceIntervals")}</h5>
+              <div className="space-y-2">
+                {maintenanceData.serviceIntervals.map((interval: any, idx: number) => (
+                  <div key={idx} className="rounded border border-slate-700 bg-slate-950/50 p-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-semibold text-slate-100">{interval.name}</span>
+                      <span className="rounded bg-teal-900/50 px-1.5 py-0.5 text-[10px] text-teal-300">
+                        {interval.intervalMiles?.toLocaleString()} mi / {interval.intervalKm?.toLocaleString()} km
+                      </span>
+                      {typeof interval.estimatedCostUsd === "number" && (
+                        <span className="text-[10px] text-slate-400">
+                          ~${interval.estimatedCostUsd}
+                        </span>
+                      )}
+                    </div>
+                    {interval.tasks && interval.tasks.length > 0 && (
+                      <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
+                        {interval.tasks.map((task: string, tidx: number) => (
+                          <li key={tidx} className="flex items-center gap-1">
+                            <span className="h-1 w-1 rounded-full bg-slate-500" />
+                            {task}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Wear Items */}
+          {maintenanceData.wearItems && maintenanceData.wearItems.length > 0 && (
+            <div className="mb-4">
+              <h5 className="mb-2 text-[11px] font-semibold text-slate-200">{t("maintenance.wearItems")}</h5>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {maintenanceData.wearItems.map((item: any, idx: number) => (
+                  <div key={idx} className="flex flex-col rounded border border-slate-700 bg-slate-950/50 p-2">
+                    <span className="text-[11px] font-medium text-slate-200">{item.item}</span>
+                    <span className="text-[10px] text-teal-400">
+                      {item.intervalMiles?.toLocaleString()} mi / {item.intervalKm?.toLocaleString()} km
+                    </span>
+                    {item.notes && (
+                      <span className="mt-0.5 text-[9px] text-slate-500">{item.notes}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fluid Capacities */}
+          {maintenanceData.fluidCapacities && (
+            <div className="mb-4">
+              <h5 className="mb-2 text-[11px] font-semibold text-slate-200">{t("maintenance.fluidCapacities")}</h5>
+              <div className="flex flex-wrap gap-3 text-[10px]">
+                {maintenanceData.fluidCapacities.engineOilLiters && (
+                  <div className="flex flex-col">
+                    <span className="text-slate-500">{t("maintenance.engineOil")}</span>
+                    <span className="text-slate-300">{maintenanceData.fluidCapacities.engineOilLiters} L</span>
+                  </div>
+                )}
+                {maintenanceData.fluidCapacities.coolantLiters && (
+                  <div className="flex flex-col">
+                    <span className="text-slate-500">{t("maintenance.coolant")}</span>
+                    <span className="text-slate-300">{maintenanceData.fluidCapacities.coolantLiters} L</span>
+                  </div>
+                )}
+                {maintenanceData.fluidCapacities.forkOilMlPerLeg && (
+                  <div className="flex flex-col">
+                    <span className="text-slate-500">{t("maintenance.forkOil")}</span>
+                    <span className="text-slate-300">{maintenanceData.fluidCapacities.forkOilMlPerLeg} ml/leg</span>
+                  </div>
+                )}
+                {maintenanceData.fluidCapacities.brakeFluidMl && (
+                  <div className="flex flex-col">
+                    <span className="text-slate-500">{t("maintenance.brakeFluid")}</span>
+                    <span className="text-slate-300">{maintenanceData.fluidCapacities.brakeFluidMl} ml</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          {maintenanceData.notes && (
+            <p className="text-[10px] text-slate-500 italic">{maintenanceData.notes}</p>
+          )}
         </div>
       )}
     </li>

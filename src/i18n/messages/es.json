@@ -263,10 +263,30 @@
     "booleanYes": "Sí",
     "booleanNo": "No",
     "selectOrType": "Seleccionar o escribir...",
-    "selectMakeFirst": "Primero selecciona marca",
+    "selectMakeFirst": "Selecciona marca primero",
     "loadingModels": "Cargando modelos...",
-    "noMatchingMakes": "Sin marcas coincidentes",
-    "noMatchingModels": "Sin modelos coincidentes"
+    "noMatchingMakes": "No hay marcas coincidentes",
+    "noMatchingModels": "No hay modelos coincidentes",
+    "maintenance": {
+      "title": "Plan de Mantenimiento",
+      "fetch": "Mantenimiento",
+      "show": "Mantenimiento",
+      "hide": "Ocultar Mantenimiento",
+      "loading": "Cargando...",
+      "serviceIntervals": "Intervalos de Servicio",
+      "wearItems": "Piezas de Desgaste e Intervalos",
+      "fluidCapacities": "Capacidades de Fluidos",
+      "engineOil": "Aceite de Motor",
+      "coolant": "Refrigerante",
+      "forkOil": "Aceite de Horquilla",
+      "brakeFluid": "Líquido de Frenos"
+    },
+    "fetchProgress": {
+      "lookingUpSpecs": "Buscando especificaciones...",
+      "fetchingMaintenance": "Obteniendo mantenimiento...",
+      "processingData": "Procesando datos...",
+      "almostDone": "Casi listo..."
+    }
   },
   "tripDetail": {
     "tripId": "ID del viaje",

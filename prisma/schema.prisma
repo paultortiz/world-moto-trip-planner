@@ -213,7 +213,8 @@ model Motorcycle {
 
   isDefaultForNewTrips Boolean  @default(false)
 
-  specs       Json?
+  specs               Json?
+  maintenanceSchedule Json?
 
   trips       Trip[]
 
