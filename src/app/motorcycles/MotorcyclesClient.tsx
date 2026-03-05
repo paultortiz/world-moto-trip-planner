@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import NewMotorcycleForm from "./NewMotorcycleForm";
 import Combobox from "@/components/ui/Combobox";
@@ -376,7 +376,6 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
   const [showSpecs, setShowSpecs] = useState(false);
   const [showMaintenance, setShowMaintenance] = useState(false);
   const [maintenanceData, setMaintenanceData] = useState<any>(moto.maintenanceSchedule ?? null);
-  const [fetchingMaintenance, setFetchingMaintenance] = useState(false);
   const [maintenanceJustLoaded, setMaintenanceJustLoaded] = useState(false);
 
   // Sync maintenanceData when moto prop changes (e.g., after AI fetch completes)
