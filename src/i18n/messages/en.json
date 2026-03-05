@@ -266,7 +266,27 @@
     "selectMakeFirst": "Select make first",
     "loadingModels": "Loading models...",
     "noMatchingMakes": "No matching makes",
-    "noMatchingModels": "No matching models"
+    "noMatchingModels": "No matching models",
+    "maintenance": {
+      "title": "Maintenance Schedule",
+      "fetch": "Maintenance",
+      "show": "Maintenance",
+      "hide": "Hide Maintenance",
+      "loading": "Loading...",
+      "serviceIntervals": "Service Intervals",
+      "wearItems": "Wear Items & Replacement Intervals",
+      "fluidCapacities": "Fluid Capacities",
+      "engineOil": "Engine Oil",
+      "coolant": "Coolant",
+      "forkOil": "Fork Oil",
+      "brakeFluid": "Brake Fluid"
+    },
+    "fetchProgress": {
+      "lookingUpSpecs": "Looking up specs...",
+      "fetchingMaintenance": "Fetching maintenance...",
+      "processingData": "Processing data...",
+      "almostDone": "Almost done..."
+    }
   },
   "tripDetail": {
     "tripId": "Trip ID",

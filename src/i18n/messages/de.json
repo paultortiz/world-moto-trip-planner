@@ -266,7 +266,27 @@
     "selectMakeFirst": "Erst Marke wählen",
     "loadingModels": "Modelle werden geladen...",
     "noMatchingMakes": "Keine passenden Marken",
-    "noMatchingModels": "Keine passenden Modelle"
+    "noMatchingModels": "Keine passenden Modelle",
+    "maintenance": {
+      "title": "Wartungsplan",
+      "fetch": "Wartung",
+      "show": "Wartung",
+      "hide": "Wartung ausblenden",
+      "loading": "Lädt...",
+      "serviceIntervals": "Serviceintervalle",
+      "wearItems": "Verschleißteile & Wechselintervalle",
+      "fluidCapacities": "Flüssigkeitsmengen",
+      "engineOil": "Motoröl",
+      "coolant": "Kühlmittel",
+      "forkOil": "Gabelöl",
+      "brakeFluid": "Bremsflüssigkeit"
+    },
+    "fetchProgress": {
+      "lookingUpSpecs": "Suche Spezifikationen...",
+      "fetchingMaintenance": "Lade Wartungsplan...",
+      "processingData": "Verarbeite Daten...",
+      "almostDone": "Fast fertig..."
+    }
   },
   "tripDetail": {
     "tripId": "Reise-ID",
