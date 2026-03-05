@@ -27,15 +27,16 @@
     "tagline": "Abenteuer-Routenplanung",
     "title": "Plane dein nächstes",
     "titleHighlight": "Motorrad-Weltabenteuer",
-    "description": "Verbinde Bergpässe, Schotterpisten und Grenzübergänge. World Moto Trip Planner kombiniert Google Maps-Routing mit einem leichten Reisetagebuch für Langstreckenfahrer.",
+    "description": "Plane epische transkontinentale Motorradrouten mit KI-generierten Tagesplänen, Reichweitenverfolgung, Fahrsimulation und Grenzübergangs-Vorbereitung. Entwickelt für Abenteuerfahrer.",
     "features": {
-      "routing": "Routing für Schotter und Asphalt",
-      "waypoints": "Wegpunkttypen für Tanken, Unterkunft und POIs",
-      "estimates": "Entfernungs- und Fahrzeit-Schätzungen"
+      "routing": "Mehrtägige Routenplanung",
+      "aiPowered": "KI-generierte Reisepläne",
+      "fuelPlanning": "Reichweitenverfolgung",
+      "rideSimulation": "Fahrsimulation"
     },
     "signedInAs": "Angemeldet als",
     "goToTrips": "Zu deinen Reisen",
-    "signInPrompt": "Melde dich mit Google an, um transkontinentale Routen, Tankstopps und Wegpunkte zu planen.",
+    "signInPrompt": "Melde dich mit Google an, um transkontinentale Routen mit KI-Unterstützung, Tankplanung und Fahrsimulation zu planen.",
     "termsAgreement": "Mit der Anmeldung akzeptierst du unsere",
     "termsOfService": "Nutzungsbedingungen",
     "privacyPolicy": "Datenschutzrichtlinie",
@@ -46,7 +47,62 @@
       "route": "Route",
       "distance": "Entfernung",
       "saddleTime": "Fahrzeit",
-      "hint": "Setze Wegpunkte und verfeinere sie im Editor. Deine Strecke wird laufend aktualisiert."
+      "days": "Dauer",
+      "daysUnit": "Tage",
+      "countries": "Länder",
+      "countriesUnit": "überquert",
+      "hint": "KI erstellt Tagespläne. Simuliere die Fahrt bevor du startest."
+    },
+    "featuresSection": {
+      "title": "Alles was du für epische Abenteuer brauchst",
+      "subtitle": "Von der ersten Planung bis zum Grenzübergang"
+    },
+    "featureCategories": {
+      "routePlanning": {
+        "title": "Routenplanung",
+        "f1": "Drag-and-Drop Wegpunkt-Editor mit Tageszuordnung",
+        "f2": "Wegpunkttypen: Tanken, Unterkunft, Camping, POIs, Grenzen",
+        "f3": "Notizen und Risikostufen pro Abschnitt",
+        "f4": "Distanz- und Höhenprofile pro Tag"
+      },
+      "aiPlanning": {
+        "title": "KI-Tagesplanung",
+        "f1": "Automatische Tagespläne aus deiner Route generieren",
+        "f2": "Personalisiert basierend auf deinem Fahrerprofil",
+        "f3": "Berücksichtigt Tempo, Interessen und Erfahrung",
+        "f4": "Pläne bearbeiten und neu generieren"
+      },
+      "fuelRange": {
+        "title": "Reichweiten-Intelligenz",
+        "f1": "Verbrauch gegen die Reichweite deines Bikes verfolgen",
+        "f2": "Visuelle Tankabschnitte auf der Karte",
+        "f3": "Warnungen bei Reservenähe",
+        "f4": "Tankstellen in der Nähe mit einem Klick finden"
+      },
+      "rideSimulation": {
+        "title": "Fahrsimulation",
+        "f1": "Vorschau deiner gesamten Route vor der Fahrt",
+        "f2": "Echtzeit-Verbrauchsverfolgung",
+        "f3": "Pause an Wegpunkten für Tank-Hinweise",
+        "f4": "Simulationsfortschritt speichern und fortsetzen"
+      },
+      "borderCrossing": {
+        "title": "Grenzübergangs-Vorbereitung",
+        "f1": "Länder entlang deiner Route automatisch erkennen",
+        "f2": "Live CBP-Wartezeiten an US-Mexiko-Grenzübergängen",
+        "f3": "KI-generierte Dokumentenanforderungen pro Land"
+      },
+      "tripManagement": {
+        "title": "Reiseverwaltung",
+        "f1": "Vor-Fahrt-Checklisten mit Fortschrittsverfolgung",
+        "f2": "Routen als GPX für GPS-Geräte exportieren",
+        "f3": "Reisen mit Nur-Lesen-Links teilen",
+        "f4": "Motorrad-Garage mit KI-abgerufenen Specs"
+      }
+    },
+    "bottomCta": {
+      "text": "Bereit für dein nächstes Abenteuer? Schließe dich den Fahrern an, die bereits ihre Traumrouten planen.",
+      "button": "Kostenlos starten"
     }
   },
   "footer": {

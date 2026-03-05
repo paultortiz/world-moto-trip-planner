@@ -27,15 +27,16 @@
     "tagline": "Adventure route planning",
     "title": "Plot your next",
     "titleHighlight": "world moto adventure",
-    "description": "String together mountain passes, gravel tracks, and border crossings. World Moto Trip Planner combines Google Maps routing with a lightweight trip log built for long-distance riders.",
+    "description": "Plan epic cross-continent motorcycle routes with AI-powered daily itineraries, fuel range tracking, ride simulation, and border crossing intelligence. Built for long-distance adventure riders.",
     "features": {
-      "routing": "Dirt & tarmac friendly routing",
-      "waypoints": "Waypoint types for fuel, lodging, and POIs",
-      "estimates": "Distance and saddle-time estimates"
+      "routing": "Multi-day route planning",
+      "aiPowered": "AI-powered itineraries",
+      "fuelPlanning": "Fuel range tracking",
+      "rideSimulation": "Ride simulation"
     },
     "signedInAs": "Signed in as",
     "goToTrips": "Go to your trips",
-    "signInPrompt": "Sign in with Google to start laying out cross-continent routes, fuel stops, and waypoints you actually care about.",
+    "signInPrompt": "Sign in with Google to start planning cross-continent routes with AI assistance, fuel tracking, and ride simulation.",
     "termsAgreement": "By signing in you agree to our",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",
@@ -46,7 +47,62 @@
       "route": "Route",
       "distance": "Distance",
       "saddleTime": "Saddle time",
-      "hint": "Drop waypoints, then fine-tune in the editor. Your track updates as you go."
+      "days": "Duration",
+      "daysUnit": "days",
+      "countries": "Countries",
+      "countriesUnit": "crossed",
+      "hint": "AI generates daily plans. Simulate the ride before you go."
+    },
+    "featuresSection": {
+      "title": "Everything you need for epic adventures",
+      "subtitle": "From initial planning to border crossings, we've got you covered"
+    },
+    "featureCategories": {
+      "routePlanning": {
+        "title": "Route Planning",
+        "f1": "Drag-and-drop waypoint editor with day assignments",
+        "f2": "Typed waypoints: fuel, lodging, camping, POIs, borders",
+        "f3": "Per-segment notes and risk levels",
+        "f4": "Distance and elevation profiles per day"
+      },
+      "aiPlanning": {
+        "title": "AI Daily Planning",
+        "f1": "Auto-generate daily itineraries from your route",
+        "f2": "Personalized based on your rider profile",
+        "f3": "Considers your pace, interests, and experience",
+        "f4": "Edit and regenerate plans as needed"
+      },
+      "fuelRange": {
+        "title": "Fuel Range Intelligence",
+        "f1": "Track fuel consumption against your bike's range",
+        "f2": "Visual fuel leg overlays on the map",
+        "f3": "Warnings when approaching reserve",
+        "f4": "Find nearby fuel stations with one click"
+      },
+      "rideSimulation": {
+        "title": "Ride Simulation",
+        "f1": "Preview your entire route before you ride",
+        "f2": "Real-time fuel consumption tracking",
+        "f3": "Pause at waypoints for refuel prompts",
+        "f4": "Save and resume simulation progress"
+      },
+      "borderCrossing": {
+        "title": "Border Crossing Prep",
+        "f1": "Detect countries along your route automatically",
+        "f2": "Live CBP wait times at US-Mexico crossings",
+        "f3": "AI-generated document requirements per country"
+      },
+      "tripManagement": {
+        "title": "Trip Management",
+        "f1": "Pre-ride checklists with completion tracking",
+        "f2": "Export routes to GPX for GPS devices",
+        "f3": "Share trips with read-only links",
+        "f4": "Motorcycle garage with AI-fetched specs"
+      }
+    },
+    "bottomCta": {
+      "text": "Ready to plan your next adventure? Join riders who are already mapping their dream routes.",
+      "button": "Get Started Free"
     }
   },
   "footer": {

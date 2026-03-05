@@ -27,15 +27,16 @@
     "tagline": "Planification d'itinéraires d'aventure",
     "title": "Planifiez votre prochaine",
     "titleHighlight": "aventure moto mondiale",
-    "description": "Reliez cols de montagne, pistes de gravier et passages frontaliers. World Moto Trip Planner combine le routage Google Maps avec un carnet de voyage léger conçu pour les motards longue distance.",
+    "description": "Planifiez des parcours moto épiques avec des itinéraires journaliers générés par IA, suivi d'autonomie carburant, simulation de trajet et préparation aux passages frontaliers. Conçu pour les motards aventuriers.",
     "features": {
-      "routing": "Routage adapté terre et asphalte",
-      "waypoints": "Types de points: carburant, hébergement et POIs",
-      "estimates": "Estimations de distance et temps de selle"
+      "routing": "Planification multi-jours",
+      "aiPowered": "Itinéraires par IA",
+      "fuelPlanning": "Suivi d'autonomie",
+      "rideSimulation": "Simulation de trajet"
     },
     "signedInAs": "Connecté en tant que",
     "goToTrips": "Aller à vos voyages",
-    "signInPrompt": "Connectez-vous avec Google pour commencer à tracer des routes transcontinentales, des arrêts carburant et des points d'intérêt.",
+    "signInPrompt": "Connectez-vous avec Google pour planifier des routes transcontinentales avec assistance IA, suivi carburant et simulation de trajet.",
     "termsAgreement": "En vous connectant, vous acceptez nos",
     "termsOfService": "Conditions d'utilisation",
     "privacyPolicy": "Politique de confidentialité",
@@ -46,7 +47,62 @@
       "route": "Itinéraire",
       "distance": "Distance",
       "saddleTime": "Temps de selle",
-      "hint": "Placez des points de passage, puis affinez dans l'éditeur. Votre tracé se met à jour en continu."
+      "days": "Durée",
+      "daysUnit": "jours",
+      "countries": "Pays",
+      "countriesUnit": "traversés",
+      "hint": "L'IA génère des plans journaliers. Simulez le trajet avant de partir."
+    },
+    "featuresSection": {
+      "title": "Tout ce qu'il faut pour des aventures épiques",
+      "subtitle": "De la planification initiale aux passages frontaliers"
+    },
+    "featureCategories": {
+      "routePlanning": {
+        "title": "Planification d'Itinéraire",
+        "f1": "Éditeur de points glisser-déposer avec attribution des jours",
+        "f2": "Points typés: carburant, hébergement, camping, POIs, frontières",
+        "f3": "Notes et niveaux de risque par segment",
+        "f4": "Profils de distance et d'élévation par jour"
+      },
+      "aiPlanning": {
+        "title": "Planification Journalière IA",
+        "f1": "Génération automatique d'itinéraires journaliers depuis votre route",
+        "f2": "Personnalisé selon votre profil de pilote",
+        "f3": "Tient compte de votre rythme, intérêts et expérience",
+        "f4": "Modifiez et regénérez les plans selon vos besoins"
+      },
+      "fuelRange": {
+        "title": "Intelligence d'Autonomie",
+        "f1": "Suivez la consommation par rapport à l'autonomie de votre moto",
+        "f2": "Superpositions visuelles des étapes carburant sur la carte",
+        "f3": "Alertes à l'approche de la réserve",
+        "f4": "Trouvez des stations service en un clic"
+      },
+      "rideSimulation": {
+        "title": "Simulation de Trajet",
+        "f1": "Prévisualisez tout votre itinéraire avant de partir",
+        "f2": "Suivi de consommation en temps réel",
+        "f3": "Pauses aux points pour invites de ravitaillement",
+        "f4": "Sauvegardez et reprenez la progression de la simulation"
+      },
+      "borderCrossing": {
+        "title": "Préparation Frontalière",
+        "f1": "Détection automatique des pays le long de votre route",
+        "f2": "Temps d'attente CBP en direct aux passages US-Mexique",
+        "f3": "Exigences documentaires générées par IA par pays"
+      },
+      "tripManagement": {
+        "title": "Gestion de Voyage",
+        "f1": "Checklists pré-départ avec suivi de complétion",
+        "f2": "Export des routes en GPX pour appareils GPS",
+        "f3": "Partagez des voyages avec des liens en lecture seule",
+        "f4": "Garage moto avec specs récupérées par IA"
+      }
+    },
+    "bottomCta": {
+      "text": "Prêt pour votre prochaine aventure? Rejoignez les motards qui planifient déjà leurs routes de rêve.",
+      "button": "Commencer Gratuitement"
     }
   },
   "footer": {

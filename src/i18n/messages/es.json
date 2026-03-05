@@ -27,15 +27,16 @@
     "tagline": "Planificación de rutas de aventura",
     "title": "Planifica tu próxima",
     "titleHighlight": "aventura en moto por el mundo",
-    "description": "Une puertos de montaña, pistas de grava y cruces fronterizos. World Moto Trip Planner combina el enrutamiento de Google Maps con un registro de viajes ligero diseñado para motociclistas de larga distancia.",
+    "description": "Planifica épicas rutas transcontinentales con itinerarios diarios generados por IA, seguimiento de autonomía de combustible, simulación de ruta y preparación para cruces fronterizos. Diseñado para motociclistas de aventura.",
     "features": {
-      "routing": "Rutas para tierra y asfalto",
-      "waypoints": "Tipos de puntos: combustible, alojamiento y POIs",
-      "estimates": "Estimaciones de distancia y tiempo en silla"
+      "routing": "Planificación de rutas multi-día",
+      "aiPowered": "Itinerarios con IA",
+      "fuelPlanning": "Seguimiento de autonomía",
+      "rideSimulation": "Simulación de ruta"
     },
     "signedInAs": "Conectado como",
     "goToTrips": "Ir a tus viajes",
-    "signInPrompt": "Inicia sesión con Google para comenzar a trazar rutas transcontinentales, paradas de combustible y puntos de interés.",
+    "signInPrompt": "Inicia sesión con Google para planificar rutas transcontinentales con asistencia de IA, seguimiento de combustible y simulación de ruta.",
     "termsAgreement": "Al iniciar sesión aceptas nuestros",
     "termsOfService": "Términos de servicio",
     "privacyPolicy": "Política de privacidad",
@@ -46,7 +47,62 @@
       "route": "Ruta",
       "distance": "Distancia",
       "saddleTime": "Tiempo en silla",
-      "hint": "Coloca puntos de referencia y ajusta en el editor. Tu ruta se actualiza sobre la marcha."
+      "days": "Duración",
+      "daysUnit": "días",
+      "countries": "Países",
+      "countriesUnit": "cruzados",
+      "hint": "La IA genera planes diarios. Simula el viaje antes de partir."
+    },
+    "featuresSection": {
+      "title": "Todo lo que necesitas para aventuras épicas",
+      "subtitle": "Desde la planificación inicial hasta los cruces fronterizos"
+    },
+    "featureCategories": {
+      "routePlanning": {
+        "title": "Planificación de Rutas",
+        "f1": "Editor de puntos con arrastrar y soltar y asignación de días",
+        "f2": "Puntos tipados: combustible, alojamiento, camping, POIs, fronteras",
+        "f3": "Notas y niveles de riesgo por segmento",
+        "f4": "Perfiles de distancia y elevación por día"
+      },
+      "aiPlanning": {
+        "title": "Planificación Diaria con IA",
+        "f1": "Genera itinerarios diarios automáticamente desde tu ruta",
+        "f2": "Personalizado según tu perfil de piloto",
+        "f3": "Considera tu ritmo, intereses y experiencia",
+        "f4": "Edita y regenera planes según necesites"
+      },
+      "fuelRange": {
+        "title": "Inteligencia de Autonomía",
+        "f1": "Rastrea el consumo contra la autonomía de tu moto",
+        "f2": "Superposiciones visuales de tramos de combustible en el mapa",
+        "f3": "Avisos al acercarse a la reserva",
+        "f4": "Encuentra gasolineras cercanas con un clic"
+      },
+      "rideSimulation": {
+        "title": "Simulación de Ruta",
+        "f1": "Previsualiza toda tu ruta antes de partir",
+        "f2": "Seguimiento de consumo en tiempo real",
+        "f3": "Pausas en puntos para indicaciones de repostaje",
+        "f4": "Guarda y reanuda el progreso de la simulación"
+      },
+      "borderCrossing": {
+        "title": "Preparación de Fronteras",
+        "f1": "Detecta países en tu ruta automáticamente",
+        "f2": "Tiempos de espera CBP en vivo en cruces EE.UU.-México",
+        "f3": "Requisitos de documentos generados por IA por país"
+      },
+      "tripManagement": {
+        "title": "Gestión de Viajes",
+        "f1": "Listas de verificación pre-viaje con seguimiento",
+        "f2": "Exporta rutas a GPX para dispositivos GPS",
+        "f3": "Comparte viajes con enlaces de solo lectura",
+        "f4": "Garaje de motos con especificaciones de IA"
+      }
+    },
+    "bottomCta": {
+      "text": "¿Listo para planificar tu próxima aventura? Únete a los pilotos que ya están trazando sus rutas soñadas.",
+      "button": "Comenzar Gratis"
     }
   },
   "footer": {
