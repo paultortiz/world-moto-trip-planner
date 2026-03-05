@@ -203,6 +203,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
   // Distance measurement state
   const [measureMode, setMeasureMode] = useState(false);
+  const [measureModePrompt, setMeasureModePrompt] = useState(false); // Show choice dialog
   const [measurePoints, setMeasurePoints] = useState<{ lat: number; lng: number }[]>([]);
   const [measureRoadLoading, setMeasureRoadLoading] = useState(false);
   const [measureRoutes, setMeasureRoutes] = useState<{
@@ -211,6 +212,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     summary: string;
     path: { lat: number; lng: number }[];
   }[]>([]);
+  const [measureAnimOffset, setMeasureAnimOffset] = useState(0);
+  const measureAnimRef = useRef<number | null>(null);
 
   // Zoom level tracking for day labels
   const [currentZoom, setCurrentZoom] = useState<number>(10);
@@ -283,8 +286,40 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       if (lowFuelToastTimeoutRef.current !== null) {
         window.clearTimeout(lowFuelToastTimeoutRef.current);
       }
+      if (measureAnimRef.current !== null) {
+        cancelAnimationFrame(measureAnimRef.current);
+      }
     };
   }, []);
+
+  // Animate measure line when routes are displayed
+  useEffect(() => {
+    if (!measureMode || measureRoutes.length === 0) {
+      if (measureAnimRef.current !== null) {
+        cancelAnimationFrame(measureAnimRef.current);
+        measureAnimRef.current = null;
+      }
+      setMeasureAnimOffset(0);
+      return;
+    }
+
+    let lastTime = 0;
+    const animate = (time: number) => {
+      if (time - lastTime > 50) { // ~20fps for smooth but efficient animation
+        lastTime = time;
+        setMeasureAnimOffset((prev) => (prev + 2) % 100);
+      }
+      measureAnimRef.current = requestAnimationFrame(animate);
+    };
+    measureAnimRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (measureAnimRef.current !== null) {
+        cancelAnimationFrame(measureAnimRef.current);
+        measureAnimRef.current = null;
+      }
+    };
+  }, [measureMode, measureRoutes.length]);
 
   // Track fullscreen changes (e.g., user presses Escape)
   useEffect(() => {
@@ -715,6 +750,85 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     }
   }, [showFuelPlaces, showLodgingPlaces, showCampgroundPlaces, showDiningPlaces, showPoiPlaces, showChargingPlaces, showBorderPlaces, minPlaceRating, onlyOpenNow]);
 
+  // Fetch directions for measurement between two points
+  const fetchMeasureDirections = useCallback(
+    (p1: { lat: number; lng: number }, p2: { lat: number; lng: number }) => {
+      // Debug: log the exact coordinates being measured
+      console.log('[Measure] Origin:', p1.lat.toFixed(5), p1.lng.toFixed(5));
+      console.log('[Measure] Destination:', p2.lat.toFixed(5), p2.lng.toFixed(5));
+
+      setMeasureRoadLoading(true);
+      setMeasureRoutes([]); // Clear previous routes while loading
+      const directionsService = new google.maps.DirectionsService();
+      directionsService.route(
+        {
+          origin: p1,
+          destination: p2,
+          travelMode: google.maps.TravelMode.DRIVING,
+          provideRouteAlternatives: true,
+        },
+        (result, status) => {
+          setMeasureRoadLoading(false);
+          if (status === google.maps.DirectionsStatus.OK && result) {
+            const routes = result.routes.map((route) => {
+              const leg = route.legs[0];
+              // Decode the polyline path
+              const path = google.maps.geometry?.encoding?.decodePath(
+                route.overview_polyline
+              ) ?? [];
+              return {
+                distanceKm: (leg?.distance?.value ?? 0) / 1000,
+                durationMins: Math.round((leg?.duration?.value ?? 0) / 60),
+                summary: route.summary || "Route",
+                path: path.map((p) => ({ lat: p.lat(), lng: p.lng() })),
+              };
+            });
+            // Sort by distance
+            routes.sort((a, b) => a.distanceKm - b.distanceKm);
+            
+            // Debug: log all routes returned
+            console.log('[Measure] Directions API returned', routes.length, 'routes');
+            routes.forEach((r, i) => {
+              console.log(`[Measure] Route ${i}: ${r.distanceKm.toFixed(1)} km, ${r.durationMins} mins via ${r.summary}`);
+            });
+            
+            setMeasureRoutes(routes);
+          }
+        }
+      );
+    },
+    []
+  );
+
+  // Handle adding a measurement point (from map click or waypoint click)
+  const handleMeasurePoint = useCallback(
+    (point: { lat: number; lng: number }) => {
+      // If measurement is complete (2 points + routes or no route), allow re-measuring
+      // by replacing the destination point and recalculating
+      if (measurePoints.length === 2) {
+        const p1 = measurePoints[0];
+        setMeasurePoints([p1, point]);
+        fetchMeasureDirections(p1, point);
+        return;
+      }
+
+      setMeasurePoints((prev) => {
+        if (prev.length === 0) {
+          // First point
+          return [point];
+        } else if (prev.length === 1) {
+          // Second point - fetch road distances with alternatives
+          const p1 = prev[0];
+          fetchMeasureDirections(p1, point);
+          return [p1, point];
+        } else {
+          return prev;
+        }
+      });
+    },
+    [measurePoints, fetchMeasureDirections]
+  );
+
   const handleMapClick = useCallback(
     (event: google.maps.MapMouseEvent) => {
       if (!event.latLng) return;
@@ -732,100 +846,56 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       if (!enableClickToAdd) return;
       onAddWaypoint({ lat, lng });
     },
-    [onAddWaypoint, enableClickToAdd, measureMode],
+    [onAddWaypoint, enableClickToAdd, measureMode, handleMeasurePoint],
   );
 
-  // Handle adding a measurement point (from map click or waypoint click)
-  const handleMeasurePoint = useCallback(
-    (point: { lat: number; lng: number }) => {
-      // If measurement is complete (routes displayed), ignore new clicks - user must Clear first
-      if (measureRoutes.length > 0) return;
-
-      setMeasurePoints((prev) => {
-        if (prev.length === 0) {
-          // First point
-          return [point];
-        } else if (prev.length === 1) {
-          // Second point - fetch road distances with alternatives
-          const p1 = prev[0];
-          const p2 = point;
-
-          // Debug: log the exact coordinates being measured
-          console.log('[Measure] Origin:', p1.lat.toFixed(5), p1.lng.toFixed(5));
-          console.log('[Measure] Destination:', p2.lat.toFixed(5), p2.lng.toFixed(5));
-
-          setMeasureRoadLoading(true);
-          const directionsService = new google.maps.DirectionsService();
-          directionsService.route(
-            {
-              origin: p1,
-              destination: p2,
-              travelMode: google.maps.TravelMode.DRIVING,
-              provideRouteAlternatives: true,
-            },
-            (result, status) => {
-              setMeasureRoadLoading(false);
-              if (status === google.maps.DirectionsStatus.OK && result) {
-                const routes = result.routes.map((route) => {
-                  const leg = route.legs[0];
-                  // Decode the polyline path
-                  const path = google.maps.geometry?.encoding?.decodePath(
-                    route.overview_polyline
-                  ) ?? [];
-                  return {
-                    distanceKm: (leg?.distance?.value ?? 0) / 1000,
-                    durationMins: Math.round((leg?.duration?.value ?? 0) / 60),
-                    summary: route.summary || "Route",
-                    path: path.map((p) => ({ lat: p.lat(), lng: p.lng() })),
-                  };
-                });
-                // Sort by distance
-                routes.sort((a, b) => a.distanceKm - b.distanceKm);
-                
-                // Debug: log all routes returned
-                console.log('[Measure] Directions API returned', routes.length, 'routes');
-                routes.forEach((r, i) => {
-                  console.log(`[Measure] Route ${i}: ${r.distanceKm.toFixed(1)} km, ${r.durationMins} mins via ${r.summary}`);
-                });
-                
-                setMeasureRoutes(routes);
-              }
-            }
-          );
-
-          return [p1, p2];
-        } else {
-          // Should not reach here since we check measureRoutes.length above
-          return prev;
-        }
-      });
-    },
-    [measureRoutes.length]
-  );
-
-  // Toggle measure mode - auto-start from last waypoint when entering
+  // Toggle measure mode - show prompt if waypoints exist, otherwise start from anywhere
   const handleMeasureToggle = useCallback(() => {
-    setMeasureMode((prev) => {
-      if (prev) {
-        // Exiting measure mode - clear everything
-        setMeasurePoints([]);
-        setMeasureRoutes([]);
+    if (measureMode) {
+      // Exiting measure mode - clear everything
+      setMeasureMode(false);
+      setMeasurePoints([]);
+      setMeasureRoutes([]);
+      setMeasureModePrompt(false);
+    } else {
+      // Entering measure mode
+      if (waypoints.length > 0) {
+        // Show prompt to choose start point type
+        setMeasureModePrompt(true);
       } else {
-        // Entering measure mode - auto-set start to last waypoint if available
-        if (waypoints.length > 0) {
-          const lastWp = waypoints[waypoints.length - 1];
-          setMeasurePoints([{ lat: lastWp.lat, lng: lastWp.lng }]);
-          // Zoom to last waypoint at ~300km scale (zoom level 7)
-          const map = mapRef.current;
-          if (map) {
-            map.panTo({ lat: lastWp.lat, lng: lastWp.lng });
-            map.setZoom(7);
-          }
-        }
+        // No waypoints - go straight to "from anywhere" mode
+        setMeasureMode(true);
       }
-      return !prev;
-    });
+    }
+  }, [measureMode, waypoints.length]);
+
+  // Start measure from last waypoint
+  const handleMeasureFromWaypoint = useCallback(() => {
+    setMeasureModePrompt(false);
+    setMeasureMode(true);
+    if (waypoints.length > 0) {
+      const lastWp = waypoints[waypoints.length - 1];
+      setMeasurePoints([{ lat: lastWp.lat, lng: lastWp.lng }]);
+      // Zoom to last waypoint at ~300km scale (zoom level 7)
+      const map = mapRef.current;
+      if (map) {
+        map.panTo({ lat: lastWp.lat, lng: lastWp.lng });
+        map.setZoom(7);
+      }
+    }
   }, [waypoints]);
+
+  // Start measure from anywhere (user picks both points)
+  const handleMeasureFromAnywhere = useCallback(() => {
+    setMeasureModePrompt(false);
+    setMeasureMode(true);
+    setMeasurePoints([]);
+  }, []);
+
+  // Cancel measure prompt
+  const handleMeasureCancel = useCallback(() => {
+    setMeasureModePrompt(false);
+  }, []);
 
   const fitToRoute = useCallback(() => {
     const map = mapRef.current;
@@ -2669,6 +2739,45 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </div>
       )}
 
+      {/* Measure mode choice prompt */}
+      {measureModePrompt && (
+        <div
+          className="pointer-events-none flex justify-center"
+          style={{ position: "absolute", left: 0, right: 0, top: 40, zIndex: 40 }}
+        >
+          <div
+            className="pointer-events-auto rounded-lg border-2 border-amber-500 bg-slate-950/95 px-4 py-3 shadow-lg"
+            role="dialog"
+            aria-label={t("measureChoiceTitle")}
+          >
+            <p className="mb-2 text-[11px] font-semibold text-amber-300">{t("measureChoiceTitle")}</p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleMeasureFromWaypoint}
+                className="rounded border border-amber-500 bg-amber-600/80 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-500"
+              >
+                {t("measureFromWaypoint")}
+              </button>
+              <button
+                type="button"
+                onClick={handleMeasureFromAnywhere}
+                className="rounded border border-slate-500 bg-slate-700 px-3 py-1.5 text-[11px] text-slate-200 hover:bg-slate-600"
+              >
+                {t("measureFromAnywhere")}
+              </button>
+              <button
+                type="button"
+                onClick={handleMeasureCancel}
+                className="rounded border border-slate-600 px-3 py-1 text-[10px] text-slate-400 hover:bg-slate-800"
+              >
+                {t("cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Measure mode instruction banner */}
       {measureMode && measurePoints.length === 0 && (
         <div
@@ -2745,7 +2854,22 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 </div>
               </div>
             ) : (
-              <div className="text-slate-500">{t("noRouteFound")}</div>
+              <div className="space-y-1.5">
+                <div className="text-slate-500">{t("noRouteFound")}</div>
+                <div className="text-[10px] text-slate-400">{t("clickNewDestination")}</div>
+                <div className="mt-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMeasurePoints([]);
+                      setMeasureRoutes([]);
+                    }}
+                    className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300 hover:bg-slate-800"
+                  >
+                    {t("clear")}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -2882,18 +3006,18 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </div>
       )}
 
-      {/* Measurement markers */}
+      {/* Measurement markers - bright magenta to match measure lines */}
       <Marker
         key="measure-start"
         position={measurePoints[0] ?? { lat: 0, lng: 0 }}
         visible={measureMode && measurePoints.length >= 1}
         icon={{
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: "#f59e0b",
+          scale: 10,
+          fillColor: "#e879f9",
           fillOpacity: 1,
           strokeColor: "#fff",
-          strokeWeight: 2,
+          strokeWeight: 3,
         }}
         zIndex={100}
       />
@@ -2903,25 +3027,35 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         visible={measureMode && measurePoints.length === 2}
         icon={{
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: "#f59e0b",
+          scale: 10,
+          fillColor: "#e879f9",
           fillOpacity: 1,
           strokeColor: "#fff",
-          strokeWeight: 2,
+          strokeWeight: 3,
         }}
         zIndex={100}
       />
 
-      {/* Measurement route polylines - always rendered, visibility controlled */}
+      {/* Measurement route polylines - bright magenta animated dashes */}
       <Polyline
         key="measure-route-0"
         path={measureRoutes[0]?.path ?? []}
         visible={measureMode && measureRoutes.length >= 1}
         options={{
-          strokeColor: "#f59e0b",
-          strokeOpacity: 0.9,
-          strokeWeight: 5,
+          strokeColor: "#e879f9",
+          strokeOpacity: 0,
+          strokeWeight: 6,
           zIndex: 50,
+          icons: [{
+            icon: {
+              path: "M 0,-1 0,1",
+              strokeOpacity: 1,
+              strokeColor: "#e879f9",
+              scale: 4,
+            },
+            offset: `${measureAnimOffset}%`,
+            repeat: "20px",
+          }],
         }}
       />
       <Polyline
@@ -2929,10 +3063,20 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         path={measureRoutes[1]?.path ?? []}
         visible={measureMode && measureRoutes.length >= 2}
         options={{
-          strokeColor: "#94a3b8",
-          strokeOpacity: 0.5,
-          strokeWeight: 3,
+          strokeColor: "#c084fc",
+          strokeOpacity: 0,
+          strokeWeight: 4,
           zIndex: 40,
+          icons: [{
+            icon: {
+              path: "M 0,-1 0,1",
+              strokeOpacity: 0.7,
+              strokeColor: "#c084fc",
+              scale: 3,
+            },
+            offset: "0",
+            repeat: "16px",
+          }],
         }}
       />
       <Polyline
@@ -2940,10 +3084,20 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         path={measureRoutes[2]?.path ?? []}
         visible={measureMode && measureRoutes.length >= 3}
         options={{
-          strokeColor: "#94a3b8",
-          strokeOpacity: 0.5,
-          strokeWeight: 3,
+          strokeColor: "#c084fc",
+          strokeOpacity: 0,
+          strokeWeight: 4,
           zIndex: 40,
+          icons: [{
+            icon: {
+              path: "M 0,-1 0,1",
+              strokeOpacity: 0.7,
+              strokeColor: "#c084fc",
+              scale: 3,
+            },
+            offset: "0",
+            repeat: "16px",
+          }],
         }}
       />
 
