@@ -267,6 +267,7 @@
     "loadingModels": "Carregando modelos...",
     "noMatchingMakes": "Nenhuma marca correspondente",
     "noMatchingModels": "Nenhum modelo correspondente",
+    "modelListHint": "Lista gerada por IA. Digite para inserir qualquer modelo.",
     "maintenance": {
       "title": "Plano de Manutenção",
       "fetch": "Manutenção",

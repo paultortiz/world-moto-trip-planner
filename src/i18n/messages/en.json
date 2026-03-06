@@ -267,6 +267,7 @@
     "loadingModels": "Loading models...",
     "noMatchingMakes": "No matching makes",
     "noMatchingModels": "No matching models",
+    "modelListHint": "AI-generated list. Type to enter any model.",
     "maintenance": {
       "title": "Maintenance Schedule",
       "fetch": "Maintenance",

@@ -125,7 +125,27 @@ export default function NewMotorcycleForm({ onCreate }: NewMotorcycleFormProps) 
         </div>
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-slate-400">{t("model")}</span>
+        <span className="flex items-center gap-1 text-slate-400">
+          {t("model")}
+          <span className="group relative">
+            <svg
+              className="h-3 w-3 cursor-help text-slate-500 hover:text-slate-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-2 py-1 text-[10px] text-slate-200 opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+              {t("modelListHint")}
+            </span>
+          </span>
+        </span>
         <div className="w-44">
           <Combobox
             value={modelInput}
