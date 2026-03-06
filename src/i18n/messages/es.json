@@ -267,6 +267,7 @@
     "loadingModels": "Cargando modelos...",
     "noMatchingMakes": "No hay marcas coincidentes",
     "noMatchingModels": "No hay modelos coincidentes",
+    "modelListHint": "Lista generada por IA. Escribe para ingresar cualquier modelo.",
     "maintenance": {
       "title": "Plan de Mantenimiento",
       "fetch": "Mantenimiento",

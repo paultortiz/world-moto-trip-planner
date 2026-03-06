@@ -267,6 +267,7 @@
     "loadingModels": "Modelle werden geladen...",
     "noMatchingMakes": "Keine passenden Marken",
     "noMatchingModels": "Keine passenden Modelle",
+    "modelListHint": "KI-generierte Liste. Tippen Sie ein beliebiges Modell.",
     "maintenance": {
       "title": "Wartungsplan",
       "fetch": "Wartung",

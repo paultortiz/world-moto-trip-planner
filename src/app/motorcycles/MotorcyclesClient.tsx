@@ -1,20 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import NewMotorcycleForm from "./NewMotorcycleForm";
-import Combobox from "@/components/ui/Combobox";
-import { MOTORCYCLE_MAKES } from "@/data/motorcycleMakes";
-
-// Generate year options from current year down to 1950
-function generateYearOptions(): number[] {
-  const currentYear = new Date().getFullYear();
-  const years: number[] = [];
-  for (let y = currentYear + 1; y >= 1950; y--) {
-    years.push(y);
-  }
-  return years;
-}
 
 // Progress stages for AI fetch - faster initial stages, then slow creep
 const FETCH_STAGES = [
@@ -183,16 +171,13 @@ export default function MotorcyclesClient({ motorcycles }: MotorcyclesClientProp
     id: string,
     preferredRangeKm: number | null,
     preferredReserveKm: number | null,
-    year: number | null,
-    make: string,
-    model: string,
   ) {
     setStatus(null);
     try {
       const res = await fetch(`/api/motorcycles/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferredRangeKm, preferredReserveKm, year, make, model }),
+        body: JSON.stringify({ preferredRangeKm, preferredReserveKm }),
       });
       if (!res.ok) {
       const data = await res.json().catch(() => null);
@@ -347,9 +332,6 @@ interface MotorcycleRowProps {
     id: string,
     range: number | null,
     reserve: number | null,
-    year: number | null,
-    make: string,
-    model: string,
   ) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onSetDefault: (id: string) => Promise<void>;
@@ -366,11 +348,6 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
   const [reserveInput, setReserveInput] = useState<string>(
     initialReserve === "" ? "" : String(initialReserve),
   );
-  const [yearInput, setYearInput] = useState<string>(
-    typeof moto.year === "number" ? String(moto.year) : "",
-  );
-  const [makeInput, setMakeInput] = useState<string>(moto.make ?? "");
-  const [modelInput, setModelInput] = useState<string>(moto.model ?? "");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showSpecs, setShowSpecs] = useState(false);
@@ -389,63 +366,12 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
     }
   }, [moto.maintenanceSchedule, maintenanceData]);
 
-  // Model fetching state
-  const [models, setModels] = useState<string[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(false);
-  const [lastFetchedMake, setLastFetchedMake] = useState(moto.make ?? "");
-
-  const yearOptions = useMemo(() => generateYearOptions(), []);
-
-  // Fetch models when make changes
-  useEffect(() => {
-    const trimmedMake = makeInput.trim();
-    
-    // Don't fetch if make is empty or same as last fetched
-    if (!trimmedMake || trimmedMake === lastFetchedMake) {
-      return;
-    }
-
-    // Debounce the fetch
-    const timeoutId = setTimeout(async () => {
-      setModelsLoading(true);
-      setLastFetchedMake(trimmedMake);
-      
-      try {
-        const res = await fetch(`/api/ai/motorcycle-models?make=${encodeURIComponent(trimmedMake)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setModels(data.models ?? []);
-        } else {
-          setModels([]);
-        }
-      } catch {
-        setModels([]);
-      } finally {
-        setModelsLoading(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [makeInput, lastFetchedMake]);
-
-  // Clear model when make changes significantly
-  const handleMakeChange = (newMake: string) => {
-    const oldMake = makeInput.toLowerCase();
-    const newMakeLower = newMake.toLowerCase();
-    setMakeInput(newMake);
-    // Clear model if make changed significantly
-    if (newMakeLower !== oldMake && !newMakeLower.startsWith(oldMake) && !oldMake.startsWith(newMakeLower)) {
-      setModelInput("");
-      setModels([]);
-    }
-  };
-
   return (
     <li className="flex flex-col gap-2 rounded border border-slate-800 bg-slate-950/70 p-2 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-[13px] font-semibold text-slate-100">
-            {moto.displayName || `${yearInput || ""} ${makeInput || ""} ${modelInput || ""}`.trim()}
+            {moto.displayName || `${moto.year ?? ""} ${moto.make ?? ""} ${moto.model ?? ""}`.trim()}
           </p>
           {typeof moto._count?.trips === "number" && moto._count.trips > 0 && (
             <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
@@ -481,50 +407,6 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
       </div>
       <div className="mt-1 flex flex-wrap items-end gap-3 text-[11px] text-slate-300 sm:mt-0">
         <div className="flex flex-col gap-1">
-          <span className="text-slate-400">{t("year")}</span>
-          <select
-            className="w-20 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-            value={yearInput}
-            onChange={(e) => setYearInput(e.target.value)}
-          >
-            <option value="">--</option>
-            {yearOptions.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-slate-400">{t("make")}</span>
-          <div className="w-28">
-            <Combobox
-              value={makeInput}
-              onChange={handleMakeChange}
-              options={[...MOTORCYCLE_MAKES]}
-              placeholder={t("selectOrType")}
-              noOptionsText={t("noMatchingMakes")}
-              aria-label={t("make")}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-slate-400">{t("model")}</span>
-          <div className="w-36">
-            <Combobox
-              value={modelInput}
-              onChange={setModelInput}
-              options={models}
-              placeholder={makeInput ? t("selectOrType") : t("selectMakeFirst")}
-              loading={modelsLoading}
-              loadingText={t("loadingModels")}
-              noOptionsText={t("noMatchingModels")}
-              disabled={!makeInput.trim()}
-              aria-label={t("model")}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1">
           <span className="text-slate-400">{t("preferredRange")}</span>
           <input
             type="number"
@@ -551,8 +433,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
             setSaving(true);
             const rangeVal = rangeInput.trim() === "" ? null : Number(rangeInput);
             const reserveVal = reserveInput.trim() === "" ? null : Number(reserveInput);
-            const yearVal = yearInput.trim() === "" ? null : Number(yearInput);
-            await onSave(moto.id, rangeVal, reserveVal, yearVal, makeInput, modelInput);
+            await onSave(moto.id, rangeVal, reserveVal);
             setSaving(false);
           }}
           className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"

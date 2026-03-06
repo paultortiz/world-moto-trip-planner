@@ -44,7 +44,11 @@ export async function GET(req: NextRequest) {
       where: { make: normalizedMake },
     });
 
-    if (cached) {
+    // Cache entries expire after 30 days
+    const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+    const isCacheValid = cached && (Date.now() - new Date(cached.updatedAt).getTime()) < CACHE_TTL_MS;
+
+    if (isCacheValid) {
       // Return cached models
       return NextResponse.json({
         make: normalizedMake,
@@ -114,9 +118,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Store in cache
-    await prismaAny.motorcycleModelCache.create({
-      data: {
+    // Store in cache (upsert to handle expired entries)
+    await prismaAny.motorcycleModelCache.upsert({
+      where: { make: normalizedMake },
+      update: {
+        models: models,
+        updatedAt: new Date(),
+      },
+      create: {
         make: normalizedMake,
         models: models,
       },
