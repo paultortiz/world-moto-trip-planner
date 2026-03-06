@@ -377,6 +377,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
   const [showMaintenance, setShowMaintenance] = useState(false);
   const [maintenanceData, setMaintenanceData] = useState<any>(moto.maintenanceSchedule ?? null);
   const [maintenanceJustLoaded, setMaintenanceJustLoaded] = useState(false);
+  const [fetchingMaintenance, setFetchingMaintenance] = useState(false);
 
   // Sync maintenanceData when moto prop changes (e.g., after AI fetch completes)
   useEffect(() => {
@@ -440,7 +441,7 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
   };
 
   return (
-    <li className="flex flex-col gap-2 rounded border border-slate-800 bg-slate-950/70 p-2 sm:flex-row sm:items-center sm:justify-between">
+    <li className="flex flex-col gap-2 rounded border border-slate-800 bg-slate-950/70 p-2 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-[13px] font-semibold text-slate-100">
@@ -600,17 +601,55 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
             {showSpecs ? t("hideSpecs") : t("showAllSpecs")}
         </button>
         )}
-        {maintenanceData && (
+        {moto.specs && (
           <button
             type="button"
-            onClick={() => setShowMaintenance(!showMaintenance)}
+            disabled={fetchingMaintenance}
+            onClick={async () => {
+              if (maintenanceData) {
+                setShowMaintenance(!showMaintenance);
+                return;
+              }
+              // Fetch maintenance for existing bike without maintenance data
+              setFetchingMaintenance(true);
+              try {
+                const res = await fetch("/api/ai/motorcycle-maintenance", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ motorcycleId: moto.id }),
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  setMaintenanceData(data.maintenanceSchedule);
+                  setShowMaintenance(true);
+                  setMaintenanceJustLoaded(true);
+                  setTimeout(() => setMaintenanceJustLoaded(false), 3000);
+                }
+              } catch {
+                // ignore errors
+              } finally {
+                setFetchingMaintenance(false);
+              }
+            }}
             className={`rounded border px-3 py-1 text-[11px] transition-all duration-300 ${
               maintenanceJustLoaded
                 ? "animate-pulse border-emerald-400 bg-emerald-500/20 text-emerald-300 ring-2 ring-emerald-400/50"
                 : "border-slate-600 text-slate-300 hover:bg-slate-700"
-            }`}
+            } disabled:opacity-50`}
           >
-            {showMaintenance ? t("maintenance.hide") : t("maintenance.show")}
+            {fetchingMaintenance ? (
+              <span className="flex items-center gap-1">
+                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                {t("maintenance.loading")}
+              </span>
+            ) : showMaintenance ? (
+              t("maintenance.hide")
+            ) : (
+              t("maintenance.show")
+            )}
           </button>
         )}
       </div>
