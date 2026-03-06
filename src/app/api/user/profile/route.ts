@@ -21,6 +21,17 @@ const VALID_INTERESTS = [
   "deserts",
 ] as const;
 
+// ISO 3166-1 alpha-2 country codes (common passport countries)
+const VALID_COUNTRY_CODES = [
+  "AF", "AL", "DZ", "AR", "AU", "AT", "BD", "BE", "BR", "BG",
+  "CA", "CL", "CN", "CO", "HR", "CZ", "DK", "EC", "EG", "FI",
+  "FR", "DE", "GR", "HK", "HU", "IN", "ID", "IE", "IL", "IT",
+  "JP", "KE", "KR", "MY", "MX", "MA", "NL", "NZ", "NG", "NO",
+  "PK", "PE", "PH", "PL", "PT", "RO", "RU", "SA", "SG", "ZA",
+  "ES", "SE", "CH", "TW", "TH", "TR", "UA", "AE", "GB", "US",
+  "VN", "ZW",
+] as const;
+
 export async function GET() {
   try {
     const session = await auth();
@@ -38,6 +49,7 @@ export async function GET() {
         email: true,
         image: true,
         locale: true,
+        passportCountries: true,
         ridingStyle: true,
         pacePreference: true,
         terrainPreference: true,
@@ -87,6 +99,18 @@ export async function PUT(req: NextRequest) {
     if (body.locale !== undefined) {
       const validLocales = ["en", "es", "de", "fr", "pt"];
       updateData.locale = validLocales.includes(body.locale) ? body.locale : null;
+    }
+
+    // Passport countries (array of ISO 3166-1 alpha-2 codes)
+    if (body.passportCountries !== undefined) {
+      if (Array.isArray(body.passportCountries)) {
+        const filtered = body.passportCountries.filter((c: string) =>
+          VALID_COUNTRY_CODES.includes(c as any)
+        );
+        updateData.passportCountries = filtered.length > 0 ? filtered : Prisma.DbNull;
+      } else {
+        updateData.passportCountries = Prisma.DbNull;
+      }
     }
 
     // Riding style enum
@@ -160,6 +184,7 @@ export async function PUT(req: NextRequest) {
         email: true,
         image: true,
         locale: true,
+        passportCountries: true,
         ridingStyle: true,
         pacePreference: true,
         terrainPreference: true,

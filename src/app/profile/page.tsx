@@ -11,6 +11,7 @@ type UserProfile = {
   email: string | null;
   image: string | null;
   locale: string | null;
+  passportCountries: string[] | null;
   ridingStyle: string | null;
   pacePreference: string | null;
   terrainPreference: string | null;
@@ -40,6 +41,72 @@ const INTEREST_OPTIONS = [
   "deserts",
 ] as const;
 
+// Common passport countries with ISO 3166-1 alpha-2 codes
+const PASSPORT_COUNTRIES = [
+  { code: "US", name: "United States" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "CA", name: "Canada" },
+  { code: "AU", name: "Australia" },
+  { code: "NZ", name: "New Zealand" },
+  { code: "DE", name: "Germany" },
+  { code: "FR", name: "France" },
+  { code: "ES", name: "Spain" },
+  { code: "IT", name: "Italy" },
+  { code: "NL", name: "Netherlands" },
+  { code: "BE", name: "Belgium" },
+  { code: "AT", name: "Austria" },
+  { code: "CH", name: "Switzerland" },
+  { code: "SE", name: "Sweden" },
+  { code: "NO", name: "Norway" },
+  { code: "DK", name: "Denmark" },
+  { code: "FI", name: "Finland" },
+  { code: "PT", name: "Portugal" },
+  { code: "IE", name: "Ireland" },
+  { code: "PL", name: "Poland" },
+  { code: "CZ", name: "Czech Republic" },
+  { code: "HU", name: "Hungary" },
+  { code: "RO", name: "Romania" },
+  { code: "BG", name: "Bulgaria" },
+  { code: "HR", name: "Croatia" },
+  { code: "GR", name: "Greece" },
+  { code: "JP", name: "Japan" },
+  { code: "KR", name: "South Korea" },
+  { code: "TW", name: "Taiwan" },
+  { code: "HK", name: "Hong Kong" },
+  { code: "SG", name: "Singapore" },
+  { code: "MY", name: "Malaysia" },
+  { code: "TH", name: "Thailand" },
+  { code: "VN", name: "Vietnam" },
+  { code: "ID", name: "Indonesia" },
+  { code: "PH", name: "Philippines" },
+  { code: "IN", name: "India" },
+  { code: "PK", name: "Pakistan" },
+  { code: "BD", name: "Bangladesh" },
+  { code: "CN", name: "China" },
+  { code: "RU", name: "Russia" },
+  { code: "UA", name: "Ukraine" },
+  { code: "TR", name: "Turkey" },
+  { code: "IL", name: "Israel" },
+  { code: "AE", name: "United Arab Emirates" },
+  { code: "SA", name: "Saudi Arabia" },
+  { code: "EG", name: "Egypt" },
+  { code: "MA", name: "Morocco" },
+  { code: "ZA", name: "South Africa" },
+  { code: "KE", name: "Kenya" },
+  { code: "NG", name: "Nigeria" },
+  { code: "ZW", name: "Zimbabwe" },
+  { code: "BR", name: "Brazil" },
+  { code: "MX", name: "Mexico" },
+  { code: "AR", name: "Argentina" },
+  { code: "CL", name: "Chile" },
+  { code: "CO", name: "Colombia" },
+  { code: "PE", name: "Peru" },
+  { code: "EC", name: "Ecuador" },
+  { code: "AF", name: "Afghanistan" },
+  { code: "AL", name: "Albania" },
+  { code: "DZ", name: "Algeria" },
+] as const;
+
 export default function ProfilePage() {
   const t = useTranslations();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -59,6 +126,7 @@ export default function ProfilePage() {
   const [avoidHighways, setAvoidHighways] = useState(false);
   const [preferCamping, setPreferCamping] = useState(false);
   const [dietaryRestrictions, setDietaryRestrictions] = useState("");
+  const [passportCountries, setPassportCountries] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProfile();
@@ -88,6 +156,7 @@ export default function ProfilePage() {
       setAvoidHighways(data.avoidHighways);
       setPreferCamping(data.preferCamping);
       setDietaryRestrictions(data.dietaryRestrictions ?? "");
+      setPassportCountries(data.passportCountries ?? []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -106,6 +175,7 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name || null,
+          passportCountries,
           ridingStyle,
           pacePreference,
           terrainPreference,
@@ -232,6 +302,50 @@ export default function ProfilePage() {
             aria-describedby="displayNameHint"
             className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-slate-100 placeholder-slate-400 focus:border-adv-accent focus:outline-none focus:ring-2 focus:ring-adv-accent/50"
           />
+        </section>
+
+        {/* Passport Countries */}
+        <section
+          className="rounded-lg border border-adv-border bg-slate-800/50 p-4"
+          aria-labelledby="passportCountriesHeading"
+        >
+          <h2
+            id="passportCountriesHeading"
+            className="mb-1 text-lg font-semibold text-slate-200"
+          >
+            {t("profile.passportCountries")}
+          </h2>
+          <p className="mb-3 text-xs text-slate-400">
+            {t("profile.passportCountriesHint")}
+          </p>
+          <div className="flex flex-wrap gap-2" role="group" aria-labelledby="passportCountriesHeading">
+            {PASSPORT_COUNTRIES.map((country) => (
+              <button
+                key={country.code}
+                type="button"
+                onClick={() => {
+                  setPassportCountries((prev) =>
+                    prev.includes(country.code)
+                      ? prev.filter((c) => c !== country.code)
+                      : [...prev, country.code]
+                  );
+                }}
+                aria-pressed={passportCountries.includes(country.code)}
+                className={`rounded-full border px-3 py-1 text-sm transition focus:outline-none focus:ring-2 focus:ring-adv-accent/50 ${
+                  passportCountries.includes(country.code)
+                    ? "border-adv-accent bg-adv-accent/20 text-adv-accent"
+                    : "border-slate-600 bg-slate-700/50 text-slate-300 hover:border-slate-500"
+                }`}
+              >
+                {country.name}
+              </button>
+            ))}
+          </div>
+          {passportCountries.length > 0 && (
+            <p className="mt-3 text-xs text-slate-400">
+              {t("profile.selectedPassports")}: {passportCountries.length}
+            </p>
+          )}
         </section>
 
         {/* Riding Style */}

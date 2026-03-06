@@ -742,6 +742,9 @@
     "preferCamping": "Camping gegenüber Hotels bevorzugen",
     "dietary": "Ernährungseinschränkungen",
     "dietaryPlaceholder": "Z.B. vegetarisch, glutenfrei, Allergien...",
+    "passportCountries": "Reisepass-Länder",
+    "passportCountriesHint": "Wähle alle Reisepässe aus, die du besitzt. Wird für genaue Visa- und Einreiseanforderungen bei der Grenzübergangsplanung verwendet.",
+    "selectedPassports": "Ausgewählt",
     "styles": {
       "TOURING": "Touring",
       "ADVENTURE": "Adventure",
