@@ -367,172 +367,189 @@ function MotorcycleRow({ moto, initialRange, initialReserve, onSave, onDelete, o
   }, [moto.maintenanceSchedule, maintenanceData]);
 
   return (
-    <li className="flex flex-col gap-2 rounded border border-slate-800 bg-slate-950/70 p-2 sm:flex-row sm:items-start sm:justify-between">
-      <div>
+    <li className="rounded-lg border border-slate-700 bg-slate-950/70 p-3">
+      {/* Card Header - Bike name and status badges */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[13px] font-semibold text-slate-100">
+          <h3 className="text-[14px] font-semibold text-slate-100">
             {moto.displayName || `${moto.year ?? ""} ${moto.make ?? ""} ${moto.model ?? ""}`.trim()}
-          </p>
+          </h3>
+          {moto.isDefaultForNewTrips && (
+            <span className="rounded-full bg-emerald-900/50 px-2 py-0.5 text-[10px] text-emerald-300">
+              ★ {t("defaultForNewTrips")}
+            </span>
+          )}
           {typeof moto._count?.trips === "number" && moto._count.trips > 0 && (
             <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
               {t("inUseByTrips", { count: moto._count.trips })}
             </span>
           )}
-          {isFetchingSpecs && (
-            <div className="flex items-center gap-2">
-              <div className="flex h-5 w-32 items-center overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-500 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-amber-300 transition-opacity duration-300">
-                {progressMessage}
-              </span>
+        </div>
+        {isFetchingSpecs && (
+          <div className="flex items-center gap-2">
+            <div className="flex h-4 w-28 items-center overflow-hidden rounded-full bg-slate-800">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-500 ease-out"
+                style={{ width: `${progress}%` }}
+              />
             </div>
-          )}
-        </div>
-        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300">
-          {typeof moto.engineDisplacementCc === "number" && (
-            <span>{t("engine")}: {moto.engineDisplacementCc} cc</span>
-          )}
-          {typeof moto.wetWeightKg === "number" && <span>{t("wetWeight")}: {moto.wetWeightKg} kg</span>}
-          {typeof moto.fuelCapacityLiters === "number" && (
-            <span>{t("fuel")}: {moto.fuelCapacityLiters.toFixed(1)} L</span>
-          )}
-          {typeof moto.estimatedRangeKm === "number" && (
-            <span>{t("estRange")}: {moto.estimatedRangeKm} km</span>
-          )}
-        </div>
-      </div>
-      <div className="mt-1 flex flex-wrap items-end gap-3 text-[11px] text-slate-300 sm:mt-0">
-        <div className="flex flex-col gap-1">
-          <span className="text-slate-400">{t("preferredRange")}</span>
-          <input
-            type="number"
-            min={0}
-            className="w-24 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-            value={rangeInput}
-            onChange={(e) => setRangeInput(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-slate-400">{t("preferredReserve")}</span>
-          <input
-            type="number"
-            min={0}
-            className="w-24 rounded border border-slate-600 bg-slate-950 p-1 text-[11px]"
-            value={reserveInput}
-            onChange={(e) => setReserveInput(e.target.value)}
-          />
-        </div>
-        <button
-          type="button"
-          disabled={saving}
-          onClick={async () => {
-            setSaving(true);
-            const rangeVal = rangeInput.trim() === "" ? null : Number(rangeInput);
-            const reserveVal = reserveInput.trim() === "" ? null : Number(reserveInput);
-            await onSave(moto.id, rangeVal, reserveVal);
-            setSaving(false);
-          }}
-          className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
-        >
-          {saving ? t("saving") : t("save")}
-        </button>
-        <button
-          type="button"
-          disabled={moto.isDefaultForNewTrips}
-          onClick={async () => {
-            await onSetDefault(moto.id);
-          }}
-          className="rounded border border-emerald-500 px-3 py-1 text-[11px] text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-60"
-        >
-          {moto.isDefaultForNewTrips ? t("defaultForNewTrips") : t("setAsDefault")}
-        </button>
-        <button
-          type="button"
-          disabled={deleting || (typeof moto._count?.trips === "number" && moto._count.trips > 0)}
-          onClick={async () => {
-            if (typeof moto._count?.trips === "number" && moto._count.trips > 0) {
-              alert(t("inUseCannotDelete"));
-              return;
-            }
-            if (!window.confirm(t("deleteConfirm"))) {
-              return;
-            }
-            setDeleting(true);
-            await onDelete(moto.id);
-            setDeleting(false);
-          }}
-          className="rounded border border-red-600 px-3 py-1 text-[11px] text-red-300 hover:bg-red-600/20 disabled:opacity-50"
-        >
-          {deleting ? t("deleting") : t("delete")}
-        </button>
-        {moto.specs && (
-          <button
-            type="button"
-            onClick={() => setShowSpecs(!showSpecs)}
-            className={`rounded border px-3 py-1 text-[11px] transition-all duration-300 ${
-              specsJustLoaded
-                ? "animate-pulse border-emerald-400 bg-emerald-500/20 text-emerald-300 ring-2 ring-emerald-400/50"
-                : "border-slate-600 text-slate-300 hover:bg-slate-700"
-            }`}
-          >
-            {showSpecs ? t("hideSpecs") : t("showAllSpecs")}
-        </button>
+            <span className="text-[10px] text-amber-300">{progressMessage}</span>
+          </div>
         )}
-        {moto.specs && (
+      </div>
+
+      {/* Card Body - Specs summary */}
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
+        {typeof moto.engineDisplacementCc === "number" && (
+          <span>{t("engine")}: <span className="text-slate-300">{moto.engineDisplacementCc} cc</span></span>
+        )}
+        {typeof moto.wetWeightKg === "number" && (
+          <span>{t("wetWeight")}: <span className="text-slate-300">{moto.wetWeightKg} kg</span></span>
+        )}
+        {typeof moto.fuelCapacityLiters === "number" && (
+          <span>{t("fuel")}: <span className="text-slate-300">{moto.fuelCapacityLiters.toFixed(1)} L</span></span>
+        )}
+        {typeof moto.estimatedRangeKm === "number" && (
+          <span>{t("estRange")}: <span className="text-slate-300">{moto.estimatedRangeKm} km</span></span>
+        )}
+      </div>
+
+      {/* Card Footer - Settings and Actions */}
+      <div className="mt-3 flex flex-col gap-3 border-t border-slate-800 pt-3 sm:flex-row sm:items-end sm:justify-between">
+        {/* Fuel settings */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-slate-500">{t("preferredRange")}</span>
+            <input
+              type="number"
+              min={0}
+              className="w-20 rounded border border-slate-600 bg-slate-900 px-2 py-1 text-[11px] text-slate-200"
+              value={rangeInput}
+              onChange={(e) => setRangeInput(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-slate-500">{t("preferredReserve")}</span>
+            <input
+              type="number"
+              min={0}
+              className="w-20 rounded border border-slate-600 bg-slate-900 px-2 py-1 text-[11px] text-slate-200"
+              value={reserveInput}
+              onChange={(e) => setReserveInput(e.target.value)}
+            />
+          </div>
           <button
             type="button"
-            disabled={fetchingMaintenance}
+            disabled={saving}
             onClick={async () => {
-              if (maintenanceData) {
-                setShowMaintenance(!showMaintenance);
+              setSaving(true);
+              const rangeVal = rangeInput.trim() === "" ? null : Number(rangeInput);
+              const reserveVal = reserveInput.trim() === "" ? null : Number(reserveInput);
+              await onSave(moto.id, rangeVal, reserveVal);
+              setSaving(false);
+            }}
+            className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black hover:bg-adv-accentMuted disabled:opacity-50"
+          >
+            {saving ? t("saving") : t("save")}
+          </button>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2">
+          {!moto.isDefaultForNewTrips && (
+            <button
+              type="button"
+              onClick={async () => {
+                await onSetDefault(moto.id);
+              }}
+              className="rounded border border-emerald-600 px-2 py-1 text-[10px] text-emerald-400 hover:bg-emerald-900/30"
+            >
+              {t("setAsDefault")}
+            </button>
+          )}
+          {moto.specs && (
+            <button
+              type="button"
+              onClick={() => setShowSpecs(!showSpecs)}
+              className={`rounded border px-2 py-1 text-[10px] transition-all duration-300 ${
+                specsJustLoaded
+                  ? "animate-pulse border-emerald-400 bg-emerald-500/20 text-emerald-300"
+                  : "border-slate-600 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+              }`}
+            >
+              {showSpecs ? t("hideSpecs") : t("showAllSpecs")}
+            </button>
+          )}
+          {moto.specs && (
+            <button
+              type="button"
+              disabled={fetchingMaintenance}
+              onClick={async () => {
+                if (maintenanceData) {
+                  setShowMaintenance(!showMaintenance);
+                  return;
+                }
+                setFetchingMaintenance(true);
+                try {
+                  const res = await fetch("/api/ai/motorcycle-maintenance", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ motorcycleId: moto.id }),
+                  });
+                  if (res.ok) {
+                    const data = await res.json();
+                    setMaintenanceData(data.maintenanceSchedule);
+                    setShowMaintenance(true);
+                    setMaintenanceJustLoaded(true);
+                    setTimeout(() => setMaintenanceJustLoaded(false), 3000);
+                  }
+                } catch {
+                  // ignore errors
+                } finally {
+                  setFetchingMaintenance(false);
+                }
+              }}
+              className={`rounded border px-2 py-1 text-[10px] transition-all duration-300 ${
+                maintenanceJustLoaded
+                  ? "animate-pulse border-emerald-400 bg-emerald-500/20 text-emerald-300"
+                  : "border-slate-600 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+              } disabled:opacity-50`}
+            >
+              {fetchingMaintenance ? (
+                <span className="flex items-center gap-1">
+                  <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  {t("maintenance.loading")}
+                </span>
+              ) : showMaintenance ? (
+                t("maintenance.hide")
+              ) : (
+                t("maintenance.show")
+              )}
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={deleting || (typeof moto._count?.trips === "number" && moto._count.trips > 0)}
+            onClick={async () => {
+              if (typeof moto._count?.trips === "number" && moto._count.trips > 0) {
+                alert(t("inUseCannotDelete"));
                 return;
               }
-              // Fetch maintenance for existing bike without maintenance data
-              setFetchingMaintenance(true);
-              try {
-                const res = await fetch("/api/ai/motorcycle-maintenance", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ motorcycleId: moto.id }),
-                });
-                if (res.ok) {
-                  const data = await res.json();
-                  setMaintenanceData(data.maintenanceSchedule);
-                  setShowMaintenance(true);
-                  setMaintenanceJustLoaded(true);
-                  setTimeout(() => setMaintenanceJustLoaded(false), 3000);
-                }
-              } catch {
-                // ignore errors
-              } finally {
-                setFetchingMaintenance(false);
+              if (!window.confirm(t("deleteConfirm"))) {
+                return;
               }
+              setDeleting(true);
+              await onDelete(moto.id);
+              setDeleting(false);
             }}
-            className={`rounded border px-3 py-1 text-[11px] transition-all duration-300 ${
-              maintenanceJustLoaded
-                ? "animate-pulse border-emerald-400 bg-emerald-500/20 text-emerald-300 ring-2 ring-emerald-400/50"
-                : "border-slate-600 text-slate-300 hover:bg-slate-700"
-            } disabled:opacity-50`}
+            className="rounded border border-red-800 px-2 py-1 text-[10px] text-red-400 hover:bg-red-900/30 disabled:opacity-50"
           >
-            {fetchingMaintenance ? (
-              <span className="flex items-center gap-1">
-                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                {t("maintenance.loading")}
-              </span>
-            ) : showMaintenance ? (
-              t("maintenance.hide")
-            ) : (
-              t("maintenance.show")
-            )}
+            {deleting ? t("deleting") : t("delete")}
           </button>
-        )}
+        </div>
       </div>
       {showSpecs && moto.specs && (
         <div className="mt-3 rounded border border-slate-700 bg-slate-900/50 p-3">
