@@ -30,8 +30,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = (session.user as any).id as string;
+
+    // Fetch user's passport countries if not provided in request
+    let userPassportCountries: string[] = [];
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { passportCountries: true },
+      });
+      userPassportCountries = (user?.passportCountries as string[] | null) ?? [];
+    }
+
     const body: RequestBody = await req.json();
-    const { originCountry, destCountry, riderNationality, locale } = body;
+    const { originCountry, destCountry, locale } = body;
+    // Use provided riderNationality, fall back to user's saved passport countries
+    // If user has multiple passports, we'll include all for the AI to consider
+    const riderNationalities = body.riderNationality 
+      ? [body.riderNationality] 
+      : userPassportCountries;
 
     if (!originCountry || !destCountry) {
       return NextResponse.json(
@@ -100,8 +117,15 @@ export async function POST(req: NextRequest) {
 Provide accurate, current information. When requirements differ by rider nationality, note this clearly.
 Return ONLY valid JSON with no markdown formatting.`;
 
+    // Build nationality context for AI prompt
+    const nationalityContext = riderNationalities.length > 0
+      ? riderNationalities.length === 1
+        ? `The rider holds a ${riderNationalities[0]} passport.`
+        : `The rider holds multiple passports: ${riderNationalities.join(", ")}. Provide requirements for each nationality where they differ, noting which passport offers easier entry.`
+      : "Assume a US passport holder if nationality-specific info is needed.";
+
     const userPrompt = `Generate motorcycle-specific border crossing requirements for traveling from ${origin} to ${dest}.
-${riderNationality ? `The rider's passport country is ${riderNationality}.` : "Assume a US passport holder if nationality-specific info is needed."}
+${nationalityContext}
 
 **Write all text in ${targetLanguage}.**
 
