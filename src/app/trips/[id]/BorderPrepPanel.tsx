@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import ReactMarkdown from "react-markdown";
 import {
   type BorderPort,
   type BorderRequirement,
@@ -45,6 +46,30 @@ interface VehicleEntryRequirement {
   lastVerified: string | null;
 }
 
+// Type for border crossing from Google Places API
+interface BorderCrossingData {
+  id: string;
+  googlePlaceId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  address: string | null;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  openingHours: string[] | null;
+  phoneNumber: string | null;
+  websiteUrl: string | null;
+  photoUrls: string[];
+  fromCountry: string | null;
+  toCountry: string | null;
+  // AI-enhanced fields
+  motorcycleTips: string | null;
+  warnings: string | null;
+  bestTimeToGo: string | null;
+  tipProcessInfo: string | null;
+  hasAiTips: boolean;
+}
+
 interface WaypointDto {
   id?: string;
   lat: number;
@@ -55,6 +80,106 @@ interface WaypointDto {
 
 interface BorderPrepPanelProps {
   waypoints: WaypointDto[];
+}
+
+// Enlargeable photo component with desktop hover and mobile tap support
+function EnlargeablePhoto({ src, alt }: { src: string; alt: string }) {
+  const [isEnlarged, setIsEnlarged] = useState(false);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    if (!imgRef.current || window.innerWidth < 768) return; // Skip on mobile
+    
+    const rect = imgRef.current.getBoundingClientRect();
+    const enlargedWidth = rect.width * 3;
+    const enlargedHeight = rect.height * 3;
+    
+    // Calculate position to keep enlarged image within viewport
+    let top = rect.top + rect.height / 2 - enlargedHeight / 2;
+    let left = rect.left + rect.width / 2 - enlargedWidth / 2;
+    
+    // Adjust if going off screen
+    const padding = 16;
+    if (left < padding) left = padding;
+    if (left + enlargedWidth > window.innerWidth - padding) {
+      left = window.innerWidth - enlargedWidth - padding;
+    }
+    if (top < padding) top = padding;
+    if (top + enlargedHeight > window.innerHeight - padding) {
+      top = window.innerHeight - enlargedHeight - padding;
+    }
+    
+    setPosition({ top, left });
+    setIsEnlarged(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsEnlarged(false);
+  }, []);
+
+  // Mobile tap handler - opens in modal-like overlay
+  const handleTap = useCallback(() => {
+    if (window.innerWidth >= 768) return; // Desktop uses hover
+    setIsEnlarged(true);
+  }, []);
+
+  const handleCloseOverlay = useCallback(() => {
+    setIsEnlarged(false);
+  }, []);
+
+  return (
+    <>
+      <img
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        className="h-20 w-28 flex-shrink-0 cursor-pointer rounded object-cover transition-transform md:cursor-zoom-in"
+        loading="lazy"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleTap}
+      />
+      
+      {/* Desktop: Hover enlargement */}
+      {isEnlarged && position && window.innerWidth >= 768 && (
+        <div
+          className="pointer-events-none fixed z-50 hidden md:block"
+          style={{ top: position.top, left: position.left }}
+        >
+          <img
+            src={src}
+            alt={alt}
+            className="h-60 w-84 rounded-lg object-cover shadow-2xl ring-2 ring-slate-600"
+            style={{ width: 336, height: 240 }} // 3x of 112x80
+          />
+        </div>
+      )}
+      
+      {/* Mobile: Tap to open overlay */}
+      {isEnlarged && window.innerWidth < 768 && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 md:hidden"
+          onClick={handleCloseOverlay}
+        >
+          <div className="relative max-h-[80vh] max-w-[90vw]">
+            <img
+              src={src}
+              alt={alt}
+              className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain"
+            />
+            <button
+              type="button"
+              className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white shadow-lg"
+              onClick={handleCloseOverlay}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 // Category icons for document requirements
@@ -71,13 +196,184 @@ const CATEGORY_ICONS: Record<string, string> = {
 // Category display order
 const CATEGORY_ORDER = ["passport", "visa", "vehicle", "insurance", "health", "customs", "tips"];
 
+// Crossing card component for displaying border crossing details
+function CrossingCard({ 
+  crossing, 
+  t, 
+  onGetTips,
+  onRegenerateTips,
+  isLoadingTips 
+}: { 
+  crossing: BorderCrossingData; 
+  t: (key: string) => string;
+  onGetTips: (id: string) => void;
+  onRegenerateTips: (id: string) => void;
+  isLoadingTips: boolean;
+}) {
+  const [showAllTips, setShowAllTips] = useState(false);
+
+  return (
+    <div className="rounded border border-slate-700 bg-slate-900/50 p-3">
+      {/* Photos */}
+      {crossing.photoUrls.length > 0 && (
+        <div className="mb-3 flex gap-2 overflow-x-auto">
+          {crossing.photoUrls.map((url, idx) => (
+            <EnlargeablePhoto
+              key={idx}
+              src={url}
+              alt={`${crossing.name} photo ${idx + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="mb-2 flex items-start justify-between">
+        <div>
+          <h6 className="text-sm font-medium text-slate-200">{crossing.name}</h6>
+          {crossing.address && (
+            <p className="text-[10px] text-slate-500">📍 {crossing.address}</p>
+          )}
+        </div>
+        {crossing.rating && (
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-amber-400">★</span>
+            <span className="text-slate-300">{crossing.rating.toFixed(1)}</span>
+            {crossing.userRatingsTotal && (
+              <span className="text-slate-500">({crossing.userRatingsTotal})</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Opening hours */}
+      {crossing.openingHours && crossing.openingHours.length > 0 && (
+        <div className="mb-2">
+          <p className="text-[10px] text-slate-400">
+            🕐 {crossing.openingHours[0]}
+          </p>
+        </div>
+      )}
+
+      {/* Contact info */}
+      <div className="mb-2 flex flex-wrap gap-3 text-[10px]">
+        {crossing.phoneNumber && (
+          <a href={`tel:${crossing.phoneNumber}`} className="text-blue-400 hover:underline">
+            📞 {crossing.phoneNumber}
+          </a>
+        )}
+        {crossing.websiteUrl && (
+          <a
+            href={crossing.websiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline"
+          >
+            🌐 {t("crossing.website")}
+          </a>
+        )}
+      </div>
+
+      {/* AI-generated tips section */}
+      {crossing.hasAiTips ? (
+        <div className="mt-3 space-y-2">
+          {/* Best time to go */}
+          {crossing.bestTimeToGo && (
+            <div className="rounded bg-emerald-500/10 p-2">
+              <p className="text-[10px] font-medium text-emerald-400">🕐 {t("crossing.bestTime")}</p>
+              <p className="text-[10px] text-slate-300">{crossing.bestTimeToGo}</p>
+            </div>
+          )}
+
+          {/* Motorcycle tips */}
+          {crossing.motorcycleTips && (
+            <div className="rounded bg-violet-500/10 p-2">
+              <p className="text-[10px] font-medium text-violet-400">🏍️ {t("crossing.motoTips")}</p>
+              <div className={`prose prose-invert prose-xs max-w-none text-[10px] text-slate-300 ${!showAllTips && "line-clamp-3"}`}>
+                <ReactMarkdown>{crossing.motorcycleTips}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* Warnings */}
+          {crossing.warnings && (
+            <div className="rounded bg-red-500/10 p-2">
+              <p className="text-[10px] font-medium text-red-400">⚠️ {t("crossing.warnings")}</p>
+              <div className={`prose prose-invert prose-xs max-w-none text-[10px] text-slate-300 ${!showAllTips && "line-clamp-2"}`}>
+                <ReactMarkdown>{crossing.warnings}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* TIP/Permit info */}
+          {crossing.tipProcessInfo && (
+            <div className="rounded bg-amber-500/10 p-2">
+              <p className="text-[10px] font-medium text-amber-400">📋 {t("crossing.permitProcess")}</p>
+              <div className={`prose prose-invert prose-xs max-w-none text-[10px] text-slate-300 ${!showAllTips && "line-clamp-3"}`}>
+                <ReactMarkdown>{crossing.tipProcessInfo}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* Show more/less toggle and regenerate button */}
+          <div className="flex items-center gap-3">
+            {(crossing.motorcycleTips || crossing.warnings || crossing.tipProcessInfo) && (
+              <button
+                type="button"
+                onClick={() => setShowAllTips(!showAllTips)}
+                className="text-[10px] text-violet-400 hover:underline"
+              >
+                {showAllTips ? t("crossing.showLess") : t("crossing.showMore")}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onRegenerateTips(crossing.id)}
+              disabled={isLoadingTips}
+              className="text-[10px] text-slate-500 hover:text-slate-300 disabled:opacity-50"
+              title={t("crossing.regenerateTips")}
+            >
+              {isLoadingTips ? (
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 animate-spin rounded-full border border-slate-400 border-t-transparent" />
+                </span>
+              ) : (
+                <span>↻ {t("crossing.regenerateTips")}</span>
+              )}
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Get AI tips button */
+        <button
+          type="button"
+          onClick={() => onGetTips(crossing.id)}
+          disabled={isLoadingTips}
+          className="mt-3 flex items-center gap-2 rounded bg-violet-500/20 px-3 py-1.5 text-[10px] font-medium text-violet-300 hover:bg-violet-500/30 disabled:opacity-50"
+        >
+          {isLoadingTips ? (
+            <>
+              <div className="h-3 w-3 animate-spin rounded-full border border-violet-400 border-t-transparent" />
+              {t("crossing.generatingTips")}
+            </>
+          ) : (
+            <>
+              🏍️ {t("crossing.getMotoTips")}
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   const t = useTranslations("borderCrossings");
   const locale = useLocale();
 
   // Panel state
   const [isExpanded, setIsExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<"countries" | "requirements" | "vehicleEntry">("countries");
+  const [activeTab, setActiveTab] = useState<"countries" | "crossings" | "vehicleEntry" | "requirements">("countries");
 
   // Country detection state
   const [isDetecting, setIsDetecting] = useState(false);
@@ -97,6 +393,11 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   // Vehicle entry requirements state
   const [vehicleRequirements, setVehicleRequirements] = useState<Map<string, VehicleEntryRequirement>>(new Map());
   const [vehicleReqLoading, setVehicleReqLoading] = useState<Set<string>>(new Set());
+
+  // Border crossings state (keyed by border waypoint location)
+  const [borderCrossingsData, setBorderCrossingsData] = useState<Map<string, BorderCrossingData[]>>(new Map());
+  const [crossingsLoading, setCrossingsLoading] = useState<Set<string>>(new Set());
+  const [aiTipsLoading, setAiTipsLoading] = useState<Set<string>>(new Set());
 
   // Derived data
   const borderWaypoints = useMemo(
@@ -254,6 +555,135 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
     }
   }, [activeTab, uniqueCountries, fetchVehicleRequirements]);
 
+  // Fetch border crossings near a location (using Google Places)
+  const fetchNearbyCrossings = useCallback(async (lat: number, lng: number) => {
+    const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    if (borderCrossingsData.has(key) || crossingsLoading.has(key)) {
+      return;
+    }
+
+    setCrossingsLoading((prev) => new Set(prev).add(key));
+
+    try {
+      const response = await fetch(`/api/nearby-crossings?lat=${lat}&lng=${lng}&radius=100`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.crossings && data.crossings.length > 0) {
+          setBorderCrossingsData((prev) => new Map(prev).set(key, data.crossings));
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to fetch nearby crossings for ${lat},${lng}:`, err);
+    } finally {
+      setCrossingsLoading((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(key);
+        return newSet;
+      });
+    }
+  }, [borderCrossingsData, crossingsLoading]);
+
+  // Fetch AI tips for a specific crossing
+  const fetchAiTips = useCallback(async (crossingId: string) => {
+    if (aiTipsLoading.has(crossingId)) return;
+
+    setAiTipsLoading((prev) => new Set(prev).add(crossingId));
+
+    try {
+      const response = await fetch(`/api/border-crossings/${crossingId}/enhance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locale }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Update the crossing data with AI tips
+        setBorderCrossingsData((prev) => {
+          const newMap = new Map(prev);
+          for (const [key, crossings] of newMap) {
+            const updated = crossings.map((c) =>
+              c.id === crossingId
+                ? {
+                    ...c,
+                    motorcycleTips: data.crossing.motorcycleTips,
+                    warnings: data.crossing.warnings,
+                    bestTimeToGo: data.crossing.bestTimeToGo,
+                    tipProcessInfo: data.crossing.tipProcessInfo,
+                    hasAiTips: true,
+                  }
+                : c
+            );
+            newMap.set(key, updated);
+          }
+          return newMap;
+        });
+      }
+    } catch (err) {
+      console.error(`Failed to fetch AI tips for crossing ${crossingId}:`, err);
+    } finally {
+      setAiTipsLoading((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(crossingId);
+        return newSet;
+      });
+    }
+  }, [aiTipsLoading, locale]);
+
+  // Regenerate AI tips for a specific crossing (force regeneration)
+  const regenerateAiTips = useCallback(async (crossingId: string) => {
+    if (aiTipsLoading.has(crossingId)) return;
+
+    setAiTipsLoading((prev) => new Set(prev).add(crossingId));
+
+    try {
+      const response = await fetch(`/api/border-crossings/${crossingId}/enhance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locale, forceRegenerate: true }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Update the crossing data with new AI tips
+        setBorderCrossingsData((prev) => {
+          const newMap = new Map(prev);
+          for (const [key, crossings] of newMap) {
+            const updated = crossings.map((c) =>
+              c.id === crossingId
+                ? {
+                    ...c,
+                    motorcycleTips: data.crossing.motorcycleTips,
+                    warnings: data.crossing.warnings,
+                    bestTimeToGo: data.crossing.bestTimeToGo,
+                    tipProcessInfo: data.crossing.tipProcessInfo,
+                    hasAiTips: true,
+                  }
+                : c
+            );
+            newMap.set(key, updated);
+          }
+          return newMap;
+        });
+      }
+    } catch (err) {
+      console.error(`Failed to regenerate AI tips for crossing ${crossingId}:`, err);
+    } finally {
+      setAiTipsLoading((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(crossingId);
+        return newSet;
+      });
+    }
+  }, [aiTipsLoading, locale]);
+
+  // Auto-fetch nearby crossings when crossings tab is selected and we have border waypoints
+  useEffect(() => {
+    if (activeTab === "crossings" && borderWaypoints.length > 0) {
+      for (const wp of borderWaypoints) {
+        fetchNearbyCrossings(wp.lat, wp.lng);
+      }
+    }
+  }, [activeTab, borderWaypoints, fetchNearbyCrossings]);
+
   // Group requirements by category
   const groupedRequirements = useCallback((reqs: BorderRequirement[]) => {
     const groups: Record<string, BorderRequirement[]> = {};
@@ -315,6 +745,17 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
               }`}
             >
               🏍️ {t("vehicleEntryTab")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("crossings")}
+              className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+                activeTab === "crossings"
+                  ? "bg-emerald-500/30 text-emerald-300"
+                  : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+              }`}
+            >
+              🚧 {t("crossingsTab")}
             </button>
             <button
               type="button"
@@ -706,6 +1147,65 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
               ) : (
                 <div className="py-4 text-center">
                   <p className="text-xs text-slate-500">{t("singleCountryTrip")}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Crossings tab */}
+          {activeTab === "crossings" && (
+            <div>
+              {borderWaypoints.length > 0 ? (
+                <div className="space-y-6">
+                  {borderWaypoints.map((wp) => {
+                    const key = `${wp.lat.toFixed(4)},${wp.lng.toFixed(4)}`;
+                    const crossings = borderCrossingsData.get(key);
+                    const isLoading = crossingsLoading.has(key);
+
+                    return (
+                      <div key={wp.id ?? key}>
+                        <div className="mb-3">
+                          <h4 className="text-xs font-semibold text-slate-200">
+                            {t("crossing.nearbyResults")}
+                          </h4>
+                          <p className="text-[10px] text-slate-500">
+                            📍 {wp.name || t("crossing.nearLocation")} ({wp.lat.toFixed(4)}, {wp.lng.toFixed(4)})
+                          </p>
+                        </div>
+
+                        {isLoading && (
+                          <div className="flex items-center gap-2 py-2">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+                            <span className="text-xs text-slate-400">{t("crossing.searchingNearby")}</span>
+                          </div>
+                        )}
+
+                        {!isLoading && (!crossings || crossings.length === 0) && (
+                          <p className="text-xs text-slate-500">{t("noCrossingsData")}</p>
+                        )}
+
+                        {crossings && crossings.length > 0 && (
+                          <div className="space-y-3">
+                            {crossings.map((crossing: BorderCrossingData) => (
+                              <CrossingCard
+                                key={crossing.id}
+                                crossing={crossing}
+                                t={t}
+                                onGetTips={fetchAiTips}
+                                onRegenerateTips={regenerateAiTips}
+                                isLoadingTips={aiTipsLoading.has(crossing.id)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-4 text-center">
+                  <p className="text-xs text-slate-500">{t("crossing.noBorderWaypoints")}</p>
+                  <p className="mt-1 text-[10px] text-slate-600">{t("crossing.addBorderWaypoint")}</p>
                 </div>
               )}
             </div>

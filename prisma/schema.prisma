@@ -354,3 +354,42 @@ model VehicleEntryRequirement {
 
   @@index([destCountry])
 }
+
+// Border crossing cache - populated from Google Places API
+// Contains location data from Google + AI-enhanced motorcycle tips
+model BorderCrossing {
+  id                  String    @id @default(cuid())
+  googlePlaceId       String    @unique // Google Places unique identifier
+  
+  // Location data from Google Places
+  name                String    // Place name from Google
+  lat                 Float
+  lng                 Float
+  address             String?   // Formatted address
+  rating              Float?    // Google rating (1-5)
+  userRatingsTotal    Int?      // Number of ratings
+  openingHours        Json?     // Opening hours from Google
+  phoneNumber         String?   // Phone number if available
+  websiteUrl          String?   // Official website if available
+  photoReferences     Json?     // Array of Google photo references
+  placeTypes          Json?     // Array of place types from Google
+  
+  // Derived location context
+  fromCountry         String?   // ISO 3166-1 alpha-2, derived from reverse geocoding
+  toCountry           String?   // ISO 3166-1 alpha-2, derived from reverse geocoding
+  
+  // AI-enhanced motorcycle-specific info (populated on-demand)
+  motorcycleTips      String?   @db.Text // AI-generated tips for motorcyclists
+  warnings            String?   @db.Text // AI-generated warnings/cautions
+  bestTimeToGo        String?   // AI-suggested best times to cross
+  tipProcessInfo      String?   @db.Text // AI info about TIP/permit process at this crossing
+  lastAiEnhanced      DateTime? // When AI enhancement was last run
+
+  // Cache metadata
+  lastFetched         DateTime  @default(now()) // When data was fetched from Google
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([lat, lng])
+  @@index([fromCountry, toCountry])
+}
