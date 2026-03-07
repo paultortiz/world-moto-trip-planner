@@ -16,6 +16,35 @@ import {
   type WaypointWithCountry,
 } from "@/lib/countryDetection";
 
+// Type for vehicle entry requirements from API
+interface VehicleEntryRequirement {
+  id: string;
+  destCountry: string;
+  countryName: string;
+  tipRequired: boolean;
+  tipCostUsd: number | null;
+  tipValidityDays: number | null;
+  tipObtainAt: string | null;
+  tipAgency: string | null;
+  tipUrl: string | null;
+  tipDocuments: string[] | null;
+  tipNotes: string | null;
+  tipProcessingDays: number | null;
+  carnetRequired: boolean;
+  carnetAccepted: boolean;
+  carnetIssuers: { country: string; org: string; url: string }[] | null;
+  carnetNotes: string | null;
+  carnetProcessingWeeks: number | null;
+  depositRequired: boolean;
+  depositAmountUsd: number | null;
+  depositRefundable: boolean | null;
+  depositNotes: string | null;
+  insuranceRequired: boolean;
+  insuranceNotes: string | null;
+  sourceUrl: string | null;
+  lastVerified: string | null;
+}
+
 interface WaypointDto {
   id?: string;
   lat: number;
@@ -48,7 +77,7 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
 
   // Panel state
   const [isExpanded, setIsExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<"countries" | "requirements">("countries");
+  const [activeTab, setActiveTab] = useState<"countries" | "requirements" | "vehicleEntry">("countries");
 
   // Country detection state
   const [isDetecting, setIsDetecting] = useState(false);
@@ -64,6 +93,10 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   const [requirements, setRequirements] = useState<Map<string, BorderRequirement[]>>(new Map());
   const [requirementsLoading, setRequirementsLoading] = useState<string | null>(null);
   const [requirementsError, setRequirementsError] = useState<string | null>(null);
+
+  // Vehicle entry requirements state
+  const [vehicleRequirements, setVehicleRequirements] = useState<Map<string, VehicleEntryRequirement>>(new Map());
+  const [vehicleReqLoading, setVehicleReqLoading] = useState<Set<string>>(new Set());
 
   // Derived data
   const borderWaypoints = useMemo(
@@ -185,6 +218,42 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
     }
   }, [isExpanded, borderWaypoints, fetchWaitTimes]);
 
+  // Fetch vehicle entry requirements for a country
+  const fetchVehicleRequirements = useCallback(async (countryCode: string) => {
+    if (vehicleRequirements.has(countryCode) || vehicleReqLoading.has(countryCode)) {
+      return;
+    }
+
+    setVehicleReqLoading((prev) => new Set(prev).add(countryCode));
+
+    try {
+      const response = await fetch(`/api/vehicle-requirements?country=${countryCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.requirements) {
+          setVehicleRequirements((prev) => new Map(prev).set(countryCode, data.requirements));
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to fetch vehicle requirements for ${countryCode}:`, err);
+    } finally {
+      setVehicleReqLoading((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(countryCode);
+        return newSet;
+      });
+    }
+  }, [vehicleRequirements, vehicleReqLoading]);
+
+  // Auto-fetch vehicle requirements when countries are detected
+  useEffect(() => {
+    if (activeTab === "vehicleEntry" && uniqueCountries.length > 0) {
+      for (const country of uniqueCountries) {
+        fetchVehicleRequirements(country.code);
+      }
+    }
+  }, [activeTab, uniqueCountries, fetchVehicleRequirements]);
+
   // Group requirements by category
   const groupedRequirements = useCallback((reqs: BorderRequirement[]) => {
     const groups: Record<string, BorderRequirement[]> = {};
@@ -224,7 +293,7 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
       {isExpanded && (
         <div className="mt-4">
           {/* Tab buttons */}
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setActiveTab("countries")}
@@ -235,6 +304,17 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
               }`}
             >
               {t("countriesTab")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("vehicleEntry")}
+              className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+                activeTab === "vehicleEntry"
+                  ? "bg-violet-500/30 text-violet-300"
+                  : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+              }`}
+            >
+              🏍️ {t("vehicleEntryTab")}
             </button>
             <button
               type="button"
@@ -344,6 +424,289 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
               {/* No border crossings */}
               {borderWaypoints.length === 0 && !isDetecting && (
                 <p className="text-xs text-slate-500">{t("noBorderCrossings")}</p>
+              )}
+            </div>
+          )}
+
+          {/* Vehicle Entry tab */}
+          {activeTab === "vehicleEntry" && (
+            <div>
+              {isDetecting ? (
+                <div className="py-4 text-center">
+                  <p className="text-xs text-slate-500">{t("detectingCountries")}</p>
+                </div>
+              ) : uniqueCountries.length > 0 ? (
+                <div className="space-y-4">
+                  {uniqueCountries.map((country) => {
+                    const req = vehicleRequirements.get(country.code);
+                    const isLoading = vehicleReqLoading.has(country.code);
+
+                    return (
+                      <div
+                        key={country.code}
+                        className="rounded border border-slate-700 bg-slate-900/50 p-3"
+                      >
+                        <h4 className="mb-3 text-sm font-semibold text-slate-200">
+                          {country.name}
+                        </h4>
+
+                        {isLoading && (
+                          <div className="flex items-center gap-2 py-2">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+                            <span className="text-xs text-slate-400">{t("loading")}</span>
+                          </div>
+                        )}
+
+                        {!isLoading && !req && (
+                          <p className="text-xs text-slate-500">{t("noVehicleData")}</p>
+                        )}
+
+                        {req && (
+                          <div className="space-y-4">
+                            {/* TIP Section */}
+                            <div className="rounded bg-slate-800/50 p-3">
+                              <div className="mb-2 flex items-center justify-between">
+                                <h5 className="flex items-center gap-2 text-xs font-medium text-violet-300">
+                                  📝 {t("vehicleEntry.tip")}
+                                </h5>
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                    req.tipRequired
+                                      ? "bg-amber-500/30 text-amber-300"
+                                      : "bg-emerald-500/30 text-emerald-300"
+                                  }`}
+                                >
+                                  {req.tipRequired ? t("vehicleEntry.tipRequired") : t("vehicleEntry.tipNotRequired")}
+                                </span>
+                              </div>
+
+                              {req.tipRequired && (
+                                <div className="grid gap-2 text-xs">
+                                  {/* Cost and Validity */}
+                                  <div className="flex flex-wrap gap-4">
+                                    <div>
+                                      <span className="text-slate-500">{t("vehicleEntry.cost")}:</span>{" "}
+                                      <span className="text-slate-200">
+                                        {req.tipCostUsd === 0 || req.tipCostUsd === null
+                                          ? t("vehicleEntry.free")
+                                          : `$${req.tipCostUsd} USD`}
+                                      </span>
+                                    </div>
+                                    {req.tipValidityDays && (
+                                      <div>
+                                        <span className="text-slate-500">{t("vehicleEntry.validity")}:</span>{" "}
+                                        <span className="text-slate-200">{req.tipValidityDays} {t("vehicleEntry.days")}</span>
+                                      </div>
+                                    )}
+                                    {req.tipProcessingDays && (
+                                      <div>
+                                        <span className="text-slate-500">{t("vehicleEntry.processingTime")}:</span>{" "}
+                                        <span className="text-slate-200">{req.tipProcessingDays} {t("vehicleEntry.days")}</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Where to obtain */}
+                                  {req.tipObtainAt && (
+                                    <div>
+                                      <span className="text-slate-500">{t("vehicleEntry.obtainAt")}:</span>{" "}
+                                      <span className="text-slate-200">
+                                        {req.tipObtainAt === "online" ? t("vehicleEntry.online") : t("vehicleEntry.border")}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Agency */}
+                                  {req.tipAgency && (
+                                    <div>
+                                      <span className="text-slate-500">{t("vehicleEntry.agency")}:</span>{" "}
+                                      {req.tipUrl ? (
+                                        <a
+                                          href={req.tipUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-violet-400 hover:text-violet-300 hover:underline"
+                                        >
+                                          {req.tipAgency} ↗
+                                        </a>
+                                      ) : (
+                                        <span className="text-slate-200">{req.tipAgency}</span>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Documents */}
+                                  {req.tipDocuments && req.tipDocuments.length > 0 && (
+                                    <div>
+                                      <p className="mb-1 text-slate-500">{t("vehicleEntry.documents")}:</p>
+                                      <ul className="ml-4 list-disc text-slate-300">
+                                        {req.tipDocuments.map((doc: string, idx: number) => (
+                                          <li key={idx}>{doc}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {/* Notes */}
+                                  {req.tipNotes && (
+                                    <div className="mt-2 rounded bg-slate-900/50 p-2">
+                                      <p className="text-[10px] text-slate-400">
+                                        💡 {req.tipNotes}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Carnet Section */}
+                            <div className="rounded bg-slate-800/50 p-3">
+                              <div className="mb-2 flex items-center justify-between">
+                                <h5 className="flex items-center gap-2 text-xs font-medium text-violet-300">
+                                  📘 {t("vehicleEntry.carnet")}
+                                </h5>
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                    req.carnetRequired
+                                      ? "bg-red-500/30 text-red-300"
+                                      : req.carnetAccepted
+                                      ? "bg-blue-500/30 text-blue-300"
+                                      : "bg-slate-600/30 text-slate-400"
+                                  }`}
+                                >
+                                  {req.carnetRequired
+                                    ? t("vehicleEntry.carnetRequired")
+                                    : req.carnetAccepted
+                                    ? t("vehicleEntry.carnetAccepted")
+                                    : t("vehicleEntry.carnetNotNeeded")}
+                                </span>
+                              </div>
+
+                              {req.carnetRequired && (
+                                <div className="grid gap-2 text-xs">
+                                  {req.carnetProcessingWeeks && (
+                                    <div>
+                                      <span className="text-slate-500">{t("vehicleEntry.processingTime")}:</span>{" "}
+                                      <span className="text-slate-200">{req.carnetProcessingWeeks} {t("vehicleEntry.weeks")}</span>
+                                    </div>
+                                  )}
+
+                                  {req.carnetIssuers && req.carnetIssuers.length > 0 && (
+                                    <div>
+                                      <p className="mb-1 text-slate-500">{t("vehicleEntry.issuers")}:</p>
+                                      <ul className="ml-4 space-y-1 text-slate-300">
+                                        {req.carnetIssuers.map((issuer: { country: string; org: string; url: string }, idx: number) => (
+                                          <li key={idx}>
+                                            <span className="text-slate-500">{issuer.country}:</span>{" "}
+                                            <a
+                                              href={issuer.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-violet-400 hover:text-violet-300 hover:underline"
+                                            >
+                                              {issuer.org} ↗
+                                            </a>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {req.carnetNotes && (
+                                    <div className="mt-2 rounded bg-slate-900/50 p-2">
+                                      <p className="text-[10px] text-slate-400">
+                                        💡 {req.carnetNotes}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Deposit Section */}
+                            {req.depositRequired && (
+                              <div className="rounded bg-slate-800/50 p-3">
+                                <h5 className="mb-2 flex items-center gap-2 text-xs font-medium text-violet-300">
+                                  💰 {t("vehicleEntry.deposit")}
+                                </h5>
+                                <div className="grid gap-2 text-xs">
+                                  <div className="flex flex-wrap gap-4">
+                                    {req.depositAmountUsd && (
+                                      <div>
+                                        <span className="text-slate-500">{t("vehicleEntry.cost")}:</span>{" "}
+                                        <span className="text-slate-200">${req.depositAmountUsd} USD</span>
+                                      </div>
+                                    )}
+                                    {req.depositRefundable !== null && (
+                                      <span
+                                        className={`rounded-full px-2 py-0.5 text-[10px] ${
+                                          req.depositRefundable
+                                            ? "bg-emerald-500/30 text-emerald-300"
+                                            : "bg-amber-500/30 text-amber-300"
+                                        }`}
+                                      >
+                                        {req.depositRefundable
+                                          ? t("vehicleEntry.depositRefundable")
+                                          : t("vehicleEntry.depositNonRefundable")}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {req.depositNotes && (
+                                    <p className="text-[10px] text-slate-400">
+                                      💡 {req.depositNotes}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Insurance Section */}
+                            {req.insuranceRequired && (
+                              <div className="rounded bg-slate-800/50 p-3">
+                                <h5 className="mb-2 flex items-center gap-2 text-xs font-medium text-violet-300">
+                                  🛡️ {t("vehicleEntry.insurance")}
+                                </h5>
+                                <div className="flex items-center gap-2">
+                                  <span className="rounded-full bg-amber-500/30 px-2 py-0.5 text-[10px] text-amber-300">
+                                    {t("vehicleEntry.insuranceRequired")}
+                                  </span>
+                                </div>
+                                {req.insuranceNotes && (
+                                  <p className="mt-2 text-[10px] text-slate-400">
+                                    💡 {req.insuranceNotes}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Metadata */}
+                            <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-500">
+                              {req.sourceUrl && (
+                                <a
+                                  href={req.sourceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:text-violet-400 hover:underline"
+                                >
+                                  {t("vehicleEntry.officialSource")} ↗
+                                </a>
+                              )}
+                              {req.lastVerified && (
+                                <span>
+                                  {t("vehicleEntry.lastVerified")}: {new Date(req.lastVerified).toLocaleDateString(locale)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-4 text-center">
+                  <p className="text-xs text-slate-500">{t("singleCountryTrip")}</p>
+                </div>
               )}
             </div>
           )}

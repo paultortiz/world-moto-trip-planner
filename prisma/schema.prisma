@@ -310,3 +310,47 @@ model BorderRequirementsCache {
   @@unique([originCountry, destCountry])
   @@index([originCountry, destCountry])
 }
+
+// Curated vehicle entry requirements by destination country
+// Contains structured TIP and Carnet de Passages information
+model VehicleEntryRequirement {
+  id                  String    @id @default(cuid())
+  destCountry         String    @unique // ISO 3166-1 alpha-2
+  countryName         String    // Human-readable name
+
+  // Temporary Import Permit (TIP) fields
+  tipRequired         Boolean   @default(true)
+  tipCostUsd          Float?    // Approximate cost in USD
+  tipValidityDays     Int?      // How long TIP is valid
+  tipObtainAt         String?   // "border", "online", "consulate", "advance"
+  tipAgency           String?   // e.g., "Banjercito", "Aduana Nacional"
+  tipUrl              String?   // Official application URL
+  tipDocuments        Json?     // Array of required document strings
+  tipNotes            String?   @db.Text // Free-form notes/tips
+  tipProcessingDays   Int?      // Typical processing time if applying in advance
+
+  // Carnet de Passages fields
+  carnetRequired      Boolean   @default(false)
+  carnetAccepted      Boolean   @default(true) // Some countries accept but don't require
+  carnetIssuers       Json?     // Array of {country, org, url}
+  carnetNotes         String?   @db.Text
+  carnetProcessingWeeks Int?    // Typical processing time
+
+  // Deposit requirements
+  depositRequired     Boolean   @default(false)
+  depositAmountUsd    Float?    // Approximate deposit amount
+  depositRefundable   Boolean   @default(true)
+  depositNotes        String?   // How/when to get deposit back
+
+  // Insurance requirements
+  insuranceRequired   Boolean   @default(true)
+  insuranceNotes      String?   // Where to buy, typical costs
+
+  // Metadata
+  sourceUrl           String?   // Primary source for this info
+  lastVerified        DateTime? // When this info was last verified
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([destCountry])
+}
