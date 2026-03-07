@@ -13,11 +13,28 @@ interface Tab {
 interface SidebarTabsProps {
   tabs: Tab[];
   defaultTab?: SidebarTabId;
+  /** Controlled active tab - when provided, component becomes controlled */
+  activeTab?: SidebarTabId;
+  /** Callback when tab changes - useful for controlled mode */
+  onTabChange?: (tab: SidebarTabId) => void;
   children: (activeTab: SidebarTabId) => ReactNode;
 }
 
-export default function SidebarTabs({ tabs, defaultTab, children }: SidebarTabsProps) {
-  const [activeTab, setActiveTab] = useState<SidebarTabId>(defaultTab ?? tabs[0]?.id ?? "route");
+export default function SidebarTabs({ tabs, defaultTab, activeTab: controlledActiveTab, onTabChange, children }: SidebarTabsProps) {
+  const [internalActiveTab, setInternalActiveTab] = useState<SidebarTabId>(defaultTab ?? tabs[0]?.id ?? "route");
+  
+  // Use controlled value if provided, otherwise use internal state
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+  
+  const handleTabChange = (tab: SidebarTabId) => {
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+    if (controlledActiveTab === undefined) {
+      // Only update internal state if uncontrolled
+      setInternalActiveTab(tab);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -27,7 +44,7 @@ export default function SidebarTabs({ tabs, defaultTab, children }: SidebarTabsP
           <button
             key={tab.id}
             type="button"
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             className={`flex items-center gap-1.5 rounded-t px-3 py-1.5 text-xs font-medium transition-colors ${
               activeTab === tab.id
                 ? "bg-adv-accent/20 text-adv-accent border-b-2 border-adv-accent"

@@ -795,6 +795,9 @@ export default function TripDetailClient({
   // always triggers the pan/zoom effect (even if the index doesn't change).
   const [focusedWaypoint, setFocusedWaypoint] = useState<{ index: number; trigger: number } | null>(null);
   const focusTriggerRef = useRef(0);
+  
+  // Sidebar tab state - controlled so we can switch to route tab when waypoint is clicked on map
+  const [sidebarActiveTab, setSidebarActiveTab] = useState<SidebarTabId>("route");
 
   const [fuelPanelOpen, setFuelPanelOpen] = useState(false);
   const [schedulePanelOpen, setSchedulePanelOpen] = useState(false);
@@ -1345,6 +1348,8 @@ export default function TripDetailClient({
                 // Select/focus the waypoint instead of deleting
                 focusTriggerRef.current += 1;
                 setFocusedWaypoint({ index, trigger: focusTriggerRef.current });
+                // Switch to route tab so user can see the waypoint editor
+                setSidebarActiveTab("route");
                 // Scroll to the specific waypoint row
                 setTimeout(() => {
                   const waypointRow = document.getElementById(`waypoint-row-${index}`);
@@ -1502,7 +1507,8 @@ export default function TripDetailClient({
               { id: "plan", label: t("tabPlan"), icon: "📋" },
               { id: "settings", label: t("tabSettings"), icon: "⚙️" },
             ]}
-            defaultTab="route"
+            activeTab={sidebarActiveTab}
+            onTabChange={setSidebarActiveTab}
           >
             {(activeTab: SidebarTabId) => (
               <div className="space-y-3">
