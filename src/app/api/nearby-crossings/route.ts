@@ -59,6 +59,22 @@ function getPhotoUrl(photoReference: string, maxWidth = 400): string {
   return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${GOOGLE_API_KEY}`;
 }
 
+/**
+ * Calculate distance between two points using Haversine formula
+ * Returns distance in kilometers
+ */
+function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 // Types that indicate this is NOT a land border crossing
 const EXCLUDED_TYPES = [
   "airport",
@@ -78,7 +94,9 @@ const LAND_CROSSING_PATTERNS = [
   /\bpoe\b/i,
   /punto de entrada/i,  // Spanish
   /garita/i,            // Spanish for checkpoint
-  /aduana/i,            // Spanish for customs (at border)
+  /aduana fronteriza/i, // Spanish for border customs
+  /cruce fronterizo/i,  // Spanish for border crossing
+  /\bcrossing\b/i,      // Generic crossing
 ];
 
 // Name patterns that suggest this is NOT a land crossing
@@ -90,18 +108,85 @@ const EXCLUDED_NAME_PATTERNS = [
   /preclearance/i,  // Usually at airports
   /seaport/i,
   /ferry/i,
+  /san francisco/i,   // Not a land border city
+  /los angeles/i,     // Not a land border city  
+  /seattle/i,         // Not a land border city (has port but not land)
+  /new york/i,        // Not a land border city
+  /chicago/i,         // Not a land border city
+  /miami/i,           // Not a land border city
+  /houston/i,         // Not a land border city (inland)
+  /\boffice\b/i,      // Administrative offices, not crossings
+  /headquarters/i,    // Administrative
+  /field office/i,    // Administrative
+];
+
+// Known US-Mexico land border cities/regions (for validation)
+const LAND_BORDER_REGIONS = [
+  // US-Mexico border cities
+  /san ysidro/i,
+  /otay mesa/i,
+  /tecate/i,
+  /calexico/i,
+  /mexicali/i,
+  /nogales/i,
+  /douglas/i,
+  /naco/i,
+  /el paso/i,
+  /ciudad ju[aá]rez/i,
+  /laredo/i,
+  /nuevo laredo/i,
+  /mcallen/i,
+  /reynosa/i,
+  /brownsville/i,
+  /matamoros/i,
+  /tijuana/i,
+  /san luis/i,
+  /lukeville/i,
+  /sasabe/i,
+  /columbus/i,
+  /palomas/i,
+  /del rio/i,
+  /eagle pass/i,
+  /piedras negras/i,
+  /hidalgo/i,
+  /progreso/i,
+  /roma/i,
+  /rio grande/i,
+  // US-Canada border cities
+  /blaine/i,
+  /peace arch/i,
+  /sumas/i,
+  /lynden/i,
+  /point roberts/i,
+  /sweet grass/i,
+  /portal/i,
+  /pembina/i,
+  /international falls/i,
+  /sault ste/i,
+  /port huron/i,
+  /detroit/i,
+  /windsor/i,
+  /niagara/i,
+  /buffalo/i,
+  /champlain/i,
+  /derby line/i,
+  /highgate/i,
+  /houlton/i,
+  /calais/i,
 ];
 
 /**
  * Determine if a place is likely a land border crossing
  */
 function isLikelyLandCrossing(name: string, types: string[] | null | undefined, address: string | null | undefined): boolean {
+  const combinedText = `${name} ${address || ""}`;
+  
   // Check for excluded types (like airport)
   if (types?.some(t => EXCLUDED_TYPES.includes(t))) {
     return false;
   }
   
-  // Check for excluded name patterns
+  // Check for excluded name patterns (airports, offices, non-border cities)
   if (EXCLUDED_NAME_PATTERNS.some(pattern => pattern.test(name))) {
     return false;
   }
@@ -111,23 +196,32 @@ function isLikelyLandCrossing(name: string, types: string[] | null | undefined, 
     return false;
   }
   
-  // Check if name matches land crossing patterns (high confidence)
+  // HIGH CONFIDENCE: Name explicitly mentions crossing/port of entry
   if (LAND_CROSSING_PATTERNS.some(pattern => pattern.test(name))) {
     return true;
   }
   
-  // For CBP/customs offices, check if they're likely at a land crossing
-  // by looking for road/highway indicators in the address
-  if (/customs|cbp|border protection/i.test(name)) {
-    // If it has a street address (not an airport), it's probably a land crossing
-    if (address && /\b(st|street|ave|avenue|blvd|boulevard|rd|road|hwy|highway)\b/i.test(address)) {
+  // MEDIUM CONFIDENCE: CBP/customs office in a known border region
+  if (/customs|cbp|border protection|border patrol/i.test(name)) {
+    // Must be in a known land border region
+    if (LAND_BORDER_REGIONS.some(pattern => pattern.test(combinedText))) {
+      return true;
+    }
+    // Generic CBP office not in border region - exclude
+    return false;
+  }
+  
+  // Check if location is in a known border region
+  if (LAND_BORDER_REGIONS.some(pattern => pattern.test(combinedText))) {
+    // In border region and name suggests government/crossing facility
+    if (/\b(federal|government|inspection|checkpoint)\b/i.test(name)) {
       return true;
     }
   }
   
-  // Default: include it but it might not be a land crossing
-  // We're being permissive here - user can see and decide
-  return true;
+  // Default: exclude unless we have positive evidence it's a land crossing
+  // This prevents random CBP offices from showing up
+  return false;
 }
 
 // Determine countries from coordinates using reverse geocoding
@@ -212,6 +306,17 @@ export async function GET(request: NextRequest) {
     // Step 2: Process each result - check cache or fetch details
     for (const result of googleResults.slice(0, 10)) { // Limit to 10 results
       const placeId = result.place_id;
+      
+      // IMPORTANT: Validate distance - Google Text Search doesn't strictly enforce radius
+      const resultLat = result.geometry?.location?.lat;
+      const resultLng = result.geometry?.location?.lng;
+      if (resultLat && resultLng) {
+        const distanceKm = calculateDistanceKm(lat, lng, resultLat, resultLng);
+        if (distanceKm > radiusKm * 1.5) { // Allow 50% buffer for places near edge
+          console.log(`Skipping ${result.name} - too far: ${distanceKm.toFixed(1)}km > ${radiusKm}km radius`);
+          continue;
+        }
+      }
 
       // Check if we have this crossing cached and it's fresh
       const cached = await prisma.borderCrossing.findUnique({
