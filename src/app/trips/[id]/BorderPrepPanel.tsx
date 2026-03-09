@@ -399,6 +399,8 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   const [borderCrossingsData, setBorderCrossingsData] = useState<Map<string, BorderCrossingData[]>>(new Map());
   const [crossingsLoading, setCrossingsLoading] = useState<Set<string>>(new Set());
   const [aiTipsLoading, setAiTipsLoading] = useState<Set<string>>(new Set());
+  // Track fetch errors for potential UI display (currently logged to console)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [fetchErrors, setFetchErrors] = useState<Map<string, string>>(new Map());
 
   // FetchTrackers to prevent infinite loops and limit retries (max 3 attempts per key)

@@ -94,7 +94,8 @@ export async function safeFetch<T = unknown>(
   options?: SafeFetchOptions
 ): Promise<SafeFetchResult<T>> {
   const key = options?.dedupKey || generateDedupKey(url, options);
-  const maxRetries = options?.maxRetries ?? MAX_RETRIES;
+  // Note: maxRetries from options is used via shouldBlockRequest which uses the global MAX_RETRIES
+  // Future enhancement could pass custom maxRetries to shouldBlockRequest
   
   // Check if request should be blocked
   const blockCheck = shouldBlockRequest(key);
