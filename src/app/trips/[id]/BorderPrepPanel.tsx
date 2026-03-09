@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { createFetchTracker } from "@/lib/safeFetch";
 import { useTranslations, useLocale } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import {
@@ -398,6 +399,15 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   const [borderCrossingsData, setBorderCrossingsData] = useState<Map<string, BorderCrossingData[]>>(new Map());
   const [crossingsLoading, setCrossingsLoading] = useState<Set<string>>(new Set());
   const [aiTipsLoading, setAiTipsLoading] = useState<Set<string>>(new Set());
+  // Track fetch errors for potential UI display (currently logged to console)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [fetchErrors, setFetchErrors] = useState<Map<string, string>>(new Map());
+
+  // FetchTrackers to prevent infinite loops and limit retries (max 3 attempts per key)
+  const crossingsTrackerRef = useRef(createFetchTracker(3));
+  const vehicleReqTrackerRef = useRef(createFetchTracker(3));
+  const aiTipsTrackerRef = useRef(createFetchTracker(3));
+  const waitTimesTrackerRef = useRef(createFetchTracker(3));
 
   // Derived data
   const borderWaypoints = useMemo(
@@ -447,7 +457,18 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   // Fetch wait times for border waypoints
   const fetchWaitTimes = useCallback(async () => {
     if (borderWaypoints.length === 0) return;
+    
+    const tracker = waitTimesTrackerRef.current;
+    const trackKey = "wait-times";
+    
+    if (!tracker.canFetch(trackKey)) {
+      if (tracker.isBlocked(trackKey)) {
+        console.error(`[BorderPrep] Wait times fetch blocked after ${tracker.getFailureCount(trackKey)} failures`);
+      }
+      return;
+    }
 
+    tracker.startFetch(trackKey);
     setWaitTimesLoading(true);
     const newWaitTimes = new Map<string, BorderPort>();
 
@@ -464,8 +485,11 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
         }
       }
       setWaitTimes(newWaitTimes);
+      tracker.completeFetch(trackKey);
     } catch (err) {
       console.error("Failed to fetch wait times:", err);
+      tracker.failFetch(trackKey);
+      setFetchErrors((prev) => new Map(prev).set(trackKey, String(err)));
     } finally {
       setWaitTimesLoading(false);
     }
@@ -521,10 +545,17 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
 
   // Fetch vehicle entry requirements for a country
   const fetchVehicleRequirements = useCallback(async (countryCode: string) => {
-    if (vehicleRequirements.has(countryCode) || vehicleReqLoading.has(countryCode)) {
+    const tracker = vehicleReqTrackerRef.current;
+    const trackKey = `vehicle-${countryCode}`;
+    
+    if (!tracker.canFetch(trackKey)) {
+      if (tracker.isBlocked(trackKey)) {
+        console.error(`[BorderPrep] Vehicle requirements for ${countryCode} blocked after ${tracker.getFailureCount(trackKey)} failures`);
+      }
       return;
     }
 
+    tracker.startFetch(trackKey);
     setVehicleReqLoading((prev) => new Set(prev).add(countryCode));
 
     try {
@@ -534,9 +565,15 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
         if (data.requirements) {
           setVehicleRequirements((prev) => new Map(prev).set(countryCode, data.requirements));
         }
+        tracker.completeFetch(trackKey);
+      } else {
+        tracker.failFetch(trackKey);
+        console.error(`[BorderPrep] Vehicle requirements API error for ${countryCode}: ${response.status}`);
       }
     } catch (err) {
       console.error(`Failed to fetch vehicle requirements for ${countryCode}:`, err);
+      tracker.failFetch(trackKey);
+      setFetchErrors((prev) => new Map(prev).set(trackKey, String(err)));
     } finally {
       setVehicleReqLoading((prev) => {
         const newSet = new Set(prev);
@@ -544,7 +581,7 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
         return newSet;
       });
     }
-  }, [vehicleRequirements, vehicleReqLoading]);
+  }, []); // No state dependencies - uses tracker ref
 
   // Auto-fetch vehicle requirements when countries are detected
   useEffect(() => {
@@ -556,37 +593,60 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   }, [activeTab, uniqueCountries, fetchVehicleRequirements]);
 
   // Fetch border crossings near a location (using Google Places)
+  // Uses FetchTracker for deduplication and retry limits
   const fetchNearbyCrossings = useCallback(async (lat: number, lng: number) => {
-    const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
-    if (borderCrossingsData.has(key) || crossingsLoading.has(key)) {
+    const tracker = crossingsTrackerRef.current;
+    const trackKey = `crossings-${lat.toFixed(4)},${lng.toFixed(4)}`;
+    const stateKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    
+    if (!tracker.canFetch(trackKey)) {
+      if (tracker.isBlocked(trackKey)) {
+        console.error(`[BorderPrep] Crossings fetch for ${stateKey} blocked after ${tracker.getFailureCount(trackKey)} failures`);
+      }
       return;
     }
 
-    setCrossingsLoading((prev) => new Set(prev).add(key));
+    tracker.startFetch(trackKey);
+    setCrossingsLoading((prev) => new Set(prev).add(stateKey));
 
     try {
       const response = await fetch(`/api/nearby-crossings?lat=${lat}&lng=${lng}&radius=100`);
       if (response.ok) {
         const data = await response.json();
         if (data.crossings && data.crossings.length > 0) {
-          setBorderCrossingsData((prev) => new Map(prev).set(key, data.crossings));
+          setBorderCrossingsData((prev) => new Map(prev).set(stateKey, data.crossings));
         }
+        tracker.completeFetch(trackKey);
+      } else {
+        tracker.failFetch(trackKey);
+        console.error(`[BorderPrep] Nearby crossings API error: ${response.status}`);
       }
     } catch (err) {
       console.error(`Failed to fetch nearby crossings for ${lat},${lng}:`, err);
+      tracker.failFetch(trackKey);
+      setFetchErrors((prev) => new Map(prev).set(trackKey, String(err)));
     } finally {
       setCrossingsLoading((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(key);
+        newSet.delete(stateKey);
         return newSet;
       });
     }
-  }, [borderCrossingsData, crossingsLoading]);
+  }, []); // No state dependencies - uses tracker ref
 
   // Fetch AI tips for a specific crossing
   const fetchAiTips = useCallback(async (crossingId: string) => {
-    if (aiTipsLoading.has(crossingId)) return;
+    const tracker = aiTipsTrackerRef.current;
+    const trackKey = `ai-tips-${crossingId}`;
+    
+    if (!tracker.canFetch(trackKey)) {
+      if (tracker.isBlocked(trackKey)) {
+        console.error(`[BorderPrep] AI tips for ${crossingId} blocked after ${tracker.getFailureCount(trackKey)} failures`);
+      }
+      return;
+    }
 
+    tracker.startFetch(trackKey);
     setAiTipsLoading((prev) => new Set(prev).add(crossingId));
 
     try {
@@ -617,9 +677,15 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
           }
           return newMap;
         });
+        tracker.completeFetch(trackKey);
+      } else {
+        tracker.failFetch(trackKey);
+        console.error(`[BorderPrep] AI tips API error for ${crossingId}: ${response.status}`);
       }
     } catch (err) {
       console.error(`Failed to fetch AI tips for crossing ${crossingId}:`, err);
+      tracker.failFetch(trackKey);
+      setFetchErrors((prev) => new Map(prev).set(trackKey, String(err)));
     } finally {
       setAiTipsLoading((prev) => {
         const newSet = new Set(prev);
@@ -627,12 +693,23 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
         return newSet;
       });
     }
-  }, [aiTipsLoading, locale]);
+  }, [locale]); // Only locale dependency - uses tracker ref
 
   // Regenerate AI tips for a specific crossing (force regeneration)
+  // Note: This resets the tracker for the crossing to allow a fresh attempt
   const regenerateAiTips = useCallback(async (crossingId: string) => {
-    if (aiTipsLoading.has(crossingId)) return;
+    const tracker = aiTipsTrackerRef.current;
+    const trackKey = `ai-tips-${crossingId}`;
+    
+    // Reset tracker for this key to allow regeneration
+    tracker.reset(trackKey);
+    
+    // Check if currently loading
+    if (!tracker.canFetch(trackKey)) {
+      return;
+    }
 
+    tracker.startFetch(trackKey);
     setAiTipsLoading((prev) => new Set(prev).add(crossingId));
 
     try {
@@ -663,9 +740,15 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
           }
           return newMap;
         });
+        tracker.completeFetch(trackKey);
+      } else {
+        tracker.failFetch(trackKey);
+        console.error(`[BorderPrep] Regenerate AI tips API error for ${crossingId}: ${response.status}`);
       }
     } catch (err) {
       console.error(`Failed to regenerate AI tips for crossing ${crossingId}:`, err);
+      tracker.failFetch(trackKey);
+      setFetchErrors((prev) => new Map(prev).set(trackKey, String(err)));
     } finally {
       setAiTipsLoading((prev) => {
         const newSet = new Set(prev);
@@ -673,7 +756,7 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
         return newSet;
       });
     }
-  }, [aiTipsLoading, locale]);
+  }, [locale]); // Only locale dependency - uses tracker ref
 
   // Auto-fetch nearby crossings when crossings tab is selected and we have border waypoints
   useEffect(() => {
