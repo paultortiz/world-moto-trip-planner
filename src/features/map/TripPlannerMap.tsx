@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { useTranslations } from "next-intl";
-import { GoogleMap, Marker, Polyline, useJsApiLoader, MarkerClusterer, StandaloneSearchBox } from "@react-google-maps/api";
+import { GoogleMap, Marker, Polyline, useJsApiLoader, MarkerClusterer, StandaloneSearchBox, InfoWindow } from "@react-google-maps/api";
+import EnlargeablePhoto from "@/shared/EnlargeablePhoto";
 
 const containerStyle: React.CSSProperties = {
   width: "100%",
@@ -32,6 +33,25 @@ type PlaceMarker = {
   openNow?: boolean | null;
   category: "fuel" | "lodging" | "campground" | "dining" | "poi" | "charging" | "border";
 };
+
+// Border crossing info for hover popup
+interface BorderCrossingInfo {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  address: string | null;
+  rating: number | null;
+  photoUrls: string[];
+  openingHours: string[] | null;
+  websiteUrl: string | null;
+  fromCountry: string | null;
+  toCountry: string | null;
+  motorcycleTips: string | null;
+  warnings: string | null;
+  bestTimeToGo: string | null;
+  hasAiTips: boolean;
+}
 
 type PanelPlaceItem = {
   name: string;
@@ -197,6 +217,16 @@ export default function TripPlannerMap({
   const [recentWaypointName, setRecentWaypointName] = useState<string | null>(null);
   const waypointToastTimeoutRef = useRef<number | null>(null);
 
+  // Border crossing popup state
+  const [hoveredBorderWaypoint, setHoveredBorderWaypoint] = useState<{
+    lat: number;
+    lng: number;
+    index: number;
+  } | null>(null);
+  const [borderCrossingsCache, setBorderCrossingsCache] = useState<Map<string, BorderCrossingInfo[]>>(new Map());
+  const [borderCrossingLoading, setBorderCrossingLoading] = useState(false);
+  const fetchedBorderKeysRef = useRef<Set<string>>(new Set());
+
 const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const [zoomHint, setZoomHint] = useState<string | null>(null);
   const zoomHintTimeoutRef = useRef<number | null>(null);
@@ -290,6 +320,53 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         cancelAnimationFrame(measureAnimRef.current);
       }
     };
+  }, []);
+
+  // Fetch border crossing data for hover popup
+  const fetchBorderCrossings = useCallback(async (lat: number, lng: number) => {
+    const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    
+    // Check cache first
+    if (borderCrossingsCache.has(cacheKey)) {
+      return;
+    }
+    
+    // Check if already fetched (prevent duplicate requests)
+    if (fetchedBorderKeysRef.current.has(cacheKey)) {
+      return;
+    }
+    
+    fetchedBorderKeysRef.current.add(cacheKey);
+    setBorderCrossingLoading(true);
+    
+    try {
+      const response = await fetch(`/api/nearby-crossings?lat=${lat}&lng=${lng}&radius=50`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.crossings && data.crossings.length > 0) {
+          setBorderCrossingsCache((prev) => new Map(prev).set(cacheKey, data.crossings));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch border crossings for popup:", err);
+    } finally {
+      setBorderCrossingLoading(false);
+    }
+  }, [borderCrossingsCache]);
+
+  // Handle border waypoint click - open popup and fetch crossing data
+  const handleBorderClick = useCallback((lat: number, lng: number, index: number) => {
+    // If clicking the same marker, close the popup (toggle)
+    if (hoveredBorderWaypoint && hoveredBorderWaypoint.index === index) {
+      setHoveredBorderWaypoint(null);
+      return;
+    }
+    setHoveredBorderWaypoint({ lat, lng, index });
+    fetchBorderCrossings(lat, lng);
+  }, [fetchBorderCrossings, hoveredBorderWaypoint]);
+
+  const handleBorderPopupClose = useCallback(() => {
+    setHoveredBorderWaypoint(null);
   }, []);
 
   // Animate measure line when routes are displayed
@@ -835,6 +912,12 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
 
+      // Close border crossing popup when clicking the map
+      if (hoveredBorderWaypoint) {
+        setHoveredBorderWaypoint(null);
+        return;
+      }
+
       // If in measure mode, handle measurement clicks
       if (measureMode) {
         handleMeasurePoint({ lat, lng });
@@ -846,7 +929,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       if (!enableClickToAdd) return;
       onAddWaypoint({ lat, lng });
     },
-    [onAddWaypoint, enableClickToAdd, measureMode, handleMeasurePoint],
+    [onAddWaypoint, enableClickToAdd, measureMode, handleMeasurePoint, hoveredBorderWaypoint],
   );
 
   // Toggle measure mode - show prompt if waypoints exist, otherwise start from anywhere
@@ -3235,11 +3318,183 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 handleMeasurePoint({ lat: position.lat, lng: position.lng });
                 return;
               }
+              // Border markers also open the crossing detail popup
+              if (wpType === "BORDER") {
+                handleBorderClick(position.lat, position.lng, index);
+              }
               if (onMarkerClick) onMarkerClick(index);
             }}
           />
         );
       })}
+
+      {/* Border crossing hover popup */}
+      {hoveredBorderWaypoint && (
+        <InfoWindow
+          position={{ lat: hoveredBorderWaypoint.lat, lng: hoveredBorderWaypoint.lng }}
+          onCloseClick={handleBorderPopupClose}
+          options={{
+            pixelOffset: new google.maps.Size(0, -30),
+            disableAutoPan: true,
+          }}
+        >
+          <div 
+            className="border-crossing-popup"
+            style={{ 
+              maxWidth: 320, 
+              maxHeight: 400,
+              overflowY: 'auto',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+            }}
+          >
+            {borderCrossingLoading ? (
+              <div style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                <div style={{ marginBottom: 8 }}>🔄</div>
+                <div style={{ fontSize: 12 }}>{t("loadingCrossings")}</div>
+              </div>
+            ) : (() => {
+              const cacheKey = `${hoveredBorderWaypoint.lat.toFixed(4)},${hoveredBorderWaypoint.lng.toFixed(4)}`;
+              const crossings = borderCrossingsCache.get(cacheKey) || [];
+              
+              if (crossings.length === 0) {
+                return (
+                  <div style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>🚧</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{t("borderCrossing")}</div>
+                    <div style={{ fontSize: 11, marginTop: 4, color: '#94a3b8' }}>
+                      {waypoints[hoveredBorderWaypoint.index]?.name || t("noCrossingsFound")}
+                    </div>
+                  </div>
+                );
+              }
+              
+              // Show the closest crossing (first one)
+              const crossing = crossings[0];
+              
+              return (
+                <div>
+                  {/* Photos */}
+                  {crossing.photoUrls && crossing.photoUrls.length > 0 && (
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: 4, 
+                      overflowX: 'auto',
+                      marginBottom: 8,
+                      paddingBottom: 4,
+                    }}>
+                      {crossing.photoUrls.slice(0, 3).map((url, i) => (
+                        <EnlargeablePhoto
+                          key={i}
+                          src={url}
+                          alt={`${crossing.name} photo ${i + 1}`}
+                          thumbWidth={100}
+                          thumbHeight={75}
+                          inlineStyles
+                        />
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Name and rating */}
+                  <div style={{ fontWeight: 600, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
+                    {crossing.name}
+                  </div>
+                  
+                  {crossing.rating && (
+                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+                      ⭐ {crossing.rating.toFixed(1)}
+                      {crossing.fromCountry && crossing.toCountry && (
+                        <span style={{ marginLeft: 8 }}>
+                          {crossing.fromCountry} → {crossing.toCountry}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Address */}
+                  {crossing.address && (
+                    <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>
+                      📍 {crossing.address}
+                    </div>
+                  )}
+                  
+                  {/* Opening hours */}
+                  {crossing.openingHours && crossing.openingHours.length > 0 && (
+                    <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>
+                      🕐 {crossing.openingHours[0]}
+                    </div>
+                  )}
+                  
+                  {/* Website link */}
+                  {crossing.websiteUrl && (
+                    <div style={{ marginBottom: 6 }}>
+                      <a 
+                        href={crossing.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ 
+                          fontSize: 11, 
+                          color: '#3b82f6',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        🔗 {t("visitWebsite")}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {/* AI Tips if available */}
+                  {crossing.hasAiTips && crossing.motorcycleTips && (
+                    <div style={{ 
+                      marginTop: 8, 
+                      padding: 8, 
+                      backgroundColor: '#f0fdf4', 
+                      borderRadius: 4,
+                      borderLeft: '3px solid #22c55e',
+                    }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#166534', marginBottom: 4 }}>
+                        🏍️ {t("motorcycleTips")}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#166534', lineHeight: 1.4 }}>
+                        {crossing.motorcycleTips.slice(0, 150)}
+                        {crossing.motorcycleTips.length > 150 && '...'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Warnings if available */}
+                  {crossing.warnings && (
+                    <div style={{ 
+                      marginTop: 6, 
+                      padding: 6, 
+                      backgroundColor: '#fef2f2', 
+                      borderRadius: 4,
+                      borderLeft: '3px solid #ef4444',
+                    }}>
+                      <div style={{ fontSize: 10, color: '#991b1b' }}>
+                        ⚠️ {crossing.warnings.slice(0, 100)}
+                        {crossing.warnings.length > 100 && '...'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Show count if multiple crossings nearby */}
+                  {crossings.length > 1 && (
+                    <div style={{ 
+                      marginTop: 8, 
+                      fontSize: 10, 
+                      color: '#8b5cf6',
+                      textAlign: 'center',
+                    }}>
+                      +{crossings.length - 1} {t("moreCrossingsNearby")}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </InfoWindow>
+      )}
 
       {/* Google Places overlays (secondary markers) */}
       {showFuelPlaces && fuelPlaces.length > 0 && (

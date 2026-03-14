@@ -697,6 +697,12 @@
     "fullscreen": "Pantalla completa",
     "exitFullscreen": "Salir de pantalla completa",
     "nearbyPlaces": "Lugares Cercanos",
+    "loadingCrossings": "Cargando cruces cercanos...",
+    "borderCrossing": "Cruce Fronterizo",
+    "noCrossingsFound": "No se encontraron cruces cercanos",
+    "visitWebsite": "Visitar Sitio Web",
+    "motorcycleTips": "Consejos para Motociclistas",
+    "moreCrossingsNearby": "{count} cruces más cercanos",
     "simulation": {
       "rideSimulation": "Simulación de Ruta",
       "fullRoute": "Ruta Completa",

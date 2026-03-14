@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createFetchTracker } from "@/lib/safeFetch";
 import { useTranslations, useLocale } from "next-intl";
 import ReactMarkdown from "react-markdown";
+import EnlargeablePhoto from "@/shared/EnlargeablePhoto";
 import {
   type BorderPort,
   type BorderRequirement,
@@ -81,106 +82,6 @@ interface WaypointDto {
 
 interface BorderPrepPanelProps {
   waypoints: WaypointDto[];
-}
-
-// Enlargeable photo component with desktop hover and mobile tap support
-function EnlargeablePhoto({ src, alt }: { src: string; alt: string }) {
-  const [isEnlarged, setIsEnlarged] = useState(false);
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  const handleMouseEnter = useCallback(() => {
-    if (!imgRef.current || window.innerWidth < 768) return; // Skip on mobile
-    
-    const rect = imgRef.current.getBoundingClientRect();
-    const enlargedWidth = rect.width * 3;
-    const enlargedHeight = rect.height * 3;
-    
-    // Calculate position to keep enlarged image within viewport
-    let top = rect.top + rect.height / 2 - enlargedHeight / 2;
-    let left = rect.left + rect.width / 2 - enlargedWidth / 2;
-    
-    // Adjust if going off screen
-    const padding = 16;
-    if (left < padding) left = padding;
-    if (left + enlargedWidth > window.innerWidth - padding) {
-      left = window.innerWidth - enlargedWidth - padding;
-    }
-    if (top < padding) top = padding;
-    if (top + enlargedHeight > window.innerHeight - padding) {
-      top = window.innerHeight - enlargedHeight - padding;
-    }
-    
-    setPosition({ top, left });
-    setIsEnlarged(true);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsEnlarged(false);
-  }, []);
-
-  // Mobile tap handler - opens in modal-like overlay
-  const handleTap = useCallback(() => {
-    if (window.innerWidth >= 768) return; // Desktop uses hover
-    setIsEnlarged(true);
-  }, []);
-
-  const handleCloseOverlay = useCallback(() => {
-    setIsEnlarged(false);
-  }, []);
-
-  return (
-    <>
-      <img
-        ref={imgRef}
-        src={src}
-        alt={alt}
-        className="h-20 w-28 flex-shrink-0 cursor-pointer rounded object-cover transition-transform md:cursor-zoom-in"
-        loading="lazy"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={handleTap}
-      />
-      
-      {/* Desktop: Hover enlargement */}
-      {isEnlarged && position && window.innerWidth >= 768 && (
-        <div
-          className="pointer-events-none fixed z-50 hidden md:block"
-          style={{ top: position.top, left: position.left }}
-        >
-          <img
-            src={src}
-            alt={alt}
-            className="h-60 w-84 rounded-lg object-cover shadow-2xl ring-2 ring-slate-600"
-            style={{ width: 336, height: 240 }} // 3x of 112x80
-          />
-        </div>
-      )}
-      
-      {/* Mobile: Tap to open overlay */}
-      {isEnlarged && window.innerWidth < 768 && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 md:hidden"
-          onClick={handleCloseOverlay}
-        >
-          <div className="relative max-h-[80vh] max-w-[90vw]">
-            <img
-              src={src}
-              alt={alt}
-              className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain"
-            />
-            <button
-              type="button"
-              className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-white shadow-lg"
-              onClick={handleCloseOverlay}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
 }
 
 // Category icons for document requirements
