@@ -720,7 +720,13 @@
       "rangeEndsHere": "Range ends near here",
       "fuelStop": "Fuel Stop",
       "saveToResume": "Save to resume"
-    }
+    },
+    "loadingCrossings": "Loading crossing info...",
+    "borderCrossing": "Border Crossing",
+    "noCrossingsFound": "No crossing details found nearby",
+    "visitWebsite": "Visit website",
+    "motorcycleTips": "Motorcycle Tips",
+    "moreCrossingsNearby": "more crossing(s) nearby"
   },
   "profile": {
     "title": "Rider Profile",

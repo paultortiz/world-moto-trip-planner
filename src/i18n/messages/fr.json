@@ -697,6 +697,12 @@
     "fullscreen": "Plein écran",
     "exitFullscreen": "Quitter le plein écran",
     "nearbyPlaces": "Lieux à Proximité",
+    "loadingCrossings": "Chargement des passages frontaliers à proximité...",
+    "borderCrossing": "Passage Frontalier",
+    "noCrossingsFound": "Aucun passage frontalier trouvé à proximité",
+    "visitWebsite": "Visiter le site web",
+    "motorcycleTips": "Conseils Moto",
+    "moreCrossingsNearby": "{count} autres passages frontaliers à proximité",
     "simulation": {
       "rideSimulation": "Simulation de Trajet",
       "fullRoute": "Itinéraire Complet",

@@ -697,6 +697,12 @@
     "fullscreen": "Vollbild",
     "exitFullscreen": "Vollbild beenden",
     "nearbyPlaces": "Orte in der Nähe",
+    "loadingCrossings": "Nahe Grenzübergänge werden geladen...",
+    "borderCrossing": "Grenzübergang",
+    "noCrossingsFound": "Keine Grenzübergänge in der Nähe gefunden",
+    "visitWebsite": "Webseite besuchen",
+    "motorcycleTips": "Motorrad-Tipps",
+    "moreCrossingsNearby": "{count} weitere Grenzübergänge in der Nähe",
     "simulation": {
       "rideSimulation": "Fahrt-Simulation",
       "fullRoute": "Gesamte Route",

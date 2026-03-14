@@ -697,6 +697,12 @@
     "fullscreen": "Tela cheia",
     "exitFullscreen": "Sair da tela cheia",
     "nearbyPlaces": "Lugares Próximos",
+    "loadingCrossings": "Carregando travessias próximas...",
+    "borderCrossing": "Travessia de Fronteira",
+    "noCrossingsFound": "Nenhuma travessia encontrada nas proximidades",
+    "visitWebsite": "Visitar Site",
+    "motorcycleTips": "Dicas para Motociclistas",
+    "moreCrossingsNearby": "{count} outras travessias nas proximidades",
     "simulation": {
       "rideSimulation": "Simulação de Percurso",
       "fullRoute": "Rota Completa",
