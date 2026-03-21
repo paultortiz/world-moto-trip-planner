@@ -800,6 +800,8 @@
     "minutes": "min",
     "lanesOpen": "carriles abiertos",
     "noWaitData": "Datos de tiempo de espera no disponibles",
+    "entering": "Entrando a",
+    "noLiveData": "Sin datos en tiempo real",
     "noBorderCrossings": "No hay cruces fronterizos añadidos a la ruta. Añade un punto fronterizo para ver información.",
     "generateRequirements": "Generar Requisitos",
     "generating": "Generando...",

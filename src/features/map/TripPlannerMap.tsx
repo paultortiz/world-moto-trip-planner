@@ -1552,6 +1552,59 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     return paths;
   }, [routePath, daySegments]);
 
+  // ── Imperative route polyline management ──────────────────────────────
+  // We manage Google Maps Polyline objects directly instead of using
+  // <Polyline> components because @react-google-maps/api does not
+  // reliably remove old drawn paths from the canvas when a Polyline
+  // component unmounts or when its `path` prop changes.
+  const routePolylinesRef = useRef<google.maps.Polyline[]>([]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    // 1. Remove every existing route polyline from the map.
+    for (const pl of routePolylinesRef.current) {
+      pl.setMap(null);
+    }
+    routePolylinesRef.current = [];
+
+    // 2. Nothing to draw if there is no map or no route.
+    if (!map || !routePath || routePath.length === 0) return;
+
+    // 3. Build new polylines.
+    if (dayRoutePaths.length > 0) {
+      // Day-colored segments
+      for (const segment of dayRoutePaths) {
+        const pl = new google.maps.Polyline({
+          path: segment.path,
+          strokeColor: segment.color,
+          strokeOpacity: 0.85,
+          strokeWeight: 4,
+          map,
+        });
+        routePolylinesRef.current.push(pl);
+      }
+    } else {
+      // Fallback: single green line
+      const pl = new google.maps.Polyline({
+        path: routePath,
+        strokeColor: "#22c55e",
+        strokeOpacity: 0.9,
+        strokeWeight: 4,
+        map,
+      });
+      routePolylinesRef.current.push(pl);
+    }
+
+    // 4. Cleanup on unmount.
+    return () => {
+      for (const pl of routePolylinesRef.current) {
+        pl.setMap(null);
+      }
+      routePolylinesRef.current = [];
+    };
+  }, [routePath, dayRoutePaths]);
+
   // Simulation path based on mode (full route or single day)
   const simulationPath = useMemo(() => {
     if (simulationMode === 'off') return [];
@@ -3184,32 +3237,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         }}
       />
 
-      {/* Route polylines - colored by day (alternating green/cyan) */}
-      {dayRoutePaths.length > 0 ? (
-        dayRoutePaths.map((segment) => (
-          <Polyline
-            key={`route-day-${segment.day}`}
-            path={segment.path}
-            options={{
-              strokeColor: segment.color,
-              strokeOpacity: 0.85,
-              strokeWeight: 4,
-            }}
-          />
-        ))
-      ) : (
-        // Fallback: single color if no day segments computed
-        routePath && routePath.length > 0 && (
-          <Polyline
-            path={routePath}
-            options={{
-              strokeColor: "#22c55e",
-              strokeOpacity: 0.9,
-              strokeWeight: 4,
-            }}
-          />
-        )
-      )}
+      {/* Route polylines are managed imperatively via useEffect + routePolylinesRef */}
 
       {/* Day labels - motorcycle icon with day badge */}
       {currentZoom >= 6 && visibleDayLabels.map((label) => {

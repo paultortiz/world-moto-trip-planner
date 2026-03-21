@@ -17,7 +17,9 @@ import {
   getUniqueCountriesInOrder,
   getCountryPairs,
   type WaypointWithCountry,
+  type CountryTransition,
 } from "@/lib/countryDetection";
+import { getCountryName } from "@/lib/borderWaitSources";
 
 // Type for vehicle entry requirements from API
 interface VehicleEntryRequirement {
@@ -284,7 +286,17 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
   const [countriesDetected, setCountriesDetected] = useState(false);
 
   // Wait times state
-  const [waitTimes, setWaitTimes] = useState<Map<string, BorderPort>>(new Map());
+  // Each entry holds the port data plus direction/source metadata from the API
+  interface WaitTimeEntry {
+    port: BorderPort | null;
+    source: string; // "cbp" | "cbsa" | "unavailable"
+    sourceLabel?: string;
+    directionLabel?: string;
+    isLive?: boolean;
+    from?: string; // country code
+    to?: string;   // country code
+  }
+  const [waitTimes, setWaitTimes] = useState<Map<string, WaitTimeEntry>>(new Map());
   const [waitTimesLoading, setWaitTimesLoading] = useState(false);
 
   // Requirements state
@@ -355,7 +367,43 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
     }
   }, [waypoints]);
 
-  // Fetch wait times for border waypoints
+  /**
+   * Find the closest country transition to a border waypoint.
+   * Uses the waypoint's position in the full waypoints array to find the
+   * nearest transition by index, giving us the from/to country direction.
+   */
+  const findDirectionForWaypoint = useCallback(
+    (wp: WaypointDto): { from: string; to: string } | null => {
+      if (transitions.length === 0) return null;
+
+      // Find the index of this waypoint in the full waypoints array.
+      // Match by id when available so that two border waypoints at the same
+      // physical location (out-and-back routes) resolve to different indices.
+      const wpIndex = waypoints.findIndex(
+        (w) => wp.id ? w.id === wp.id : (w.lat === wp.lat && w.lng === wp.lng)
+      );
+      if (wpIndex === -1) return null;
+
+      // Find the closest transition by waypoint index
+      let closest: CountryTransition | null = null;
+      let closestDist = Infinity;
+      for (const t of transitions) {
+        const dist = Math.abs(t.atWaypointIndex - wpIndex);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closest = t;
+        }
+      }
+
+      if (closest) {
+        return { from: closest.fromCountry.code, to: closest.toCountry.code };
+      }
+      return null;
+    },
+    [waypoints, transitions]
+  );
+
+  // Fetch wait times for border waypoints (direction-aware)
   const fetchWaitTimes = useCallback(async () => {
     if (borderWaypoints.length === 0) return;
     
@@ -371,18 +419,31 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
 
     tracker.startFetch(trackKey);
     setWaitTimesLoading(true);
-    const newWaitTimes = new Map<string, BorderPort>();
+    const newWaitTimes = new Map<string, WaitTimeEntry>();
 
     try {
       for (const wp of borderWaypoints) {
-        const response = await fetch(
-          `/api/border/wait-times?lat=${wp.lat}&lng=${wp.lng}`
-        );
+        const direction = findDirectionForWaypoint(wp);
+
+        // Build query — include direction if we have it
+        let url = `/api/border/wait-times?lat=${wp.lat}&lng=${wp.lng}`;
+        if (direction) {
+          url += `&from=${direction.from}&to=${direction.to}`;
+        }
+
+        const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
-          if (data.port) {
-            newWaitTimes.set(wp.id ?? `${wp.lat},${wp.lng}`, data.port);
-          }
+          const key = wp.id ?? `${wp.lat},${wp.lng}`;
+          newWaitTimes.set(key, {
+            port: data.port ?? null,
+            source: data.source ?? "cbp",
+            sourceLabel: data.sourceLabel,
+            directionLabel: data.directionLabel,
+            isLive: data.isLive ?? (data.port != null),
+            from: direction?.from,
+            to: direction?.to,
+          });
         }
       }
       setWaitTimes(newWaitTimes);
@@ -394,7 +455,7 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
     } finally {
       setWaitTimesLoading(false);
     }
-  }, [borderWaypoints]);
+  }, [borderWaypoints, findDirectionForWaypoint]);
 
   // Generate requirements for a country pair
   const generateRequirements = useCallback(
@@ -437,12 +498,12 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
     }
   }, [isExpanded, countriesDetected, isDetecting, detectCountries]);
 
-  // Fetch wait times when panel is expanded
+  // Fetch wait times when panel is expanded and countries are detected
   useEffect(() => {
-    if (isExpanded && borderWaypoints.length > 0) {
+    if (isExpanded && borderWaypoints.length > 0 && countriesDetected) {
       fetchWaitTimes();
     }
-  }, [isExpanded, borderWaypoints, fetchWaitTimes]);
+  }, [isExpanded, borderWaypoints, countriesDetected, fetchWaitTimes]);
 
   // Fetch vehicle entry requirements for a country
   const fetchVehicleRequirements = useCallback(async (countryCode: string) => {
@@ -798,25 +859,51 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
                   <div className="space-y-2">
                     {borderWaypoints.map((wp) => {
                       const key = wp.id ?? `${wp.lat},${wp.lng}`;
-                      const waitTime = waitTimes.get(key);
-                      const severity = waitTime
-                        ? getWaitTimeSeverity(waitTime.passengerWaitMinutes)
+                      const entry = waitTimes.get(key);
+                      const waitPort = entry?.port;
+                      const severity = waitPort
+                        ? getWaitTimeSeverity(waitPort.passengerWaitMinutes)
                         : "unknown";
                       const colors = getWaitTimeColorClasses(severity);
+
+                      // Direction label from API response or derived from transition
+                      const dirLabel = entry?.directionLabel
+                        ?? (entry?.to ? `${t("entering")} ${getCountryName(entry.to)}` : null);
+
+                      // Source badge styling
+                      const isLive = entry?.isLive ?? false;
+                      const srcLabel = entry?.sourceLabel;
 
                       return (
                         <div
                           key={key}
                           className={`rounded border p-2 ${colors.border} ${colors.bg}`}
                         >
+                          {/* Direction + source row */}
+                          {dirLabel && (
+                            <div className="mb-1.5 flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-amber-300">
+                                → {dirLabel}
+                              </span>
+                              {srcLabel && (
+                                <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
+                                  isLive
+                                    ? "bg-emerald-500/20 text-emerald-400"
+                                    : "bg-slate-600/30 text-slate-500"
+                                }`}>
+                                  {srcLabel}{isLive ? " ✓" : ""}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-xs font-medium text-slate-200">
                                 {wp.name ?? t("unnamedCrossing")}
                               </p>
-                              {waitTime && (
+                              {waitPort && (
                                 <p className="text-[10px] text-slate-400">
-                                  {waitTime.portName} · {waitTime.crossingName}
+                                  {waitPort.portName} · {waitPort.crossingName}
                                 </p>
                               )}
                             </div>
@@ -824,15 +911,21 @@ export default function BorderPrepPanel({ waypoints }: BorderPrepPanelProps) {
                               <span className="text-[10px] text-slate-500">
                                 {t("loading")}
                               </span>
-                            ) : waitTime?.passengerWaitMinutes != null ? (
+                            ) : waitPort?.passengerWaitMinutes != null ? (
                               <div className="text-right">
                                 <span className={`text-sm font-bold ${colors.text}`}>
-                                  {waitTime.passengerWaitMinutes} {t("minutes")}
+                                  {waitPort.passengerWaitMinutes} {t("minutes")}
                                 </span>
-                                <p className="text-[10px] text-slate-500">
-                                  {waitTime.passengerLanesOpen} {t("lanesOpen")}
-                                </p>
+                                {waitPort.passengerLanesOpen > 0 && (
+                                  <p className="text-[10px] text-slate-500">
+                                    {waitPort.passengerLanesOpen} {t("lanesOpen")}
+                                  </p>
+                                )}
                               </div>
+                            ) : entry && !isLive ? (
+                              <span className="text-[10px] text-slate-500">
+                                {t("noLiveData")}
+                              </span>
                             ) : (
                               <span className="text-[10px] text-slate-500">
                                 {t("noWaitData")}

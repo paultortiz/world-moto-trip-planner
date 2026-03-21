@@ -800,6 +800,8 @@
     "minutes": "min",
     "lanesOpen": "lanes open",
     "noWaitData": "Wait time data not available",
+    "entering": "Entering",
+    "noLiveData": "No live data available",
     "noBorderCrossings": "No border crossings added to route. Add a border waypoint to see crossing info.",
     "generateRequirements": "Generate Requirements",
     "generating": "Generating...",
