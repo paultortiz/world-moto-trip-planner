@@ -135,18 +135,18 @@ export function findCountryTransitions(
 }
 
 /**
- * Get unique countries in route order.
+ * Get unique countries in route order (each country appears at most once).
  */
 export function getUniqueCountriesInOrder(
   waypoints: WaypointWithCountry[]
 ): CountryInfo[] {
+  const seen = new Set<string>();
   const countries: CountryInfo[] = [];
-  let lastCode: string | null = null;
   
   for (const wp of waypoints) {
-    if (wp.country && wp.country.code !== lastCode) {
+    if (wp.country && !seen.has(wp.country.code)) {
+      seen.add(wp.country.code);
       countries.push(wp.country);
-      lastCode = wp.country.code;
     }
   }
   

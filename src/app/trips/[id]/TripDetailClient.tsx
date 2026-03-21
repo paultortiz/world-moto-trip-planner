@@ -20,9 +20,22 @@ import {
   findOptimalInsertIndex,
   getDayIndexForInsertPosition,
 } from "@/lib/routeInsertion";
+import { decodePolyline } from "@/features/map/polyline";
 import { HelpTooltip } from "@/help";
 import BorderPrepPanel from "./BorderPrepPanel";
 import SidebarTabs, { type SidebarTabId } from "./SidebarTabs";
+
+/** Extract the decoded route path from a route-calculation API response body. */
+function extractRoutePathFromResponse(
+  data: any,
+): WaypointPosition[] | undefined {
+  const segments: any[] | undefined =
+    data?.routeSegments ?? data?.route_segments;
+  if (!Array.isArray(segments)) return undefined;
+  const seg = segments.find((s: any) => !!s.polyline);
+  if (!seg?.polyline) return undefined;
+  return decodePolyline(seg.polyline);
+}
 
 interface WaypointDto {
   id?: string;
@@ -443,6 +456,13 @@ export default function TripDetailClient({
   );
   const [isDirty, setIsDirty] = useState(false);
 
+  // Local route path state.  Initialised from the server-rendered prop but
+  // updated *directly* from the route-calculation API response on every
+  // save+recalc so the map never has to wait for router.refresh().
+  const [activeRoutePath, setActiveRoutePath] = useState<
+    WaypointPosition[] | undefined
+  >(routePath);
+
   // Sync waypoints state when trip data refreshes from server.
   // Only trigger on trip.waypoints changes to avoid race condition where
   // isDirty becomes false before new server data arrives.
@@ -452,6 +472,12 @@ export default function TripDetailClient({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.waypoints]);
+
+  // Keep activeRoutePath in sync when the server prop changes (e.g. after
+  // router.refresh() or initial navigation).
+  useEffect(() => {
+    setActiveRoutePath(routePath);
+  }, [routePath]);
   const [fuelRangeInput, setFuelRangeInput] = useState<string>(
     trip.fuelRangeKm != null ? String(trip.fuelRangeKm) : "",
   );
@@ -907,6 +933,9 @@ export default function TripDetailClient({
     // This triggers the same save flow as WaypointEditor
     // We'll call the API directly here for the inline save button
     try {
+      // Hide the old route immediately while we save + recalculate.
+      setActiveRoutePath(undefined);
+
       const withEffectiveDay: WaypointDto[] = [];
       let currentDay = 1;
       for (let i = 0; i < waypoints.length; i++) {
@@ -940,12 +969,16 @@ export default function TripDetailClient({
         throw new Error(data?.error ?? "Failed to save waypoints");
       }
 
-      // Recalculate route
-      await fetch("/api/routes/calculate", {
+      // Recalculate route and apply the new polyline immediately.
+      const recalcRes = await fetch("/api/routes/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tripId: trip.id }),
       });
+      if (recalcRes.ok) {
+        const recalcData = await recalcRes.json();
+        setActiveRoutePath(extractRoutePathFromResponse(recalcData));
+      }
 
       // Recalculate elevation
       await fetch("/api/routes/elevation", {
@@ -1278,7 +1311,7 @@ export default function TripDetailClient({
           <div id="trip-map-container" className="overflow-hidden rounded border border-adv-border bg-slate-950/70 shadow-adv-glow">
             <TripPlannerMap
               waypoints={mapWaypoints}
-              routePath={isDirty ? undefined : routePath}
+              routePath={isDirty ? undefined : activeRoutePath}
               enableClickToAdd={enableClickToAdd}
               showFuelPlaces={showFuelPlaces}
               showLodgingPlaces={showLodgingPlaces}
@@ -1605,7 +1638,12 @@ export default function TripDetailClient({
               setWaypoints(next);
               setIsDirty(true);
             }}
-            onSaveSuccess={() => {
+            onSaveSuccess={(newRoutePath) => {
+              if (newRoutePath) {
+                setActiveRoutePath(newRoutePath);
+              } else {
+                setActiveRoutePath(undefined);
+              }
               setIsDirty(false);
               setElevationRefreshKey((k) => k + 1);
             }}

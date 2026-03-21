@@ -7,6 +7,7 @@ import {
   deriveDaysFromOvernightStops,
   inferOvernightStopsFromDayIndex,
 } from "@/lib/dayPlanning";
+import { decodePolyline } from "@/features/map/polyline";
 
 interface WaypointDto {
   id?: string;
@@ -24,7 +25,7 @@ interface Props {
   tripId: string;
   waypoints: WaypointDto[];
   onWaypointsChange: (wps: WaypointDto[]) => void;
-  onSaveSuccess?: () => void;
+  onSaveSuccess?: (newRoutePath?: { lat: number; lng: number }[]) => void;
   /**
    * Optional hint for the maximum number of logical trip days based on
    * trip dates and/or computed daily plan. The editor will ensure the
@@ -208,6 +209,7 @@ export default function WaypointEditor({
   async function handleSave() {
     setStatus(null);
     startTransition(async () => {
+      let newDecodedRoutePath: { lat: number; lng: number }[] | undefined;
       try {
         // Derive day indices from overnight stops for backward compatibility
         const withDerivedDays = deriveDaysFromOvernightStops(waypoints);
@@ -260,6 +262,19 @@ export default function WaypointEditor({
             recalcMessage = `${t("waypointsSavedRouteError")}: ${friendly}`;
           } else {
             routeOk = true;
+            // Decode the new polyline so the parent can update the map immediately
+            // without waiting for router.refresh().
+            try {
+              const recalcData = await recalcRes.json();
+              const segments: any[] | undefined =
+                recalcData?.routeSegments ?? recalcData?.route_segments;
+              const seg = segments?.find((s: any) => !!s.polyline);
+              if (seg?.polyline) {
+                newDecodedRoutePath = decodePolyline(seg.polyline);
+              }
+            } catch {
+              // non-critical — parent will still get data via router.refresh()
+            }
           }
         } catch {
           recalcMessage = `${t("waypointsSavedRouteError")}: ${t("networkError")}`;
@@ -288,7 +303,7 @@ export default function WaypointEditor({
         }
 
         setStatus(recalcMessage);
-        onSaveSuccess?.();
+        onSaveSuccess?.(newDecodedRoutePath);
         router.refresh();
       } catch (err: any) {
         setStatus(`Error: ${err.message ?? "Failed to save waypoints"}`);

@@ -800,6 +800,8 @@
     "minutes": "min",
     "lanesOpen": "faixas abertas",
     "noWaitData": "Sem dados de tempo de espera",
+    "entering": "Entrando em",
+    "noLiveData": "Sem dados ao vivo",
     "noBorderCrossings": "Nenhuma travessia de fronteira nesta rota",
     "generateRequirements": "Gerar requisitos",
     "generating": "Gerando requisitos...",

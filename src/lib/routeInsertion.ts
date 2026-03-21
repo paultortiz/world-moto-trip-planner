@@ -46,6 +46,10 @@ function calculateDetour(
 /**
  * Find the optimal index to insert a new waypoint to minimize route detour.
  * 
+ * When the new point is very close to an existing waypoint (< 0.5 km), it is
+ * appended at the end.  This handles out-and-back routes where the rider
+ * revisits the same location (e.g. a border crossing on the return leg).
+ * 
  * @param waypoints - Current array of waypoints
  * @param newPoint - The new point to insert
  * @returns The index where the new waypoint should be inserted (0 = before first, length = after last)
@@ -60,6 +64,16 @@ export function findOptimalInsertIndex(
   }
   if (waypoints.length === 1) {
     return 1;
+  }
+
+  // If the new point is very close to an existing waypoint, assume the rider
+  // is revisiting the same location on a later leg and append at the end.
+  const DUPLICATE_THRESHOLD_KM = 0.5;
+  const isNearExisting = waypoints.some(
+    (wp) => haversineKm(wp, newPoint) < DUPLICATE_THRESHOLD_KM
+  );
+  if (isNearExisting) {
+    return waypoints.length;
   }
 
   let bestIndex = waypoints.length; // Default: append to end
