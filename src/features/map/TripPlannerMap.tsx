@@ -190,6 +190,7 @@ export default function TripPlannerMap({
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const idleTimeoutRef = useRef<number | null>(null);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -1009,6 +1010,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const handleMapLoad = useCallback(
     (map: google.maps.Map) => {
       mapRef.current = map;
+      setMapReady(true);
       fitToRoute();
     },
     [fitToRoute],
@@ -1508,6 +1510,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     even: "#d97706",  // amber-600
   };
 
+
   // Split routePath into day segments for colored rendering
   const dayRoutePaths = useMemo(() => {
     if (!routePath || routePath.length === 0 || daySegments.length === 0) return [];
@@ -1557,6 +1560,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   // <Polyline> components because @react-google-maps/api does not
   // reliably remove old drawn paths from the canvas when a Polyline
   // component unmounts or when its `path` prop changes.
+  //
+  // On retraced sections (where a later day’s path overlaps an earlier
+  // day’s path) the later day is rendered as a dashed line so the earlier
+  // solid colour is visible through the gaps.
   const routePolylinesRef = useRef<google.maps.Polyline[]>([]);
 
   useEffect(() => {
@@ -1571,18 +1578,119 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     // 2. Nothing to draw if there is no map or no route.
     if (!map || !routePath || routePath.length === 0) return;
 
-    // 3. Build new polylines.
+    // ── Overlap detection helpers ────────────────────────────────────
+    // Grid-based spatial index: cell size ~200 m (≈0.002° at mid latitudes).
+    const CELL = 0.002;
+    const cellKey = (lat: number, lng: number) =>
+      `${Math.round(lat / CELL)},${Math.round(lng / CELL)}`;
+
+    type Pt = { lat: number; lng: number };
+
+    /** Build a Set of grid-cell keys occupied by a path. */
+    const buildGrid = (path: Pt[]): Set<string> => {
+      const s = new Set<string>();
+      for (const p of path) s.add(cellKey(p.lat, p.lng));
+      return s;
+    };
+
+    /** Check whether a point overlaps the grid (same cell or any neighbour). */
+    const overlaps = (grid: Set<string>, p: Pt): boolean => {
+      const cx = Math.round(p.lat / CELL);
+      const cy = Math.round(p.lng / CELL);
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (grid.has(`${cx + dx},${cy + dy}`)) return true;
+        }
+      }
+      return false;
+    };
+
+    /**
+     * Split a path into contiguous runs of overlapping / non-overlapping
+     * points relative to an earlier-days grid.
+     * Adjacent sub-paths share their boundary point so the line is continuous.
+     */
+    const splitByOverlap = (
+      path: Pt[],
+      grid: Set<string>,
+    ): { sub: Pt[]; isOverlap: boolean }[] => {
+      if (path.length === 0) return [];
+      const runs: { sub: Pt[]; isOverlap: boolean }[] = [];
+      let currentOverlap = overlaps(grid, path[0]);
+      let current: Pt[] = [path[0]];
+
+      for (let i = 1; i < path.length; i++) {
+        const ol = overlaps(grid, path[i]);
+        if (ol !== currentOverlap) {
+          runs.push({ sub: current, isOverlap: currentOverlap });
+          current = [current[current.length - 1]]; // share boundary point
+          currentOverlap = ol;
+        }
+        current.push(path[i]);
+      }
+      if (current.length > 0) runs.push({ sub: current, isOverlap: currentOverlap });
+      return runs;
+    };
+
+    // ── Build polylines ──────────────────────────────────────────
     if (dayRoutePaths.length > 0) {
-      // Day-colored segments
+      // Accumulate a spatial grid of all earlier days’ points.
+      const earlierGrid = new Set<string>();
+
       for (const segment of dayRoutePaths) {
-        const pl = new google.maps.Polyline({
-          path: segment.path,
-          strokeColor: segment.color,
-          strokeOpacity: 0.85,
-          strokeWeight: 4,
-          map,
-        });
-        routePolylinesRef.current.push(pl);
+        const segGrid = earlierGrid.size > 0 ? earlierGrid : null;
+
+        if (!segGrid) {
+          // First day — always solid, no earlier path to overlap with.
+          const pl = new google.maps.Polyline({
+            path: segment.path,
+            strokeColor: segment.color,
+            strokeOpacity: 0.85,
+            strokeWeight: 4,
+            map,
+          });
+          routePolylinesRef.current.push(pl);
+        } else {
+          // Later day — split into overlapping (dashed) and unique (solid).
+          const runs = splitByOverlap(segment.path, segGrid);
+          for (const run of runs) {
+            if (run.sub.length < 2) continue;
+            if (run.isOverlap) {
+              // Dashed line so the earlier day’s solid colour shows through.
+              const pl = new google.maps.Polyline({
+                path: run.sub,
+                strokeColor: segment.color,
+                strokeOpacity: 0,
+                strokeWeight: 4,
+                icons: [{
+                  icon: {
+                    path: "M 0,-1 0,1",
+                    strokeOpacity: 1,
+                    strokeColor: segment.color,
+                    scale: 3,
+                  },
+                  offset: "0",
+                  repeat: "14px",
+                }],
+                map,
+              });
+              routePolylinesRef.current.push(pl);
+            } else {
+              // Solid — no overlap here.
+              const pl = new google.maps.Polyline({
+                path: run.sub,
+                strokeColor: segment.color,
+                strokeOpacity: 0.85,
+                strokeWeight: 4,
+                map,
+              });
+              routePolylinesRef.current.push(pl);
+            }
+          }
+        }
+
+        // Add this day’s points to the grid for future overlap checks.
+        for (const p of segment.path) earlierGrid.add(cellKey(p.lat, p.lng));
       }
     } else {
       // Fallback: single green line
@@ -1596,14 +1704,15 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       routePolylinesRef.current.push(pl);
     }
 
-    // 4. Cleanup on unmount.
+    // Cleanup on unmount or when route changes.
     return () => {
       for (const pl of routePolylinesRef.current) {
         pl.setMap(null);
       }
       routePolylinesRef.current = [];
     };
-  }, [routePath, dayRoutePaths]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routePath, dayRoutePaths, mapReady]);
 
   // Simulation path based on mode (full route or single day)
   const simulationPath = useMemo(() => {
