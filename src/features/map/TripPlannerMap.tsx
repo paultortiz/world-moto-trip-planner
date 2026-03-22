@@ -2239,6 +2239,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   const visibleDayLabels = useMemo(() => {
     if (!mapBounds || daySegments.length === 0 || dayRoutePaths.length === 0) return [];
 
+    // Viewport centre — used to anchor each day badge to the route point
+    // closest to where the user is actually looking.
+    const ne = mapBounds.getNorthEast();
+    const sw = mapBounds.getSouthWest();
+    const centerLat = (ne.lat() + sw.lat()) / 2;
+    const centerLng = (ne.lng() + sw.lng()) / 2;
+
     const labels: { day: number; lat: number; lng: number; text: string }[] = [];
 
     for (const segment of daySegments) {
@@ -2246,16 +2253,22 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       const dayPath = dayRoutePaths.find(p => p.day === segment.day);
       if (!dayPath || dayPath.path.length < 2) continue;
 
-      // Find route points within the viewport
-      const visibleRoutePoints = dayPath.path.filter(pt => 
-        mapBounds.contains({ lat: pt.lat, lng: pt.lng })
-      );
+      // Find the visible route point closest to the viewport centre.
+      // This ensures the badge tracks the pan position smoothly instead
+      // of getting anchored to a dense cluster of points.
+      let bestPt: { lat: number; lng: number } | null = null;
+      let bestDist = Infinity;
 
-      if (visibleRoutePoints.length > 0) {
-        // Place label at the midpoint of visible route segment
-        const midIndex = Math.floor(visibleRoutePoints.length / 2);
-        const midPoint = visibleRoutePoints[midIndex];
-        
+      for (const pt of dayPath.path) {
+        if (!mapBounds.contains({ lat: pt.lat, lng: pt.lng })) continue;
+        const d = Math.pow(pt.lat - centerLat, 2) + Math.pow(pt.lng - centerLng, 2);
+        if (d < bestDist) {
+          bestDist = d;
+          bestPt = pt;
+        }
+      }
+
+      if (bestPt) {
         // Calculate offset to move label away from route line and waypoints
         // Use a northward offset (positive lat) to position above the route
         // The offset scales inversely with zoom - smaller offset at higher zoom
@@ -2263,12 +2276,12 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         const latOffset = 0.008 * zoomFactor; // ~800m at zoom 8, less at higher zoom
         
         // Check distance to nearest waypoint and increase offset if too close
-        let finalLat = midPoint.lat + latOffset;
-        const finalLng = midPoint.lng;
+        let finalLat = bestPt.lat + latOffset;
+        const finalLng = bestPt.lng;
         
         // Find minimum distance to any waypoint in this segment
         const minWpDistSq = segment.waypoints.reduce((min, wp) => {
-          const distSq = Math.pow(midPoint.lat - wp.lat, 2) + Math.pow(midPoint.lng - wp.lng, 2);
+          const distSq = Math.pow(bestPt!.lat - wp.lat, 2) + Math.pow(bestPt!.lng - wp.lng, 2);
           return Math.min(min, distSq);
         }, Infinity);
         
@@ -2284,6 +2297,24 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           lng: finalLng,
           text: t("dayLabel", { day: segment.day }),
         });
+      }
+    }
+
+    // Push apart any labels that are too close to each other.
+    // On overlapping route sections multiple day badges land at nearly the
+    // same position; spread them so every badge is readable.
+    const zf = Math.max(1, 12 - (currentZoom ?? 8));
+    const minSepLat = 0.014 * zf;  // minimum latitude separation
+    const minSepLng = 0.014 * zf;  // minimum longitude separation
+
+    for (let i = 0; i < labels.length; i++) {
+      for (let j = i + 1; j < labels.length; j++) {
+        const dLat = Math.abs(labels[i].lat - labels[j].lat);
+        const dLng = Math.abs(labels[i].lng - labels[j].lng);
+        if (dLat < minSepLat && dLng < minSepLng) {
+          // Nudge the later label southward so it sits below the earlier one.
+          labels[j].lat = labels[i].lat - minSepLat;
+        }
       }
     }
 
