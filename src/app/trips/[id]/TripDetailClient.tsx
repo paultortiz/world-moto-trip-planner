@@ -1200,110 +1200,11 @@ export default function TripDetailClient({
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#8b5cf6" stroke="#fff" strokeWidth="1"><path d="M4 2v20M4 4h12l-2 4 2 4H4"/></svg>
                 <span>{t("border")}</span>
               </div>
-              <div data-tour-nearby-filters className="flex flex-wrap items-center gap-2 relative z-50">
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showFuelPlaces ? 'bg-green-600/30 text-green-300' : 'bg-slate-800 text-slate-400'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setShowFuelPlaces(!showFuelPlaces); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showFuelPlaces ? 'bg-green-500 border-green-500' : 'border-slate-500'}`}>
-                    {showFuelPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span>{t("nearbyFuel")}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showLodgingPlaces ? 'bg-blue-600/30 text-blue-300' : 'bg-slate-800 text-slate-400'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setShowLodgingPlaces(!showLodgingPlaces); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showLodgingPlaces ? 'bg-blue-500 border-blue-500' : 'border-slate-500'}`}>
-                    {showLodgingPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span>{t("nearbyLodging")}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showCampgroundPlaces ? 'bg-teal-600/30 text-teal-300' : 'bg-slate-800 text-slate-400'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setShowCampgroundPlaces(!showCampgroundPlaces); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showCampgroundPlaces ? 'bg-teal-500 border-teal-500' : 'border-slate-500'}`}>
-                    {showCampgroundPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span>{t("nearbyCampgrounds")}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showDiningPlaces ? 'bg-rose-600/30 text-rose-300' : 'bg-slate-800 text-slate-400'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setShowDiningPlaces(!showDiningPlaces); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showDiningPlaces ? 'bg-rose-500 border-rose-500' : 'border-slate-500'}`}>
-                    {showDiningPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span>{t("nearbyDining")}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showPoiPlaces ? 'bg-amber-600/30 text-amber-300' : 'bg-slate-800 text-slate-400'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setShowPoiPlaces(!showPoiPlaces); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showPoiPlaces ? 'bg-amber-500 border-amber-500' : 'border-slate-500'}`}>
-                    {showPoiPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span>{t("nearbyPois")}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showChargingPlaces ? 'bg-sky-600/30 text-sky-300' : 'bg-slate-800 text-slate-400'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setShowChargingPlaces(!showChargingPlaces); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showChargingPlaces ? 'bg-sky-500 border-sky-500' : 'border-slate-500'}`}>
-                    {showChargingPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span>{t("nearbyCharging")}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${showBorderPlaces ? 'bg-violet-600/30 text-violet-300' : 'bg-slate-800 text-slate-400'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setShowBorderPlaces(!showBorderPlaces); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${showBorderPlaces ? 'bg-violet-500 border-violet-500' : 'border-slate-500'}`}>
-                    {showBorderPlaces && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span>{t("nearbyBorder")}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded-full touch-manipulation select-none transition-colors border ${enableClickToAdd ? 'bg-amber-500/30 text-amber-300 border-amber-400/70' : 'bg-slate-800 text-slate-400 border-slate-600'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setEnableClickToAdd(!enableClickToAdd); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${enableClickToAdd ? 'bg-amber-500 border-amber-500' : 'border-slate-500'}`}>
-                    {enableClickToAdd && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span className="font-semibold">{t("addWaypointsByClick")}</span>
-                </button>
-                <label className="flex items-center gap-1 touch-manipulation cursor-pointer select-none">
-                  <span className="text-slate-500">{t("minRating")}</span>
-                  <select
-                    className="rounded border border-slate-600 bg-slate-950 px-1 py-0.5 text-[11px] min-h-[32px]"
-                    value={minPlaceRating}
-                    onChange={(e) => setMinPlaceRating(e.target.value)}
-                  >
-                    <option value="any">{t("any")}</option>
-                    <option value="3.5">3.5+</option>
-                    <option value="4.0">4.0+</option>
-                    <option value="4.5">4.5+</option>
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 py-1.5 px-2 rounded touch-manipulation select-none transition-colors ${onlyOpenNow ? 'bg-emerald-600/30 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}
-                  onPointerDown={(e) => { e.preventDefault(); setOnlyOpenNow(!onlyOpenNow); }}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-sm border-2 ${onlyOpenNow ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'}`}>
-                    {onlyOpenNow && <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
-                  </span>
-                  <span>{t("openNowOnly")}</span>
-                </button>
+              <div className="flex items-center gap-1.5" title="Dashed lines indicate a retraced route segment">
+                <svg className="h-3 w-8" viewBox="0 0 32 12" fill="none">
+                  <line x1="0" y1="6" x2="32" y2="6" stroke="#d97706" strokeWidth="3" strokeDasharray="4 3" />
+                </svg>
+                <span>Retraced</span>
               </div>
             </div>
           </div>

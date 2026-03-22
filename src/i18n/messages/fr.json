@@ -60,10 +60,11 @@
     "featureCategories": {
       "routePlanning": {
         "title": "Planification d'Itinéraire",
-        "f1": "Éditeur de points glisser-déposer avec attribution des jours",
-        "f2": "Points typés: carburant, hébergement, camping, POIs, frontières",
+        "f1": "Éditeur de points avec glisser-déposer et attribution des jours",
+        "f2": "Points typés : carburant, hébergement, camping, POIs, frontières",
         "f3": "Notes et niveaux de risque par segment",
-        "f4": "Profils de distance et d'élévation par jour"
+        "f4": "Profils de distance et d'altitude par jour",
+        "f5": "Itinéraires colorés par jour avec détection des segments retracés"
       },
       "aiPlanning": {
         "title": "Planification Journalière IA",
@@ -87,17 +88,20 @@
         "f4": "Sauvegardez et reprenez la progression de la simulation"
       },
       "borderCrossing": {
-        "title": "Préparation Frontalière",
-        "f1": "Détection automatique des pays le long de votre route",
-        "f2": "Temps d'attente CBP en direct aux passages US-Mexique",
-        "f3": "Exigences documentaires générées par IA par pays"
+        "title": "Préparation Passage Frontière",
+        "f1": "Détection automatique des pays sur votre itinéraire",
+        "f2": "Temps d'attente en direct selon la direction (US CBP & Canada ASFC)",
+        "f3": "Exigences documentaires générées par IA par pays",
+        "f4": "Permis d'entrée de véhicule (TIP/Carnet) avec sources officielles",
+        "f5": "Recherche de passages proches avec photos et conseils moto IA"
       },
       "tripManagement": {
         "title": "Gestion de Voyage",
-        "f1": "Checklists pré-départ avec suivi de complétion",
-        "f2": "Export des routes en GPX pour appareils GPS",
-        "f3": "Partagez des voyages avec des liens en lecture seule",
-        "f4": "Garage moto avec specs récupérées par IA"
+        "f1": "Listes de vérification pré-voyage avec suivi",
+        "f2": "Exporter les itinéraires en GPX et PDF pour référence hors ligne",
+        "f3": "Partager les voyages avec des liens en lecture seule",
+        "f4": "Garage moto avec spécifications et entretien IA",
+        "f5": "Trouver carburant, hébergements, campings, restaurants et POIs à proximité"
       }
     },
     "bottomCta": {

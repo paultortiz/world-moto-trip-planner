@@ -27,7 +27,7 @@
     "tagline": "Planificación de rutas de aventura",
     "title": "Planifica tu próxima",
     "titleHighlight": "aventura en moto por el mundo",
-    "description": "Planifica épicas rutas transcontinentales con itinerarios diarios generados por IA, seguimiento de autonomía de combustible, simulación de ruta y preparación para cruces fronterizos. Diseñado para motociclistas de aventura.",
+    "description": "Planifica épicas rutas transcontinentales con itinerarios diarios generados por IA, seguimiento de autonomía de combustible, simulación de ruta, preparación para cruces fronterizos y tiempos de espera en tiempo real. Diseñado para motociclistas de aventura.",
     "features": {
       "routing": "Planificación de rutas multi-día",
       "aiPowered": "Itinerarios con IA",
@@ -63,7 +63,8 @@
         "f1": "Editor de puntos con arrastrar y soltar y asignación de días",
         "f2": "Puntos tipados: combustible, alojamiento, camping, POIs, fronteras",
         "f3": "Notas y niveles de riesgo por segmento",
-        "f4": "Perfiles de distancia y elevación por día"
+        "f4": "Perfiles de distancia y elevación por día",
+        "f5": "Rutas coloreadas por día con detección de segmentos retrazados"
       },
       "aiPlanning": {
         "title": "Planificación Diaria con IA",
@@ -89,15 +90,18 @@
       "borderCrossing": {
         "title": "Preparación de Fronteras",
         "f1": "Detecta países en tu ruta automáticamente",
-        "f2": "Tiempos de espera CBP en vivo en cruces EE.UU.-México",
-        "f3": "Requisitos de documentos generados por IA por país"
+        "f2": "Tiempos de espera en vivo según dirección (US CBP y Canadá CBSA)",
+        "f3": "Requisitos de documentos generados por IA por país",
+        "f4": "Permisos de entrada de vehículos (TIP/Carnet) con fuentes oficiales",
+        "f5": "Búsqueda de cruces cercanos con fotos y consejos de IA para motos"
       },
       "tripManagement": {
         "title": "Gestión de Viajes",
         "f1": "Listas de verificación pre-viaje con seguimiento",
-        "f2": "Exporta rutas a GPX para dispositivos GPS",
+        "f2": "Exporta rutas a GPX y PDF para referencia offline",
         "f3": "Comparte viajes con enlaces de solo lectura",
-        "f4": "Garaje de motos con especificaciones de IA"
+        "f4": "Garaje de motos con especificaciones y mantenimiento de IA",
+        "f5": "Encuentra combustible, alojamiento, campings, restaurantes y POIs cercanos"
       }
     },
     "bottomCta": {

@@ -59,11 +59,12 @@
     },
     "featureCategories": {
       "routePlanning": {
-        "title": "Planejamento de Rotas",
-        "f1": "Editor de pontos arrastar e soltar com atribuição de dias",
+        "title": "Planejamento de Rota",
+        "f1": "Editor de pontos com arrastar e soltar e atribuição de dias",
         "f2": "Pontos tipados: combustível, hospedagem, camping, POIs, fronteiras",
         "f3": "Notas e níveis de risco por segmento",
-        "f4": "Perfis de distância e elevação por dia"
+        "f4": "Perfis de distância e elevação por dia",
+        "f5": "Rotas coloridas por dia com detecção de segmentos retraçados"
       },
       "aiPlanning": {
         "title": "Planejamento Diário com IA",
@@ -87,17 +88,20 @@
         "f4": "Salve e retome o progresso da simulação"
       },
       "borderCrossing": {
-        "title": "Preparação de Fronteiras",
-        "f1": "Detecte países ao longo da sua rota automaticamente",
-        "f2": "Tempos de espera CBP em tempo real em travessias EUA-México",
-        "f3": "Requisitos de documentos gerados por IA por país"
+        "title": "Preparação para Fronteira",
+        "f1": "Detecta países na sua rota automaticamente",
+        "f2": "Tempos de espera ao vivo por direção (US CBP e Canadá CBSA)",
+        "f3": "Requisitos de documentos gerados por IA por país",
+        "f4": "Permissões de entrada de veículo (TIP/Carnet) com fontes oficiais",
+        "f5": "Busca de travessias próximas com fotos e dicas de IA para motos"
       },
       "tripManagement": {
-        "title": "Gestão de Viagens",
-        "f1": "Checklists pré-viagem com rastreamento de conclusão",
-        "f2": "Exporte rotas para GPX para dispositivos GPS",
-        "f3": "Compartilhe viagens com links somente leitura",
-        "f4": "Garagem de motos com especificações obtidas por IA"
+        "title": "Gestão de Viagem",
+        "f1": "Listas de verificação pré-viagem com acompanhamento",
+        "f2": "Exportar rotas para GPX e PDF para referência offline",
+        "f3": "Compartilhar viagens com links somente leitura",
+        "f4": "Garagem de motos com especificações e manutenção de IA",
+        "f5": "Encontre combustível, hospedagem, campings, restaurantes e POIs próximos"
       }
     },
     "bottomCta": {

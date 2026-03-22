@@ -2725,8 +2725,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         </button>
       </div>
 
-      {/* Nearby places controls panel - shown in fullscreen mode */}
-      {isFullscreen && nearbyPlacesControls && (
+      {/* Nearby places controls panel - collapsible overlay on the map */}
+      {nearbyPlacesControls && (
         <div
           className="pointer-events-auto"
           style={{
@@ -2734,7 +2734,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             left: 8,
             bottom: 8,
             zIndex: 30,
-            maxHeight: nearbyPlacesPanelExpanded ? "calc(100vh - 60px)" : "auto",
+            maxWidth: "calc(100% - 300px)",
+            maxHeight: nearbyPlacesPanelExpanded
+              ? (isFullscreen ? "calc(100vh - 60px)" : "280px")
+              : "auto",
           }}
         >
           <div className="rounded border border-adv-border bg-slate-950/95 p-2 text-[11px] text-slate-200 shadow-adv-glow">
@@ -2756,7 +2759,14 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             </button>
             {/* Expanded content */}
             {nearbyPlacesPanelExpanded && (
-              <div id="nearby-places-panel-body" className="mt-1" style={{ maxHeight: "calc(100vh - 100px)", overflowY: "auto" }}>
+              <div
+                id="nearby-places-panel-body"
+                className="mt-1"
+                style={{
+                  maxHeight: isFullscreen ? "calc(100vh - 100px)" : "220px",
+                  overflowY: "auto",
+                }}
+              >
                 {nearbyPlacesControls}
               </div>
             )}

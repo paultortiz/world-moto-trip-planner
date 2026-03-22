@@ -60,10 +60,11 @@
     "featureCategories": {
       "routePlanning": {
         "title": "Routenplanung",
-        "f1": "Drag-and-Drop Wegpunkt-Editor mit Tageszuordnung",
-        "f2": "Wegpunkttypen: Tanken, Unterkunft, Camping, POIs, Grenzen",
+        "f1": "Drag-and-Drop-Wegpunkte-Editor mit Tageszuordnung",
+        "f2": "Typisierte Wegpunkte: Tanken, Unterkunft, Camping, POIs, Grenzen",
         "f3": "Notizen und Risikostufen pro Abschnitt",
-        "f4": "Distanz- und Höhenprofile pro Tag"
+        "f4": "Distanz- und Höhenprofile pro Tag",
+        "f5": "Farbige Tagesrouten mit Erkennung von Streckenwiederholungen"
       },
       "aiPlanning": {
         "title": "KI-Tagesplanung",
@@ -87,17 +88,20 @@
         "f4": "Simulationsfortschritt speichern und fortsetzen"
       },
       "borderCrossing": {
-        "title": "Grenzübergangs-Vorbereitung",
-        "f1": "Länder entlang deiner Route automatisch erkennen",
-        "f2": "Live CBP-Wartezeiten an US-Mexiko-Grenzübergängen",
-        "f3": "KI-generierte Dokumentenanforderungen pro Land"
+        "title": "Grenzübergang-Vorbereitung",
+        "f1": "Länder auf Ihrer Route automatisch erkennen",
+        "f2": "Richtungsabhängige Live-Wartezeiten (US CBP & Kanada CBSA)",
+        "f3": "KI-generierte Dokumentenanforderungen pro Land",
+        "f4": "Fahrzeug-Einfuhrgenehmigungen (TIP/Carnet) mit offiziellen Quellen",
+        "f5": "Suche nach nahen Grenzübergängen mit Fotos und KI-Motorradtipps"
       },
       "tripManagement": {
         "title": "Reiseverwaltung",
-        "f1": "Vor-Fahrt-Checklisten mit Fortschrittsverfolgung",
-        "f2": "Routen als GPX für GPS-Geräte exportieren",
-        "f3": "Reisen mit Nur-Lesen-Links teilen",
-        "f4": "Motorrad-Garage mit KI-abgerufenen Specs"
+        "f1": "Vor-Fahrt-Checklisten mit Fortschritt",
+        "f2": "Routen als GPX und PDF für Offline-Referenz exportieren",
+        "f3": "Reisen mit Nur-Lese-Links teilen",
+        "f4": "Motorrad-Garage mit KI-Spezifikationen und Wartung",
+        "f5": "Tankstellen, Unterkünfte, Campingplätze, Restaurants und POIs in der Nähe finden"
       }
     },
     "bottomCta": {
