@@ -1586,13 +1586,6 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
     type Pt = { lat: number; lng: number };
 
-    /** Build a Set of grid-cell keys occupied by a path. */
-    const buildGrid = (path: Pt[]): Set<string> => {
-      const s = new Set<string>();
-      for (const p of path) s.add(cellKey(p.lat, p.lng));
-      return s;
-    };
-
     /** Check whether a point overlaps the grid (same cell or any neighbour). */
     const overlaps = (grid: Set<string>, p: Pt): boolean => {
       const cx = Math.round(p.lat / CELL);
