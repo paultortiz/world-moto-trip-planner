@@ -16,6 +16,7 @@ export default async function HomePage() {
         t("featureCategories.routePlanning.f2"),
         t("featureCategories.routePlanning.f3"),
         t("featureCategories.routePlanning.f4"),
+        t("featureCategories.routePlanning.f5"),
       ],
     },
     {
@@ -55,6 +56,8 @@ export default async function HomePage() {
         t("featureCategories.borderCrossing.f1"),
         t("featureCategories.borderCrossing.f2"),
         t("featureCategories.borderCrossing.f3"),
+        t("featureCategories.borderCrossing.f4"),
+        t("featureCategories.borderCrossing.f5"),
       ],
     },
     {
@@ -65,6 +68,7 @@ export default async function HomePage() {
         t("featureCategories.tripManagement.f2"),
         t("featureCategories.tripManagement.f3"),
         t("featureCategories.tripManagement.f4"),
+        t("featureCategories.tripManagement.f5"),
       ],
     },
   ];

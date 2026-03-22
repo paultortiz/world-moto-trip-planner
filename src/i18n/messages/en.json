@@ -27,7 +27,7 @@
     "tagline": "Adventure route planning",
     "title": "Plot your next",
     "titleHighlight": "world moto adventure",
-    "description": "Plan epic cross-continent motorcycle routes with AI-powered daily itineraries, fuel range tracking, ride simulation, and border crossing intelligence. Built for long-distance adventure riders.",
+    "description": "Plan epic cross-continent motorcycle routes with AI-powered daily itineraries, fuel range tracking, ride simulation, border crossing intelligence, and real-time wait times. Built for long-distance adventure riders.",
     "features": {
       "routing": "Multi-day route planning",
       "aiPowered": "AI-powered itineraries",
@@ -63,7 +63,8 @@
         "f1": "Drag-and-drop waypoint editor with day assignments",
         "f2": "Typed waypoints: fuel, lodging, camping, POIs, borders",
         "f3": "Per-segment notes and risk levels",
-        "f4": "Distance and elevation profiles per day"
+        "f4": "Distance and elevation profiles per day",
+        "f5": "Day-colored route lines with retraced segment detection"
       },
       "aiPlanning": {
         "title": "AI Daily Planning",
@@ -89,15 +90,18 @@
       "borderCrossing": {
         "title": "Border Crossing Prep",
         "f1": "Detect countries along your route automatically",
-        "f2": "Live CBP wait times at US-Mexico crossings",
-        "f3": "AI-generated document requirements per country"
+        "f2": "Direction-aware live wait times (US CBP & Canada CBSA)",
+        "f3": "AI-generated document requirements per country",
+        "f4": "Vehicle entry permits (TIP/Carnet) with official sources",
+        "f5": "Nearby crossing search with photos and AI motorcycle tips"
       },
       "tripManagement": {
         "title": "Trip Management",
         "f1": "Pre-ride checklists with completion tracking",
-        "f2": "Export routes to GPX for GPS devices",
+        "f2": "Export routes to GPX and PDF for offline reference",
         "f3": "Share trips with read-only links",
-        "f4": "Motorcycle garage with AI-fetched specs"
+        "f4": "Motorcycle garage with AI-fetched specs and maintenance",
+        "f5": "Find nearby fuel, lodging, campgrounds, dining, and POIs"
       }
     },
     "bottomCta": {
