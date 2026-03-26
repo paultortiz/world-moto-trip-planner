@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { openai } from "@/lib/openai";
 import { auth } from "@/auth";
 import { logActivityAsync, ActivityActions } from "@/lib/activity";
+import {
+  deriveDaysFromOvernightStops,
+  inferOvernightStopsFromDayIndex,
+} from "@/lib/dayPlanning";
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,13 +61,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    const waypoints = trip.waypoints.map((wp, index) => ({
+    const rawWaypoints = trip.waypoints.map((wp, index) => ({
       index,
       name: wp.name ?? null,
       type: wp.type,
       lat: wp.lat,
       lng: wp.lng,
       dayIndex: wp.dayIndex ?? null,
+      isOvernightStop: wp.isOvernightStop ?? null,
+    }));
+
+    // Derive effective day indices using the same logic as the waypoint editor.
+    const hasOvernightData = rawWaypoints.some((wp) => wp.isOvernightStop === true);
+    const waypointsForDays = hasOvernightData
+      ? rawWaypoints
+      : inferOvernightStopsFromDayIndex(rawWaypoints);
+    const withDays = deriveDaysFromOvernightStops(waypointsForDays);
+    const waypoints = withDays.map((wp) => ({
+      ...wp,
+      dayIndex: wp.effectiveDayIndex,
     }));
 
     const totalKm = trip.totalDistanceMeters ? trip.totalDistanceMeters / 1000 : null;
@@ -164,6 +180,11 @@ export async function POST(req: NextRequest) {
     };
     const targetLanguage = languageMap[locale ?? "en"] ?? "English";
 
+    // Day count derived from overnight stops (matches the waypoint editor sidebar).
+    const dayCount = waypoints.length > 0
+      ? Math.max(...waypoints.map((wp) => wp.dayIndex), 1)
+      : 1;
+
     const userContent = [
       {
         type: "input_text" as const,
@@ -242,7 +263,8 @@ Return a JSON object with this exact structure (no markdown, just JSON):
 }
 
 Rules:
-- waypointIndices: array of 0-based indices from the waypoints list that belong to this day
+- CRITICAL: The trip has exactly ${dayCount} days. You MUST return exactly ${dayCount} day objects, numbered 1 through ${dayCount}. Each waypoint's day assignment is shown above — respect it.
+- waypointIndices: array of 0-based indices from the waypoints list that belong to this day (use the day assignments shown above)
 - suggestedStops type must be one of: FUEL, LODGING, CAMPGROUND, DINING, POI
 - scenicRating and difficultyRating: 1-5 scale (1=low, 5=high)
 - terrain percentages should sum to ~100
@@ -264,10 +286,11 @@ Trip name: ${trip.name}
           (totalKm != null ? `\nTotal distance: ~${totalKm.toFixed(0)} km\n` : "") +
           (totalHours != null ? `Estimated riding time: ~${totalHours.toFixed(1)} hours\n` : "") +
           (trip.startDate ? `Start date: ${new Date(trip.startDate).toLocaleDateString()}\n` : "") +
+          `\nTrip is organized into ${dayCount} days.\n` +
           `\nWaypoints (in route order, 0-indexed):\n` +
           waypoints
             .map((wp) =>
-              `${wp.index}. ${wp.name || "Unnamed"} (${wp.type}, lat: ${wp.lat.toFixed(4)}, lng: ${wp.lng.toFixed(4)})`,
+              `${wp.index}. ${wp.name || "Unnamed"} (${wp.type}, day ${wp.dayIndex ?? "?"}, lat: ${wp.lat.toFixed(4)}, lng: ${wp.lng.toFixed(4)})`,
             )
             .join("\n"),
       },
@@ -289,14 +312,26 @@ Adapt your recommendations to the rider's preferences when provided (experience 
 Provide practical, safety-conscious advice while maintaining the spirit of adventure.
 Include specific local knowledge that only experienced travelers would know.`;
 
+    // For longer trips, instruct the model to be concise so we stay within output limits.
+    const conciseHint =
+      dayCount > 5
+        ? `\n\nIMPORTANT: This is a ${dayCount}-day trip. To fit all days, keep each day concise:
+- suggestedStops: max 2 per day
+- highlights, warnings, localTips: max 2 items each
+- photoOpportunities, waterCrossings, alternateRoutes: include only if truly notable (max 1 each)
+- emergencyInfo: only nearestHospital and gasStationGaps
+Do NOT truncate — you MUST include ALL ${dayCount} days.`
+        : "";
+
     // Streaming mode
     if (useStreaming) {
       const stream = await openai.chat.completions.create({
         model: "gpt-4.1-mini",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userContent[0].text },
+          { role: "user", content: userContent[0].text + conciseHint },
         ],
+        max_tokens: 16384,
         stream: true,
       });
 
@@ -495,8 +530,9 @@ Include specific local knowledge that only experienced travelers would know.`;
       model: "gpt-4.1-mini",
       input: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
+        { role: "user", content: [{ type: "input_text" as const, text: userContent[0].text + conciseHint }] },
       ],
+      max_output_tokens: 16384,
     });
 
     const rawText = (response.output_text ?? "").trim();

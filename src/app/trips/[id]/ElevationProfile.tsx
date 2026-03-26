@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import {
+  type TerrainSegment,
+  terrainMeta,
+  uniqueTerrainTypes,
+} from "@/lib/terrainClassification";
 
 interface ElevationPoint {
   distanceMeters: number;
@@ -16,9 +21,11 @@ interface Props {
    * that the route has changed.
    */
   refreshKey?: number;
+  /** Optional terrain segments to overlay on the chart */
+  terrainSegments?: TerrainSegment[];
 }
 
-export default function ElevationProfile({ tripId, refreshKey }: Props) {
+export default function ElevationProfile({ tripId, refreshKey, terrainSegments }: Props) {
   const t = useTranslations("tripDetail");
   const [profile, setProfile] = useState<ElevationPoint[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -159,6 +166,22 @@ export default function ElevationProfile({ tripId, refreshKey }: Props) {
           preserveAspectRatio="none"
           className="h-24 w-full text-adv-accent"
         >
+          {/* Terrain color bands behind the elevation line */}
+          {terrainSegments && terrainSegments.length > 0 && maxDist > 0 && terrainSegments.map((seg, idx) => {
+            const x1 = ((seg.startKm * 1000) / maxDist) * 100;
+            const x2 = ((seg.endKm * 1000) / maxDist) * 100;
+            const meta = terrainMeta[seg.type];
+            return (
+              <rect
+                key={`${seg.type}-${idx}`}
+                x={x1}
+                y={0}
+                width={Math.max(0.3, x2 - x1)}
+                height={40}
+                fill={meta?.svgColor ?? "rgba(100,116,139,0.15)"}
+              />
+            );
+          })}
           <path
             d={pathD}
             fill="none"
@@ -171,6 +194,23 @@ export default function ElevationProfile({ tripId, refreshKey }: Props) {
           <span>{(maxDist / 1000).toFixed(0)} km</span>
         </div>
       </div>
+      {/* Terrain legend */}
+      {terrainSegments && terrainSegments.length > 0 && (
+        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px]">
+          {uniqueTerrainTypes(terrainSegments).map(({ type, label }) => {
+            const meta = terrainMeta[type];
+            return (
+              <span key={type} className={`flex items-center gap-1 ${meta.textClass}`}>
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-sm"
+                  style={{ backgroundColor: meta.svgColor.replace("0.25", "0.7") }}
+                />
+                {meta.emoji} {label}
+              </span>
+            );
+          })}
+        </div>
+      )}
       {summary && (
         <p className="text-[11px] text-slate-400">
           {t("totalAscent")} {summary.totalAscentMeters.toFixed(0)} m, {t("descent")} {" "}

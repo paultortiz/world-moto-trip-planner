@@ -11,11 +11,17 @@ import RecalculateRouteButton from "./RecalculateRouteButton";
 import DeleteTripButton from "./DeleteTripButton";
 import WaypointEditor from "./WaypointEditor";
 import ElevationProfile from "./ElevationProfile";
-import AiDayCard, { type AiDayData, type SuggestedStop } from "./AiDayCard";
+import AiDayCard, { type AiDayData, type SuggestedStop, type TerrainTag } from "./AiDayCard";
 import {
   deriveDaysFromOvernightStops,
   inferOvernightStopsFromDayIndex,
 } from "@/lib/dayPlanning";
+import {
+  type TerrainSegment,
+  type TerrainClassificationData,
+  getDayTerrainTags,
+  uniqueTerrainTypes,
+} from "@/lib/terrainClassification";
 import {
   findOptimalInsertIndex,
   getDayIndexForInsertPosition,
@@ -511,6 +517,7 @@ export default function TripDetailClient({
     (trip.aiDailyPlanStructured as { days: AiDayData[] } | null | undefined) ?? null,
   );
   const [showMarkdownView, setShowMarkdownView] = useState(false);
+  const [aiPlanOutdated, setAiPlanOutdated] = useState(false);
   const [aiPlanStreaming, setAiPlanStreaming] = useState(false);
   const [aiStreamingText, setAiStreamingText] = useState<string>("");
   const streamingPreRef = useRef<HTMLPreElement>(null);
@@ -558,6 +565,14 @@ export default function TripDetailClient({
   const [scheduleSaving, setScheduleSaving] = useState(false);
 
   const [elevationRefreshKey, setElevationRefreshKey] = useState(0);
+
+  // Terrain classification state
+  const [terrainSegments, setTerrainSegments] = useState<TerrainSegment[]>(() => {
+    const tc = trip.terrainClassification as TerrainClassificationData | null | undefined;
+    return tc?.segments ?? [];
+  });
+  const [terrainLoading, setTerrainLoading] = useState(false);
+  const [terrainError, setTerrainError] = useState<string | null>(null);
 
   const [fuelAutoSync, setFuelAutoSync] = useState<boolean>(
     trip.fuelAutoFromMotorcycle !== false,
@@ -928,6 +943,38 @@ export default function TripDetailClient({
     setPendingNavigation(null);
   }, []);
 
+  // Mark the AI daily plan as outdated after waypoints change + recalculate.
+  // The plan's waypoint indices may no longer match, so warn the user.
+  const markPlanOutdated = useCallback(() => {
+    if (aiPlanStructured || aiPlanText) {
+      setAiPlanOutdated(true);
+    }
+  }, [aiPlanStructured, aiPlanText]);
+
+  // Classify terrain (fire-and-forget helper used after route recalculation)
+  const classifyTerrain = useCallback(async () => {
+    setTerrainLoading(true);
+    setTerrainError(null);
+    try {
+      const res = await fetch("/api/routes/terrain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tripId: trip.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to classify terrain");
+      }
+      const data: TerrainClassificationData = await res.json();
+      setTerrainSegments(data.segments);
+    } catch (err: any) {
+      console.error("Terrain classification failed:", err);
+      setTerrainError(err.message ?? "Failed to classify terrain");
+    } finally {
+      setTerrainLoading(false);
+    }
+  }, [trip.id]);
+
   // Save waypoints handler for the banner button
   const handleSaveWaypoints = useCallback(async () => {
     // This triggers the same save flow as WaypointEditor
@@ -986,6 +1033,12 @@ export default function TripDetailClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tripId: trip.id }),
       });
+
+      // Classify terrain in background (non-blocking)
+      classifyTerrain();
+
+      // Flag AI plan as outdated (waypoint indices may no longer match)
+      markPlanOutdated();
 
       setIsDirty(false);
       setElevationRefreshKey((k) => k + 1);
@@ -1328,7 +1381,16 @@ export default function TripDetailClient({
             <ElevationProfile
               tripId={trip.id}
               refreshKey={elevationRefreshKey}
+              terrainSegments={terrainSegments}
             />
+
+            {/* Terrain classification status (runs automatically on recalculation) */}
+            {terrainLoading && (
+              <p className="text-[10px] text-slate-400">{t("terrainClassifying")}</p>
+            )}
+            {terrainError && (
+              <p className="text-[10px] text-red-400">{terrainError}</p>
+            )}
 
             <div className="flex items-center justify-between text-xs text-slate-300">
               <div>
@@ -1346,7 +1408,11 @@ export default function TripDetailClient({
               <div className="flex items-center gap-3">
                 <RecalculateRouteButton
                   tripId={trip.id}
-                  onRouteRecalculated={() => setElevationRefreshKey((k) => k + 1)}
+                  onRouteRecalculated={() => {
+                    setElevationRefreshKey((k) => k + 1);
+                    classifyTerrain();
+                    markPlanOutdated();
+                  }}
                 />
                 <div data-tour-export className="flex items-center gap-3">
                   <a
@@ -1547,6 +1613,8 @@ export default function TripDetailClient({
               }
               setIsDirty(false);
               setElevationRefreshKey((k) => k + 1);
+              classifyTerrain();
+              markPlanOutdated();
             }}
             maxDayHint={baseDayHint}
             startDateLabelBase={startDateInput || null}
@@ -1656,6 +1724,7 @@ export default function TripDetailClient({
                               // Stream complete - update with final data
                               setAiPlanText(typeof data.text === "string" ? data.text : "");
                               setAiPlanStructured(data.structured ?? null);
+                              setAiPlanOutdated(false);
                               setShowMarkdownView(false);
                               if (data.generatedAt) {
                                 setAiPlanGeneratedAt(new Date(data.generatedAt).toLocaleString());
@@ -1714,6 +1783,14 @@ export default function TripDetailClient({
             <p className="text-[11px] text-slate-400">
               {t("aiPlanDescription")}
             </p>
+            {aiPlanOutdated && (aiPlanText || aiPlanStructured) && (
+              <div className="flex items-center gap-2 rounded border border-amber-500/60 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-200">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span>{t("planOutdated")}</span>
+              </div>
+            )}
             {aiPlanGeneratedAt && (
               <p className="text-[10px] text-slate-500">
                 {t("generatedOn")} {aiPlanGeneratedAt}
@@ -1820,6 +1897,18 @@ export default function TripDetailClient({
                         name: wp.name ?? null,
                         type: wp.type ?? "CHECKPOINT",
                       }))}
+                      terrainTags={
+                        terrainSegments.length > 0
+                          ? (() => {
+                              // Compute cumulative km offset for this day
+                              const prevDays = aiPlanStructured!.days.filter((d) => d.day < day.day);
+                              const dayStartKm = prevDays.reduce((sum, d) => sum + d.distanceKm, 0);
+                              const dayEndKm = dayStartKm + day.distanceKm;
+                              const daySegs = getDayTerrainTags(terrainSegments, dayStartKm, dayEndKm);
+                              return uniqueTerrainTypes(daySegs) as TerrainTag[];
+                            })()
+                          : undefined
+                      }
                       onAddWaypoint={(stop: SuggestedStop) => {
                         // Check if already added (same name and day)
                         const alreadyExists = waypoints.some(

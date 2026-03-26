@@ -1,6 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { type TerrainType, terrainMeta } from "@/lib/terrainClassification";
+
+export interface TerrainTag {
+  type: TerrainType;
+  label: string;
+}
 
 export interface SuggestedStop {
   name: string;
@@ -33,6 +39,7 @@ interface AiDayCardProps {
   waypoints: WaypointInfo[];
   onAddWaypoint?: (stop: SuggestedStop) => void;
   isStopAdded?: (stop: SuggestedStop) => boolean;
+  terrainTags?: TerrainTag[];
   t: (key: string) => string;
 }
 
@@ -41,6 +48,7 @@ export default function AiDayCard({
   waypoints,
   onAddWaypoint,
   isStopAdded,
+  terrainTags,
   t,
 }: AiDayCardProps) {
   const [expanded, setExpanded] = useState(true);
@@ -87,6 +95,23 @@ export default function AiDayCard({
       {/* Expandable content */}
       {expanded && (
         <div className="border-t border-slate-700 p-3 space-y-3">
+          {/* Terrain badges */}
+          {terrainTags && terrainTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {terrainTags.map((tag) => {
+                const meta = terrainMeta[tag.type];
+                return (
+                  <span
+                    key={tag.type}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${meta.bgClass} ${meta.textClass}`}
+                  >
+                    {meta.emoji} {tag.label}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
           {/* Summary */}
           <p className="text-[11px] text-slate-300">{day.summary}</p>
 
