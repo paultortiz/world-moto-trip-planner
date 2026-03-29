@@ -528,7 +528,20 @@
     "terrainCanyon": "Canyon",
     "terrainUrban": "Urban",
     "terrainTundra": "Tundra",
-    "terrainWetland": "Wetland"
+    "terrainWetland": "Wetland",
+    "routePreferences": "Route preferences",
+    "routePreferencesDescription": "Control how the route is calculated between waypoints.",
+    "avoidHighways": "Avoid highways",
+    "avoidTolls": "Avoid tolls",
+    "avoidFerries": "Avoid ferries",
+    "saveRoutePrefs": "Save preferences",
+    "routePrefsSaved": "Route preferences saved. Recalculate route to apply.",
+    "failedToSaveRoutePrefs": "Failed to save route preferences",
+    "routePrefsRecalcHint": "Recalculate the route after changing preferences to see the updated path.",
+    "viaPoint": "Via point",
+    "showViaPoints": "Show shaping points",
+    "hideViaPoints": "Hide shaping points",
+    "clickRouteToShape": "Click on the route line to add a shaping point"
   },
   "sponsor": {
     "title": "Sponsor console",

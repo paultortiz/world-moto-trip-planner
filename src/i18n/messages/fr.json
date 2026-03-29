@@ -528,7 +528,20 @@
     "terrainCanyon": "Canyon",
     "terrainUrban": "Urbain",
     "terrainTundra": "Toundra",
-    "terrainWetland": "Zone humide"
+    "terrainWetland": "Zone humide",
+    "routePreferences": "Préférences d'itinéraire",
+    "routePreferencesDescription": "Contrôlez comment l'itinéraire est calculé entre les points de passage.",
+    "avoidHighways": "Éviter les autoroutes",
+    "avoidTolls": "Éviter les péages",
+    "avoidFerries": "Éviter les ferries",
+    "saveRoutePrefs": "Enregistrer les préférences",
+    "routePrefsSaved": "Préférences d'itinéraire enregistrées. Recalculez l'itinéraire pour appliquer.",
+    "failedToSaveRoutePrefs": "Échec de l'enregistrement des préférences",
+    "routePrefsRecalcHint": "Recalculez l'itinéraire après avoir modifié les préférences pour voir le tracé mis à jour.",
+    "viaPoint": "Point de passage",
+    "showViaPoints": "Afficher les points de forme",
+    "hideViaPoints": "Masquer les points de forme",
+    "clickRouteToShape": "Cliquez sur la ligne d'itinéraire pour ajouter un point de forme"
   },
   "sponsor": {
     "title": "Console sponsor",

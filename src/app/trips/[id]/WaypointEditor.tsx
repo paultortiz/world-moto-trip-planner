@@ -477,6 +477,37 @@ export default function WaypointEditor({
                   const canBeOvernight = !isFirstWaypoint && waypoints.length > 1;
                   const isFocused = focusedWaypointIndex === index;
 
+                  // Compact row for VIA shaping points
+                  if (wp.type === "VIA") {
+                    return (
+                      <div
+                        key={wp.id ?? `via-${wp.lat}-${wp.lng}-${index}`}
+                        id={`waypoint-row-${index}`}
+                        ref={(el) => {
+                          if (el) waypointRefs.current.set(index, el);
+                          else waypointRefs.current.delete(index);
+                        }}
+                        className={`flex items-center justify-between gap-2 px-3 py-1.5 text-[10px] text-slate-500 ${
+                          isFocused ? "border-l-4 border-l-cyan-400 bg-cyan-900/30" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-500" />
+                          <span>{t("viaPoint")}</span>
+                          <span className="text-slate-600">
+                            {wp.lat.toFixed(4)}, {wp.lng.toFixed(4)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {onLocateWaypoint && (
+                            <button type="button" onClick={() => onLocateWaypoint(index)} className="rounded border border-slate-700 px-1.5 py-0.5 text-[9px] text-slate-400 hover:bg-slate-800" title={t("locateOnMap")}>📍</button>
+                          )}
+                          <button type="button" onClick={() => removeWaypoint(index)} className="rounded bg-red-600/80 px-1.5 py-0.5 text-[9px] text-white hover:bg-red-500">✕</button>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div
                       key={wp.id ?? `${wp.lat}-${wp.lng}-${index}`}

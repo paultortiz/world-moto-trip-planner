@@ -528,7 +528,20 @@
     "terrainCanyon": "Cañón",
     "terrainUrban": "Urbano",
     "terrainTundra": "Tundra",
-    "terrainWetland": "Humedal"
+    "terrainWetland": "Humedal",
+    "routePreferences": "Preferencias de ruta",
+    "routePreferencesDescription": "Controla cómo se calcula la ruta entre puntos.",
+    "avoidHighways": "Evitar autopistas",
+    "avoidTolls": "Evitar peajes",
+    "avoidFerries": "Evitar ferris",
+    "saveRoutePrefs": "Guardar preferencias",
+    "routePrefsSaved": "Preferencias guardadas. Recalcula la ruta para aplicar.",
+    "failedToSaveRoutePrefs": "Error al guardar preferencias de ruta",
+    "routePrefsRecalcHint": "Recalcula la ruta después de cambiar las preferencias para ver el camino actualizado.",
+    "viaPoint": "Punto de paso",
+    "showViaPoints": "Mostrar puntos de forma",
+    "hideViaPoints": "Ocultar puntos de forma",
+    "clickRouteToShape": "Haz clic en la línea de ruta para añadir un punto de forma"
   },
   "sponsor": {
     "title": "Consola de patrocinador",

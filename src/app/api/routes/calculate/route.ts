@@ -26,6 +26,7 @@ async function fetchDirectionsChunk(
   destination: string,
   viaPoints: WaypointCoord[],
   apiKey: string,
+  avoidParam?: string,
 ): Promise<ChunkResult> {
   const waypointsParam =
     viaPoints.length > 0
@@ -34,9 +35,11 @@ async function fetchDirectionsChunk(
         )}`
       : "";
 
+  const avoidStr = avoidParam ? `&avoid=${encodeURIComponent(avoidParam)}` : "";
+
   const url = `${DIRECTIONS_URL}?origin=${encodeURIComponent(
     origin,
-  )}&destination=${encodeURIComponent(destination)}${waypointsParam}&key=${apiKey}`;
+  )}&destination=${encodeURIComponent(destination)}${waypointsParam}${avoidStr}&key=${apiKey}`;
 
   const res = await fetch(url);
   if (!res.ok) {
@@ -230,7 +233,14 @@ export async function POST(req: NextRequest) {
     }
 
     const allWaypoints = trip.waypoints.map((wp) => ({ lat: wp.lat, lng: wp.lng }));
-    
+
+    // Build avoidance param from trip preferences
+    const avoidParts: string[] = [];
+    if (trip.routeAvoidHighways) avoidParts.push("highways");
+    if (trip.routeAvoidTolls) avoidParts.push("tolls");
+    if (trip.routeAvoidFerries) avoidParts.push("ferries");
+    const avoidParam = avoidParts.length > 0 ? avoidParts.join("|") : undefined;
+
     let totalDistanceMeters = 0;
     let totalDurationSeconds = 0;
     const polylines: string[] = [];
@@ -246,7 +256,7 @@ export async function POST(req: NextRequest) {
       const destination = `${allWaypoints[allWaypoints.length - 1].lat},${allWaypoints[allWaypoints.length - 1].lng}`;
       const via = allWaypoints.slice(1, -1);
 
-      const result = await fetchDirectionsChunk(origin, destination, via, apiKey);
+      const result = await fetchDirectionsChunk(origin, destination, via, apiKey, avoidParam);
       totalDistanceMeters = result.distanceMeters;
       totalDurationSeconds = result.durationSeconds;
       polylines.push(result.polyline);
@@ -274,7 +284,7 @@ export async function POST(req: NextRequest) {
         const origin = `${chunkOrigin.lat},${chunkOrigin.lng}`;
         const destination = `${chunkDestination.lat},${chunkDestination.lng}`;
 
-        const result = await fetchDirectionsChunk(origin, destination, chunkVia, apiKey);
+        const result = await fetchDirectionsChunk(origin, destination, chunkVia, apiKey, avoidParam);
         totalDistanceMeters += result.distanceMeters;
         totalDurationSeconds += result.durationSeconds;
         if (result.polyline) {
