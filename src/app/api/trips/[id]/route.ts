@@ -63,6 +63,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       motorcycleId,
       fuelAutoFromMotorcycle,
       resetFuelFromMotorcycle,
+      routeAvoidHighways,
+      routeAvoidTolls,
+      routeAvoidFerries,
     } = body ?? {};
 
     const safeWaypoints = Array.isArray(waypoints)
@@ -172,6 +175,9 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
           segmentNotes: segmentNotes ?? undefined,
           motorcycleId: nextMotorcycleId,
           fuelAutoFromMotorcycle: nextFuelAutoFromMoto,
+          ...(typeof routeAvoidHighways === "boolean" ? { routeAvoidHighways } : {}),
+          ...(typeof routeAvoidTolls === "boolean" ? { routeAvoidTolls } : {}),
+          ...(typeof routeAvoidFerries === "boolean" ? { routeAvoidFerries } : {}),
         },
       });
 

@@ -61,15 +61,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    const rawWaypoints = trip.waypoints.map((wp, index) => ({
-      index,
-      name: wp.name ?? null,
-      type: wp.type,
-      lat: wp.lat,
-      lng: wp.lng,
-      dayIndex: wp.dayIndex ?? null,
-      isOvernightStop: wp.isOvernightStop ?? null,
-    }));
+    const rawWaypoints = trip.waypoints
+      .filter((wp) => wp.type !== "VIA") // Exclude VIA shaping points from AI plan
+      .map((wp, index) => ({
+        index,
+        name: wp.name ?? null,
+        type: wp.type,
+        lat: wp.lat,
+        lng: wp.lng,
+        dayIndex: wp.dayIndex ?? null,
+        isOvernightStop: wp.isOvernightStop ?? null,
+      }));
 
     // Derive effective day indices using the same logic as the waypoint editor.
     const hasOvernightData = rawWaypoints.some((wp) => wp.isOvernightStop === true);

@@ -319,7 +319,9 @@ function computeDailyPlan(
   totalDistanceMeters?: number | null,
   totalDurationSeconds?: number | null,
 ): DailyPlanEntry[] {
-  if (!waypoints || waypoints.length < 2) return [];
+  // Exclude VIA shaping points from the daily plan computation
+  const filtered = waypoints.filter((wp) => wp.type !== "VIA");
+  if (!filtered || filtered.length < 2) return [];
 
   const totalDistanceKm =
     (totalDistanceMeters ?? 0) > 0 ? (totalDistanceMeters as number) / 1000 : null;
@@ -327,16 +329,16 @@ function computeDailyPlan(
     (totalDurationSeconds ?? 0) > 0 ? (totalDurationSeconds as number) / 3600 : null;
 
   // Check if we have overnight stop data; if not, infer from dayIndex for backward compat
-  const hasOvernightData = waypoints.some((wp) => wp.isOvernightStop === true);
-  let waypointsToUse = waypoints;
+  const hasOvernightData = filtered.some((wp) => wp.isOvernightStop === true);
+  let waypointsToUse = filtered;
   
   if (!hasOvernightData) {
     // Infer overnight stops from existing dayIndex values
-    const hasDayIndexData = waypoints.some(
+    const hasDayIndexData = filtered.some(
       (wp) => typeof wp.dayIndex === "number" && wp.dayIndex > 1
     );
     if (hasDayIndexData) {
-      waypointsToUse = inferOvernightStopsFromDayIndex(waypoints);
+      waypointsToUse = inferOvernightStopsFromDayIndex(filtered);
     }
   }
 
@@ -480,9 +482,14 @@ export default function TripDetailClient({
   }, [trip.waypoints]);
 
   // Keep activeRoutePath in sync when the server prop changes (e.g. after
-  // router.refresh() or initial navigation).
+  // router.refresh() or initial navigation).  Skip if dirty — the recalc
+  // response is authoritative and we don't want a stale server prop to
+  // flash the old route back.
   useEffect(() => {
-    setActiveRoutePath(routePath);
+    if (!isDirty) {
+      setActiveRoutePath(routePath);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routePath]);
   const [fuelRangeInput, setFuelRangeInput] = useState<string>(
     trip.fuelRangeKm != null ? String(trip.fuelRangeKm) : "",
@@ -577,6 +584,13 @@ export default function TripDetailClient({
   const [fuelAutoSync, setFuelAutoSync] = useState<boolean>(
     trip.fuelAutoFromMotorcycle !== false,
   );
+
+  // Route preference flags
+  const [avoidHighways, setAvoidHighways] = useState(trip.routeAvoidHighways === true);
+  const [avoidTolls, setAvoidTolls] = useState(trip.routeAvoidTolls === true);
+  const [avoidFerries, setAvoidFerries] = useState(trip.routeAvoidFerries === true);
+  const [routePrefsSaving, setRoutePrefsSaving] = useState(false);
+  const [routePrefsStatus, setRoutePrefsStatus] = useState<string | null>(null);
 
   const [bikeYearInput, setBikeYearInput] = useState<string>(
     typeof trip.motorcycle?.year === "number" ? String(trip.motorcycle.year) : "",
@@ -1024,7 +1038,8 @@ export default function TripDetailClient({
       });
       if (recalcRes.ok) {
         const recalcData = await recalcRes.json();
-        setActiveRoutePath(extractRoutePathFromResponse(recalcData));
+        const newPath = extractRoutePathFromResponse(recalcData);
+        setActiveRoutePath(newPath);
       }
 
       // Recalculate elevation
@@ -1344,6 +1359,15 @@ export default function TripDetailClient({
                     waypointRow.scrollIntoView({ behavior: "smooth", block: "center" });
                   }
                 }, 100);
+              }}
+              onWaypointDragEnd={(index, lat, lng) => {
+                setWaypoints((prev) =>
+                  prev.map((wp, i) => (i === index ? { ...wp, lat, lng } : wp)),
+                );
+                // Clear stale route immediately so the old polyline doesn't
+                // flash back when isDirty toggles off after save.
+                setActiveRoutePath(undefined);
+                setIsDirty(true);
               }}
             />
           </div>
@@ -1990,6 +2014,61 @@ export default function TripDetailClient({
                 {/* ===== SETTINGS TAB ===== */}
                 {activeTab === "settings" && (
                   <>
+          {/* Route preferences */}
+          <section className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Route preferences">
+            <h2 className="font-semibold text-slate-100 text-xs md:text-sm">{t("routePreferences")}</h2>
+            <p className="mt-1 text-[11px] text-slate-400">{t("routePreferencesDescription")}</p>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+              <label className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                <input type="checkbox" className="h-3 w-3 accent-adv-accent" checked={avoidHighways} onChange={(e) => setAvoidHighways(e.target.checked)} />
+                {t("avoidHighways")}
+              </label>
+              <label className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                <input type="checkbox" className="h-3 w-3 accent-adv-accent" checked={avoidTolls} onChange={(e) => setAvoidTolls(e.target.checked)} />
+                {t("avoidTolls")}
+              </label>
+              <label className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                <input type="checkbox" className="h-3 w-3 accent-adv-accent" checked={avoidFerries} onChange={(e) => setAvoidFerries(e.target.checked)} />
+                {t("avoidFerries")}
+              </label>
+            </div>
+            <div className="mt-2 flex items-center gap-3">
+              <button
+                type="button"
+                disabled={routePrefsSaving}
+                onClick={async () => {
+                  setRoutePrefsStatus(null);
+                  setRoutePrefsSaving(true);
+                  try {
+                    const res = await fetch(`/api/trips/${trip.id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        routeAvoidHighways: avoidHighways,
+                        routeAvoidTolls: avoidTolls,
+                        routeAvoidFerries: avoidFerries,
+                      }),
+                    });
+                    if (!res.ok) throw new Error("Failed to save");
+                    setRoutePrefsStatus(t("routePrefsSaved"));
+                    router.refresh();
+                  } catch {
+                    setRoutePrefsStatus(t("failedToSaveRoutePrefs"));
+                  } finally {
+                    setRoutePrefsSaving(false);
+                  }
+                }}
+                className="rounded bg-adv-accent px-3 py-1 text-[11px] font-semibold text-black shadow-adv-glow hover:bg-adv-accentMuted disabled:opacity-50"
+              >
+                {routePrefsSaving ? t("savingFuel") : t("saveRoutePrefs")}
+              </button>
+              {routePrefsStatus && (
+                <span className="text-[10px] text-slate-300">{routePrefsStatus}</span>
+              )}
+            </div>
+            <p className="mt-1 text-[10px] text-slate-500">{t("routePrefsRecalcHint")}</p>
+          </section>
+
           {/* Motorcycle section */}
           <section data-tour-motorcycle className="rounded border border-adv-border bg-slate-900/70 p-3 text-xs text-slate-200 shadow-adv-glow" aria-label="Motorcycle for this trip">
             <div className="flex items-center justify-between gap-2">

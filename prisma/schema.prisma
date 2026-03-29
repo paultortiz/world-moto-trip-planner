@@ -119,6 +119,11 @@ model Trip {
   aiDailyPlanStructured Json?
   aiDailyPlanGeneratedAt DateTime?
 
+  // Route preference flags
+  routeAvoidHighways   Boolean  @default(false)
+  routeAvoidTolls      Boolean  @default(false)
+  routeAvoidFerries    Boolean  @default(false)
+
   // AI-classified terrain segments along the route
   terrainClassification Json?
 
@@ -237,6 +242,7 @@ enum WaypointType {
   CHARGING
   BORDER
   CHECKPOINT
+  VIA
   OTHER
 }
 

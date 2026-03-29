@@ -528,7 +528,20 @@
     "terrainCanyon": "Schlucht",
     "terrainUrban": "Städtisch",
     "terrainTundra": "Tundra",
-    "terrainWetland": "Feuchtgebiet"
+    "terrainWetland": "Feuchtgebiet",
+    "routePreferences": "Routeneinstellungen",
+    "routePreferencesDescription": "Steuere, wie die Route zwischen Wegpunkten berechnet wird.",
+    "avoidHighways": "Autobahnen vermeiden",
+    "avoidTolls": "Maut vermeiden",
+    "avoidFerries": "Fähren vermeiden",
+    "saveRoutePrefs": "Einstellungen speichern",
+    "routePrefsSaved": "Routeneinstellungen gespeichert. Route neu berechnen zum Anwenden.",
+    "failedToSaveRoutePrefs": "Fehler beim Speichern der Routeneinstellungen",
+    "routePrefsRecalcHint": "Berechne die Route nach Änderung der Einstellungen neu, um den aktualisierten Weg zu sehen.",
+    "viaPoint": "Zwischenpunkt",
+    "showViaPoints": "Formpunkte anzeigen",
+    "hideViaPoints": "Formpunkte ausblenden",
+    "clickRouteToShape": "Klicke auf die Routenlinie, um einen Formpunkt hinzuzufügen"
   },
   "sponsor": {
     "title": "Sponsor-Konsole",

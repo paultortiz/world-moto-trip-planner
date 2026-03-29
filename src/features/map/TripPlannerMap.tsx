@@ -159,6 +159,10 @@ interface TripPlannerMapProps {
    * Callback to trigger a save - used when adding fuel waypoint during out-of-fuel state.
    */
   onRequestSave?: () => void;
+  /**
+   * Callback when a draggable waypoint (VIA) is dragged to a new position.
+   */
+  onWaypointDragEnd?: (index: number, lat: number, lng: number) => void;
 }
 
 export default function TripPlannerMap({
@@ -187,10 +191,14 @@ export default function TripPlannerMap({
   fuelRangeKm,
   onLowFuelAlert,
   onRequestSave,
+  onWaypointDragEnd,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  // Ref for onAddWaypoint so polyline click handlers always see the latest callback
+  const onAddWaypointRef = useRef(onAddWaypoint);
+  onAddWaypointRef.current = onAddWaypoint;
   const idleTimeoutRef = useRef<number | null>(null);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -1566,14 +1574,22 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
   // solid colour is visible through the gaps.
   const routePolylinesRef = useRef<google.maps.Polyline[]>([]);
 
+  // Aggressively destroy all tracked route polylines from the canvas.
+  const destroyRoutePolylines = useCallback(() => {
+    for (const pl of routePolylinesRef.current) {
+      google.maps.event.clearInstanceListeners(pl);
+      pl.setPath([]);
+      pl.setVisible(false);
+      pl.setMap(null);
+    }
+    routePolylinesRef.current = [];
+  }, []);
+
   useEffect(() => {
     const map = mapRef.current;
 
     // 1. Remove every existing route polyline from the map.
-    for (const pl of routePolylinesRef.current) {
-      pl.setMap(null);
-    }
-    routePolylinesRef.current = [];
+    destroyRoutePolylines();
 
     // 2. Nothing to draw if there is no map or no route.
     if (!map || !routePath || routePath.length === 0) return;
@@ -1625,9 +1641,19 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       return runs;
     };
 
+    // Click handler for polylines — inserts a VIA shaping point
+    const handlePolylineClick = (e: google.maps.PolyMouseEvent) => {
+      if (!e.latLng || !onAddWaypointRef.current) return;
+      onAddWaypointRef.current({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng(),
+        type: "VIA",
+      });
+    };
+
     // ── Build polylines ──────────────────────────────────────────
     if (dayRoutePaths.length > 0) {
-      // Accumulate a spatial grid of all earlier days’ points.
+      // Accumulate a spatial grid of all earlier days' points.
       const earlierGrid = new Set<string>();
 
       for (const segment of dayRoutePaths) {
@@ -1640,8 +1666,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             strokeColor: segment.color,
             strokeOpacity: 0.85,
             strokeWeight: 4,
+            clickable: true,
             map,
           });
+          pl.addListener("click", handlePolylineClick);
           routePolylinesRef.current.push(pl);
         } else {
           // Later day — split into overlapping (dashed) and unique (solid).
@@ -1649,12 +1677,13 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
           for (const run of runs) {
             if (run.sub.length < 2) continue;
             if (run.isOverlap) {
-              // Dashed line so the earlier day’s solid colour shows through.
+              // Dashed line so the earlier day's solid colour shows through.
               const pl = new google.maps.Polyline({
                 path: run.sub,
                 strokeColor: segment.color,
                 strokeOpacity: 0,
                 strokeWeight: 4,
+                clickable: true,
                 icons: [{
                   icon: {
                     path: "M 0,-1 0,1",
@@ -1667,6 +1696,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 }],
                 map,
               });
+              pl.addListener("click", handlePolylineClick);
               routePolylinesRef.current.push(pl);
             } else {
               // Solid — no overlap here.
@@ -1675,8 +1705,10 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 strokeColor: segment.color,
                 strokeOpacity: 0.85,
                 strokeWeight: 4,
+                clickable: true,
                 map,
               });
+              pl.addListener("click", handlePolylineClick);
               routePolylinesRef.current.push(pl);
             }
           }
@@ -1692,17 +1724,16 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         strokeColor: "#22c55e",
         strokeOpacity: 0.9,
         strokeWeight: 4,
+        clickable: true,
         map,
       });
+      pl.addListener("click", handlePolylineClick);
       routePolylinesRef.current.push(pl);
     }
 
     // Cleanup on unmount or when route changes.
     return () => {
-      for (const pl of routePolylinesRef.current) {
-        pl.setMap(null);
-      }
-      routePolylinesRef.current = [];
+      destroyRoutePolylines();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routePath, dayRoutePaths, mapReady]);
@@ -3424,6 +3455,36 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
         let icon: google.maps.Icon | google.maps.Symbol | undefined;
         let zIndex: number | undefined;
+
+        // VIA shaping points: small gray draggable circles
+        if (wpType === "VIA") {
+          return (
+            <Marker
+              key={`via-${index}`}
+              position={position}
+              draggable
+              icon={{
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 6,
+                fillColor: "#94a3b8",
+                fillOpacity: 0.9,
+                strokeColor: "#fff",
+                strokeWeight: 2,
+              }}
+              zIndex={5}
+              title="Via point (drag to reshape route)"
+              onClick={() => {
+                if (onMarkerClick) onMarkerClick(index);
+              }}
+              onDragEnd={(e) => {
+                if (!e.latLng) return;
+                if (onWaypointDragEnd) {
+                  onWaypointDragEnd(index, e.latLng.lat(), e.latLng.lng());
+                }
+              }}
+            />
+          );
+        }
 
         // Rider-defined waypoints use SVG icons for better visual recognition
         if (wpType === "FUEL") {
