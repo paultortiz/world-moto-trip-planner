@@ -538,12 +538,19 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     };
   }, []);
 
-  // Pan/zoom to focused waypoint when it changes (or when trigger increments)
+  // Ref so the focus effect can read the latest waypoints without depending on them.
+  const waypointsRef = useRef(waypoints);
+  waypointsRef.current = waypoints;
+
+  // Pan/zoom to focused waypoint when it changes (or when trigger increments).
+  // We intentionally exclude `waypoints` from deps — we only want to pan when
+  // the user explicitly focuses a waypoint, not when waypoints update from a
+  // parent re-render (e.g. toggling a nearby-places checkbox).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || focusedWaypointIndex === null || focusedWaypointIndex === undefined) return;
     
-    const wp = waypoints[focusedWaypointIndex];
+    const wp = waypointsRef.current[focusedWaypointIndex];
     if (!wp) return;
     
     // Pan to the waypoint and zoom in if currently zoomed out
@@ -552,7 +559,8 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
     if (currentZoom < 12) {
       map.setZoom(12);
     }
-  }, [focusedWaypointIndex, focusedWaypointTrigger, waypoints]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusedWaypointIndex, focusedWaypointTrigger]);
 
   // Trigger places fetch immediately when a checkbox is enabled
   useEffect(() => {
