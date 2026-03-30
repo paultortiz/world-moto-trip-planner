@@ -160,9 +160,10 @@ interface TripPlannerMapProps {
    */
   onRequestSave?: () => void;
   /**
-   * Callback when a draggable waypoint (VIA) is dragged to a new position.
+   * Callback when the user drags a point on the route line to a new location.
+   * The parent should insert a hidden VIA waypoint and auto-save + recalculate.
    */
-  onWaypointDragEnd?: (index: number, lat: number, lng: number) => void;
+  onRouteDragEnd?: (lat: number, lng: number) => void;
 }
 
 export default function TripPlannerMap({
@@ -191,14 +192,22 @@ export default function TripPlannerMap({
   fuelRangeKm,
   onLowFuelAlert,
   onRequestSave,
-  onWaypointDragEnd,
+  onRouteDragEnd,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
   const mapRef = useRef<google.maps.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  // Ref for onAddWaypoint so polyline click handlers always see the latest callback
+  // Refs for callbacks so polyline event handlers always see the latest version
   const onAddWaypointRef = useRef(onAddWaypoint);
   onAddWaypointRef.current = onAddWaypoint;
+  const onRouteDragEndRef = useRef(onRouteDragEnd);
+  onRouteDragEndRef.current = onRouteDragEnd;
+
+  // Route drag state: drag a point on the route line to reshape it
+  const [routeDragPos, setRouteDragPos] = useState<{ lat: number; lng: number } | null>(null);
+  const routeDraggingRef = useRef(false);
+  const mapMoveListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+  const mapUpListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const idleTimeoutRef = useRef<number | null>(null);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -1649,13 +1658,51 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
       return runs;
     };
 
-    // Click handler for polylines — inserts a VIA shaping point
-    const handlePolylineClick = (e: google.maps.PolyMouseEvent) => {
-      if (!e.latLng || !onAddWaypointRef.current) return;
-      onAddWaypointRef.current({
-        lat: e.latLng.lat(),
-        lng: e.latLng.lng(),
-        type: "VIA",
+    // Drag handler for polylines — drag a point on the route to reshape it.
+    // mousedown starts tracking, mousemove updates a temp marker, mouseup finalizes.
+    const handlePolylineMouseDown = (e: google.maps.PolyMouseEvent) => {
+      if (!e.latLng || !map) return;
+      routeDraggingRef.current = true;
+      const startPos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+      setRouteDragPos(startPos);
+
+      // Disable map panning while dragging the route
+      map.setOptions({ draggable: false });
+
+      // Track mouse movement on the map
+      mapMoveListenerRef.current = map.addListener("mousemove", (moveEvt: google.maps.MapMouseEvent) => {
+        if (!moveEvt.latLng || !routeDraggingRef.current) return;
+        setRouteDragPos({ lat: moveEvt.latLng.lat(), lng: moveEvt.latLng.lng() });
+      });
+
+      // Finalize on mouseup
+      mapUpListenerRef.current = map.addListener("mouseup", (upEvt: google.maps.MapMouseEvent) => {
+        // Clean up listeners
+        if (mapMoveListenerRef.current) {
+          google.maps.event.removeListener(mapMoveListenerRef.current);
+          mapMoveListenerRef.current = null;
+        }
+        if (mapUpListenerRef.current) {
+          google.maps.event.removeListener(mapUpListenerRef.current);
+          mapUpListenerRef.current = null;
+        }
+
+        // Re-enable map panning
+        map.setOptions({ draggable: true });
+        routeDraggingRef.current = false;
+        setRouteDragPos(null);
+
+        if (!upEvt.latLng) return;
+        const dropLat = upEvt.latLng.lat();
+        const dropLng = upEvt.latLng.lng();
+
+        // Only fire if the user actually dragged (not just a click)
+        const dist = Math.abs(dropLat - startPos.lat) + Math.abs(dropLng - startPos.lng);
+        if (dist < 0.001) return; // ~100m threshold — too small, treat as accidental
+
+        if (onRouteDragEndRef.current) {
+          onRouteDragEndRef.current(dropLat, dropLng);
+        }
       });
     };
 
@@ -1677,7 +1724,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
             clickable: true,
             map,
           });
-          pl.addListener("click", handlePolylineClick);
+          pl.addListener("mousedown", handlePolylineMouseDown);
           routePolylinesRef.current.push(pl);
         } else {
           // Later day — split into overlapping (dashed) and unique (solid).
@@ -1704,7 +1751,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 }],
                 map,
               });
-              pl.addListener("click", handlePolylineClick);
+              pl.addListener("mousedown", handlePolylineMouseDown);
               routePolylinesRef.current.push(pl);
             } else {
               // Solid — no overlap here.
@@ -1716,7 +1763,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
                 clickable: true,
                 map,
               });
-              pl.addListener("click", handlePolylineClick);
+              pl.addListener("mousedown", handlePolylineMouseDown);
               routePolylinesRef.current.push(pl);
             }
           }
@@ -1735,7 +1782,7 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         clickable: true,
         map,
       });
-      pl.addListener("click", handlePolylineClick);
+      pl.addListener("mousedown", handlePolylineMouseDown);
       routePolylinesRef.current.push(pl);
     }
 
@@ -3421,6 +3468,24 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
 
       {/* Route polylines are managed imperatively via useEffect + routePolylinesRef */}
 
+      {/* Temporary drag marker shown while dragging a point on the route line */}
+      {routeDragPos && (
+        <Marker
+          key="route-drag-marker"
+          position={routeDragPos}
+          icon={{
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: "#f59e0b",
+            fillOpacity: 0.9,
+            strokeColor: "#fff",
+            strokeWeight: 2,
+          }}
+          zIndex={300}
+          clickable={false}
+        />
+      )}
+
       {/* Day labels - motorcycle icon with day badge */}
       {currentZoom >= 6 && visibleDayLabels.map((label) => {
         // Colors: teal for odd days, amber for even days (matching route colors)
@@ -3464,35 +3529,9 @@ const [pendingPlace, setPendingPlace] = useState<PanelPlaceItem | null>(null);
         let icon: google.maps.Icon | google.maps.Symbol | undefined;
         let zIndex: number | undefined;
 
-        // VIA shaping points: small gray draggable circles
-        if (wpType === "VIA") {
-          return (
-            <Marker
-              key={`via-${index}`}
-              position={position}
-              draggable
-              icon={{
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 6,
-                fillColor: "#94a3b8",
-                fillOpacity: 0.9,
-                strokeColor: "#fff",
-                strokeWeight: 2,
-              }}
-              zIndex={5}
-              title="Via point (drag to reshape route)"
-              onClick={() => {
-                if (onMarkerClick) onMarkerClick(index);
-              }}
-              onDragEnd={(e) => {
-                if (!e.latLng) return;
-                if (onWaypointDragEnd) {
-                  onWaypointDragEnd(index, e.latLng.lat(), e.latLng.lng());
-                }
-              }}
-            />
-          );
-        }
+        // VIA shaping points are invisible — they only exist in the data layer
+        // to force the route through specific locations.
+        if (wpType === "VIA") return null;
 
         // Rider-defined waypoints use SVG icons for better visual recognition
         if (wpType === "FUEL") {
