@@ -1373,13 +1373,6 @@ export default function TripDetailClient({
                   }
                 }, 100);
               }}
-              onWaypointDragEnd={(index, lat, lng) => {
-                setWaypoints((prev) =>
-                  prev.map((wp, i) => (i === index ? { ...wp, lat, lng } : wp)),
-                );
-                setActiveRoutePath(undefined);
-                setIsDirty(true);
-              }}
               onRouteDragEnd={(lat, lng) => {
                 // Insert a hidden VIA waypoint at the drop location and auto-save
                 setWaypoints((prev) => {

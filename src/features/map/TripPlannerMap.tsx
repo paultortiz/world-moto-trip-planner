@@ -160,10 +160,6 @@ interface TripPlannerMapProps {
    */
   onRequestSave?: () => void;
   /**
-   * Callback when a draggable waypoint (VIA) is dragged to a new position.
-   */
-  onWaypointDragEnd?: (index: number, lat: number, lng: number) => void;
-  /**
    * Callback when the user drags a point on the route line to a new location.
    * The parent should insert a hidden VIA waypoint and auto-save + recalculate.
    */
@@ -196,7 +192,6 @@ export default function TripPlannerMap({
   fuelRangeKm,
   onLowFuelAlert,
   onRequestSave,
-  onWaypointDragEnd,
   onRouteDragEnd,
 }: TripPlannerMapProps) {
   const t = useTranslations("map");
