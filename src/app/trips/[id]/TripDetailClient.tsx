@@ -865,6 +865,10 @@ export default function TripDetailClient({
   const isDirtyRef = useRef(isDirty);
   isDirtyRef.current = isDirty;
 
+  // Flag to auto-save after a route drag inserts a VIA waypoint.
+  // The useEffect below fires after the waypoints state update is committed.
+  const [pendingAutoSave, setPendingAutoSave] = useState(false);
+
   const mapWaypoints: WaypointPosition[] = waypoints.map((wp) => ({
     lat: wp.lat,
     lng: wp.lng,
@@ -988,6 +992,15 @@ export default function TripDetailClient({
       setTerrainLoading(false);
     }
   }, [trip.id]);
+
+  // Auto-save after route drag: fires once waypoints state includes the new VIA
+  useEffect(() => {
+    if (pendingAutoSave) {
+      setPendingAutoSave(false);
+      handleSaveWaypoints();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAutoSave]);
 
   // Save waypoints handler for the banner button
   const handleSaveWaypoints = useCallback(async () => {
@@ -1364,10 +1377,28 @@ export default function TripDetailClient({
                 setWaypoints((prev) =>
                   prev.map((wp, i) => (i === index ? { ...wp, lat, lng } : wp)),
                 );
-                // Clear stale route immediately so the old polyline doesn't
-                // flash back when isDirty toggles off after save.
                 setActiveRoutePath(undefined);
                 setIsDirty(true);
+              }}
+              onRouteDragEnd={(lat, lng) => {
+                // Insert a hidden VIA waypoint at the drop location and auto-save
+                setWaypoints((prev) => {
+                  const insertIndex = findOptimalInsertIndex(prev, { lat, lng });
+                  const dayIndex = getDayIndexForInsertPosition(prev, insertIndex);
+                  const viaWp: WaypointDto = {
+                    lat,
+                    lng,
+                    type: "VIA",
+                    dayIndex: prev.length === 0 ? 1 : dayIndex,
+                  };
+                  const updated = [...prev];
+                  updated.splice(insertIndex, 0, viaWp);
+                  return updated;
+                });
+                setActiveRoutePath(undefined);
+                setIsDirty(true);
+                // Trigger auto-save on next render (after waypoints state is committed)
+                setPendingAutoSave(true);
               }}
             />
           </div>
